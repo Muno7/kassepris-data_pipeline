@@ -11,19 +11,12 @@ async function getProducts() {
     page = await browser.newPage();
     await page.goto('https://www.coop.se/butiker-erbjudanden/coop/coop-skurup/');
 
-    await page.waitForSelector('div.Rnj2piQi button.Wy2NiM6K.tkw4k9hc.dIzgXmHF'); // wait for the visa alla buttons to appear
-    await page.evaluate(() => {
-        const buttons = document.querySelectorAll('div.Rnj2piQi button.Wy2NiM6K.tkw4k9hc.dIzgXmHF');
-        buttons.forEach(button => button.click());
-    }); // click all visa alla buttons to make all products appear on the page
-
+    await page.waitForSelector('article.ohKiwh8z.xSu5Uapq')
     const productElements = await page.$$('article.ohKiwh8z.xSu5Uapq');
 
     for (const productElement of productElements) {
         await scrapeProductData(productElement, false);
     }
-    
-
     await browser.close();
 }
 
