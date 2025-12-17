@@ -19,10 +19,10 @@ async function getProducts() {
         const button = categoryButtons[i];
 
         // Get the category name from the span inside the button
-    const rawCategoryText = await button.$eval(
-        'span',
-        span => span.textContent.trim()
-    );
+        const rawCategoryText = await button.$eval(
+            'span',
+            span => span.textContent.trim()
+        );
 
         const match = rawCategoryText.match(/^(.+?)\s*\((\d+)\)$/);
         const categoryName = match ? match[1].trim() : rawCategoryText;
