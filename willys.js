@@ -68,7 +68,7 @@ async function getProducts() {
     page = await browser.newPage();
     await page.goto('https://www.willys.se/erbjudanden/butik');
 
-    await selectStore('svedala');
+    await selectStore('skurup');
 
     // Open filter panel
     await page.evaluate(() => {
