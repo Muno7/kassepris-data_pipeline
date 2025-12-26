@@ -1,0 +1,4017 @@
+[
+  {
+    "code": "stora-coop/stora-coop-valbo/",
+    "name": "Stora Coop Valbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-valbo/"
+  },
+  {
+    "code": "stora-coop/stora-coop-bollnas/",
+    "name": "Stora Coop Bollnäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-bollnas/"
+  },
+  {
+    "code": "coop/coop-hofors/",
+    "name": "Coop Hofors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hofors/"
+  },
+  {
+    "code": "stora-coop/stora-coop-hudiksvall/",
+    "name": "Stora Coop Hudiksvall",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-hudiksvall/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ljusdal/",
+    "name": "Stora Coop Ljusdal",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ljusdal/"
+  },
+  {
+    "code": "coop/coop-sandviken/",
+    "name": "Coop Sandviken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sandviken/"
+  },
+  {
+    "code": "coop/coop-skutskar/",
+    "name": "Coop Skutskär",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skutskar/"
+  },
+  {
+    "code": "coop/coop-bergvik/",
+    "name": "Coop Bergvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergvik/"
+  },
+  {
+    "code": "coop/coop-eken-gavle/",
+    "name": "Coop Eken Gävle",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eken-gavle/"
+  },
+  {
+    "code": "coop/coop-hallen/",
+    "name": "Coop Hallen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hallen/"
+  },
+  {
+    "code": "coop/coop-enen/",
+    "name": "Coop Enen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-enen/"
+  },
+  {
+    "code": "coop/coop-karlholm/",
+    "name": "Coop Karlholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlholm/"
+  },
+  {
+    "code": "coop/coop-kilafors/",
+    "name": "Coop Kilafors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kilafors/"
+  },
+  {
+    "code": "coop/coop-krysset/",
+    "name": "Coop Krysset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-krysset/"
+  },
+  {
+    "code": "coop/coop-ljusne/",
+    "name": "Coop Ljusne",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ljusne/"
+  },
+  {
+    "code": "coop/coop-nian/",
+    "name": "Coop Nian",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nian/"
+  },
+  {
+    "code": "coop/coop-norrsundet/",
+    "name": "Coop Norrsundet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrsundet/"
+  },
+  {
+    "code": "coop/coop-storvik/",
+    "name": "Coop Storvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storvik/"
+  },
+  {
+    "code": "coop/coop-triangeln-gavle/",
+    "name": "Coop Triangeln Gävle",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-triangeln-gavle/"
+  },
+  {
+    "code": "coop/coop-alvkarleby/",
+    "name": "Coop Älvkarleby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvkarleby/"
+  },
+  {
+    "code": "coop/coop-hagastrom/",
+    "name": "Coop Hagaström",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hagastrom/"
+  },
+  {
+    "code": "coop/coop-hassela/",
+    "name": "Coop Hassela",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hassela/"
+  },
+  {
+    "code": "coop/coop-kungsgarden/",
+    "name": "Coop Kungsgården",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsgarden/"
+  },
+  {
+    "code": "stora-coop/stora-coop-norra-backa/",
+    "name": "Stora Coop Norra Backa",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-norra-backa/"
+  },
+  {
+    "code": "coop/coop-djuras/",
+    "name": "Coop Djurås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-djuras/"
+  },
+  {
+    "code": "coop/coop-fredriksberg/",
+    "name": "Coop Fredriksberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fredriksberg/"
+  },
+  {
+    "code": "coop/coop-sunnansjo/",
+    "name": "Coop Sunnansjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sunnansjo/"
+  },
+  {
+    "code": "coop/coop-limaold/",
+    "name": null,
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-limaold/"
+  },
+  {
+    "code": "coop/coop-enanger/",
+    "name": "Coop Enånger",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-enanger/"
+  },
+  {
+    "code": "coop/coop-osterbybruk/",
+    "name": "Coop Österbybruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterbybruk/"
+  },
+  {
+    "code": "coop/coop-tierp/",
+    "name": "Coop Tierp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tierp/"
+  },
+  {
+    "code": "coop/coop-osthammar-centrum/",
+    "name": "Coop Östhammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osthammar-centrum/"
+  },
+  {
+    "code": "coop/coop-oregrund/",
+    "name": "Coop Öregrund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oregrund/"
+  },
+  {
+    "code": "coop/coop-norberg/",
+    "name": "Coop Norberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norberg/"
+  },
+  {
+    "code": "coop/coop-skinnskatteberg/",
+    "name": "Coop Skinnskatteberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skinnskatteberg/"
+  },
+  {
+    "code": "coop/coop-heby/",
+    "name": "Coop Heby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-heby/"
+  },
+  {
+    "code": "coop/coop-ostervala/",
+    "name": "Coop Östervåla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostervala/"
+  },
+  {
+    "code": "coop/coop--leksand/",
+    "name": "Coop Leksand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop--leksand/"
+  },
+  {
+    "code": "coop/coop-sater/",
+    "name": "Coop Säter",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sater/"
+  },
+  {
+    "code": "coop/coop-orsa/",
+    "name": "Coop Orsa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-orsa/"
+  },
+  {
+    "code": "coop/coop-smedjebacken/",
+    "name": "Coop Smedjebacken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-smedjebacken/"
+  },
+  {
+    "code": "coop/coop-grangesberg/",
+    "name": "Coop Grängesberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grangesberg/"
+  },
+  {
+    "code": "coop/coop-vansbro/",
+    "name": "Coop Vansbro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vansbro/"
+  },
+  {
+    "code": "coop/coop-ludvika-gard/",
+    "name": "Coop Ludvika Gård",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ludvika-gard/"
+  },
+  {
+    "code": "coop/coop-kvarnberget/",
+    "name": "Coop Kvarnberget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kvarnberget/"
+  },
+  {
+    "code": "coop/coop-rattvik/",
+    "name": "Coop Rättvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rattvik/"
+  },
+  {
+    "code": "coop/coop-forssa/",
+    "name": "Coop Forssa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-forssa/"
+  },
+  {
+    "code": "coop/coop-salen/",
+    "name": "Coop Sälen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-salen/"
+  },
+  {
+    "code": "coop/coop-krylbo/",
+    "name": "Coop Krylbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-krylbo/"
+  },
+  {
+    "code": "stora-coop/stora-coop-osthammar/",
+    "name": "Stora Coop Östhammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-osthammar/"
+  },
+  {
+    "code": "coop/coop-fagersta/",
+    "name": "Coop Fagersta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fagersta/"
+  },
+  {
+    "code": "coop/coop-sala/",
+    "name": "Coop Sala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sala/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ludvika/",
+    "name": "Stora Coop Ludvika",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ludvika/"
+  },
+  {
+    "code": "coop/coop-idre/",
+    "name": "Coop Idre",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-idre/"
+  },
+  {
+    "code": "coop/coop-sarna/",
+    "name": "Coop Särna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sarna/"
+  },
+  {
+    "code": "coop/coop-alvdalen/",
+    "name": "Coop Älvdalen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvdalen/"
+  },
+  {
+    "code": "coop/coop-sundborn/",
+    "name": "Coop Sundborn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sundborn/"
+  },
+  {
+    "code": "stora-coop/stora-coop-falun/",
+    "name": "Stora Coop Falun",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-falun/"
+  },
+  {
+    "code": "coop/coop-pilgatan-vasteras/",
+    "name": "Coop Pilgatan Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-pilgatan-vasteras/"
+  },
+  {
+    "code": "coop/coop-karlfeldtsplatsen/",
+    "name": "Coop Karlfeldtsplatsen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlfeldtsplatsen/"
+  },
+  {
+    "code": "coop/coop-kungsor/",
+    "name": "Coop Kungsör",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsor/"
+  },
+  {
+    "code": "coop/coop-ostanas/",
+    "name": "Coop Östanås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostanas/"
+  },
+  {
+    "code": "coop/coop-koping/",
+    "name": "Coop Köping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-koping/"
+  },
+  {
+    "code": "coop/coop-rosta/",
+    "name": "Coop Rosta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rosta/"
+  },
+  {
+    "code": "coop/coop-garphyttan/",
+    "name": "Coop Garphyttan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-garphyttan/"
+  },
+  {
+    "code": "coop/coop-fjugesta/",
+    "name": "Coop Fjugesta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fjugesta/"
+  },
+  {
+    "code": "coop/coop-laxa/",
+    "name": "Coop Laxå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-laxa/"
+  },
+  {
+    "code": "coop/coop-askersund/",
+    "name": "Coop Askersund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-askersund/"
+  },
+  {
+    "code": "coop/coop--city-vasteras/",
+    "name": "Coop Punkt",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop--city-vasteras/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ladugardsangen/",
+    "name": "Stora Coop Ladugårdsängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ladugardsangen/"
+  },
+  {
+    "code": "coop/coop-nora/",
+    "name": "Coop Nora",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nora/"
+  },
+  {
+    "code": "coop/coop-stjarnan-vasteras/",
+    "name": "Coop Stjärnan Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stjarnan-vasteras/"
+  },
+  {
+    "code": "coop/coop-svampen/",
+    "name": "Coop Svampen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svampen/"
+  },
+  {
+    "code": "coop/coop-osterplan/",
+    "name": "Coop Österplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterplan/"
+  },
+  {
+    "code": "coop/coop-anggatan/",
+    "name": "Coop Änggatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-anggatan/"
+  },
+  {
+    "code": "stora-coop/coop-forum-marieberg/",
+    "name": "Coop Forum Marieberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/coop-forum-marieberg/"
+  },
+  {
+    "code": "coop/coop-oxbacken/",
+    "name": "Coop Oxbacken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oxbacken/"
+  },
+  {
+    "code": "stora-coop/stora-coop-stenby-vasteras/",
+    "name": "Stora Coop Stenby Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-stenby-vasteras/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kristinehamn/",
+    "name": "Stora Coop Kristinehamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kristinehamn/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ersboda/",
+    "name": "Stora Coop Ersboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ersboda/"
+  },
+  {
+    "code": "stora-coop/stora-coop-harnosand/",
+    "name": "Stora Coop Härnösand",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-harnosand/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ornskoldsvik/",
+    "name": "Stora Coop Örnsköldsvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ornskoldsvik/"
+  },
+  {
+    "code": "stora-coop/stora-coop-boden/",
+    "name": "Stora Coop Boden",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-boden/"
+  },
+  {
+    "code": "stora-coop/stora-coop-pitea/",
+    "name": "Stora Coop Piteå",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-pitea/"
+  },
+  {
+    "code": "stora-coop/stora-coop-karlshamn/",
+    "name": "Stora Coop Karlshamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-karlshamn/"
+  },
+  {
+    "code": "stora-coop/stora-coop-overby/",
+    "name": "Stora Coop Överby",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-overby/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ostersund/",
+    "name": "Stora Coop Östersund",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ostersund/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kil/",
+    "name": "Stora Coop Kil",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kil/"
+  },
+  {
+    "code": "stora-coop/stora-coop-torsby/",
+    "name": "Stora Coop Torsby",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-torsby/"
+  },
+  {
+    "code": "stora-coop/stora-coop-vinsta/",
+    "name": "Stora Coop Vinsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-vinsta/"
+  },
+  {
+    "code": "stora-coop/stora-coop-bromma/",
+    "name": "Stora Coop Bromma",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-bromma/"
+  },
+  {
+    "code": "stora-coop/stora-coop-norremark/",
+    "name": "Stora Coop Norremark",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-norremark/"
+  },
+  {
+    "code": "stora-coop/stora-coop-visby/",
+    "name": "Stora Coop Visby",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-visby/"
+  },
+  {
+    "code": "stora-coop/stora-coop-valbo/",
+    "name": "Stora Coop Valbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-valbo/"
+  },
+  {
+    "code": "stora-coop/stora-coop-storheden/",
+    "name": "Stora Coop Storheden",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-storheden/"
+  },
+  {
+    "code": "stora-coop/stora-coop-karlskoga/",
+    "name": "Stora Coop Karlskoga",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-karlskoga/"
+  },
+  {
+    "code": "stora-coop/stora-coop-osthammar/",
+    "name": "Stora Coop Östhammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-osthammar/"
+  },
+  {
+    "code": "stora-coop/stora-coop-sisjon/",
+    "name": "Stora Coop Sisjön",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-sisjon/"
+  },
+  {
+    "code": "stora-coop/stora-coop-skara/",
+    "name": "Stora Coop Skara",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-skara/"
+  },
+  {
+    "code": "stora-coop/stora-coop-backaplan/",
+    "name": "Stora Coop Backaplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-backaplan/"
+  },
+  {
+    "code": "stora-coop/stora-coop-backebol/",
+    "name": "Stora Coop Bäckebol",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-backebol/"
+  },
+  {
+    "code": "stora-coop/coop-forum-marieberg/",
+    "name": "Coop Forum Marieberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/coop-forum-marieberg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-sorbole/",
+    "name": "Stora Coop Sörböle",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-sorbole/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kiruna/",
+    "name": "Stora Coop Kiruna",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kiruna/"
+  },
+  {
+    "code": "stora-coop/stora-coop-vastberga/",
+    "name": "Stora Coop Västberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-vastberga/"
+  },
+  {
+    "code": "stora-coop/stora-coop-varberg/",
+    "name": "Stora Coop Varberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-varberg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-stadion/",
+    "name": "Stora Coop Stadion",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-stadion/"
+  },
+  {
+    "code": "stora-coop/stora-coop-haggvik/",
+    "name": "Stora Coop Häggvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-haggvik/"
+  },
+  {
+    "code": "stora-coop/stora-coop-huddinge/",
+    "name": "Stora Coop Huddinge",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-huddinge/"
+  },
+  {
+    "code": "stora-coop/stora-coop-marsta/",
+    "name": "Stora Coop Märsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-marsta/"
+  },
+  {
+    "code": "stora-coop/stora-coop-nolhaga-skovde/",
+    "name": "Stora Coop Nolhaga Skövde",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-nolhaga-skovde/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kungsbacka/",
+    "name": "Stora Coop Kungsbacka",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kungsbacka/"
+  },
+  {
+    "code": "stora-coop/stora-coop-lund/",
+    "name": "Stora Coop Lund",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-lund/"
+  },
+  {
+    "code": "stora-coop/stora-coop-bergvik/",
+    "name": "Stora Coop Bergvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-bergvik/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kalix-/",
+    "name": "Stora Coop Kalix",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kalix-/"
+  },
+  {
+    "code": "stora-coop/stora-coop-sundby-park/",
+    "name": "Stora Coop Sundby Park",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-sundby-park/"
+  },
+  {
+    "code": "stora-coop/stora-coop-hudiksvall/",
+    "name": "Stora Coop Hudiksvall",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-hudiksvall/"
+  },
+  {
+    "code": "stora-coop/stora-coop-bolanderna/",
+    "name": "Stora Coop Boländerna",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-bolanderna/"
+  },
+  {
+    "code": "stora-coop/stora-coop-danderyd/",
+    "name": "Stora Coop Danderyd",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-danderyd/"
+  },
+  {
+    "code": "stora-coop/stora-coop-jonkoping/",
+    "name": "Stora Coop Jönköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-jonkoping/"
+  },
+  {
+    "code": "stora-coop/stora-coop-gallivare/",
+    "name": "Stora Coop Gällivare",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-gallivare/"
+  },
+  {
+    "code": "stora-coop/stora-coop-nykoping/",
+    "name": "Stora Coop Nyköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-nykoping/"
+  },
+  {
+    "code": "stora-coop/stora-coop-norrteljeporten/",
+    "name": "Stora Coop Norrteljeporten",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-norrteljeporten/"
+  },
+  {
+    "code": "stora-coop/stora-coop-stuvsta/",
+    "name": "Stora Coop Stuvsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-stuvsta/"
+  },
+  {
+    "code": "stora-coop/stora-coop-orminge/",
+    "name": "Stora Coop Orminge",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-orminge/"
+  },
+  {
+    "code": "stora-coop/stora-coop-varmdo/",
+    "name": "Stora Coop Värmdö",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-varmdo/"
+  },
+  {
+    "code": "stora-coop/stora-coop-sodertalje/",
+    "name": "Stora Coop Södertälje",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-sodertalje/"
+  },
+  {
+    "code": "stora-coop/stora-coop-haninge/",
+    "name": "Stora Coop Haninge",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-haninge/"
+  },
+  {
+    "code": "stora-coop/stora-coop-raa-helsingborg/",
+    "name": "Stora Coop Råå Hbg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-raa-helsingborg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-vala-helsingborg/",
+    "name": "Stora Coop Väla Hbg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-vala-helsingborg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-strangnas/",
+    "name": "Stora Coop Strängnäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-strangnas/"
+  },
+  {
+    "code": "stora-coop/stora-coop-eskilstuna/",
+    "name": "Stora Coop Eskilstuna",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-eskilstuna/"
+  },
+  {
+    "code": "stora-coop/stora-coop-boras/",
+    "name": "Stora Coop Borås",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-boras/"
+  },
+  {
+    "code": "stora-coop/stora-coop-bollnas/",
+    "name": "Stora Coop Bollnäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-bollnas/"
+  },
+  {
+    "code": "stora-coop/stora-coop-palmviken/",
+    "name": "Stora Coop Palmviken Arvika",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-palmviken/"
+  },
+  {
+    "code": "stora-coop/stora-coop-styckasen/",
+    "name": "Stora Coop Styckåsen",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-styckasen/"
+  },
+  {
+    "code": "stora-coop/stora-coop-restaurangen-bergvik/",
+    "name": "Coop Kök & Cafe Bergvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-restaurangen-bergvik/"
+  },
+  {
+    "code": "stora-coop/stora-coop-hammaro/",
+    "name": "Stora Coop Hammarö",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-hammaro/"
+  },
+  {
+    "code": "stora-coop/stora-coop-akersberga/",
+    "name": "Stora Coop Åkersberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-akersberga/"
+  },
+  {
+    "code": "stora-coop/stora-coop-enkoping/",
+    "name": "Stora Coop Enköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-enkoping/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ornaset/",
+    "name": "Stora Coop Örnäset",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ornaset/"
+  },
+  {
+    "code": "stora-coop/stora-coop-finspang/",
+    "name": "Stora Coop Finspång",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-finspang/"
+  },
+  {
+    "code": "stora-coop/stora-coop-stenby-vasteras/",
+    "name": "Stora Coop Stenby Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-stenby-vasteras/"
+  },
+  {
+    "code": "stora-coop/stora-coop-rotebro/",
+    "name": "Stora Coop Rotebro",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-rotebro/"
+  },
+  {
+    "code": "stora-coop/stora-coop-sundsvall/",
+    "name": "Stora Coop Sundsvall",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-sundsvall/"
+  },
+  {
+    "code": "stora-coop/stora-coop-halmstad/",
+    "name": "Stora Coop Halmstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-halmstad/"
+  },
+  {
+    "code": "stora-coop/stora-coop-norra-backa/",
+    "name": "Stora Coop Norra Backa",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-norra-backa/"
+  },
+  {
+    "code": "stora-coop/stora-coop-valsviken/",
+    "name": "Stora Coop Välsviken",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-valsviken/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ludvika/",
+    "name": "Stora Coop Ludvika",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ludvika/"
+  },
+  {
+    "code": "stora-coop/stora-coop-kungsangen/",
+    "name": "Stora Coop Kungsängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-kungsangen/"
+  },
+  {
+    "code": "stora-coop/stora-coop-garnisonen-linkoping/",
+    "name": "Stora Coop Garnisonen Linköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-garnisonen-linkoping/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ladugardsangen/",
+    "name": "Stora Coop Ladugårdsängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ladugardsangen/"
+  },
+  {
+    "code": "stora-coop/stora-coop-risangen/",
+    "name": "Stora Coop Risängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-risangen/"
+  },
+  {
+    "code": "stora-coop/stora-coop-hem-tradgard-skelleftea/",
+    "name": "Stora Coop Hus&Trädgård Skellefteå",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-hem-tradgard-skelleftea/"
+  },
+  {
+    "code": "stora-coop/stora-coop-falun/",
+    "name": "Stora Coop Falun",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-falun/"
+  },
+  {
+    "code": "stora-coop/stora-coop-tomtebo/",
+    "name": "Stora Coop Tomtebo",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-tomtebo/"
+  },
+  {
+    "code": "stora-coop/stora-coop-falkenberg/",
+    "name": "Stora Coop Falkenberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-falkenberg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-flygstaden/",
+    "name": "Stora Coop Flygstaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-flygstaden/"
+  },
+  {
+    "code": "stora-coop/stora-coop-tumba/",
+    "name": "Stora Coop Tumba",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-tumba/"
+  },
+  {
+    "code": "stora-coop/stora-coop-trelleborg/",
+    "name": "Stora Coop Trelleborg",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-trelleborg/"
+  },
+  {
+    "code": "stora-coop/stora-coop-torp/",
+    "name": "Stora Coop Torp",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-torp/"
+  },
+  {
+    "code": "stora-coop/stora-coop-storlien/",
+    "name": "Stora Coop Storlien",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-storlien/"
+  },
+  {
+    "code": "stora-coop/stora-coop-arninge/",
+    "name": "Stora Coop Arninge",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-arninge/"
+  },
+  {
+    "code": "stora-coop/stora-coop-harlov/",
+    "name": "Stora Coop Härlöv",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-harlov/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ljusdal/",
+    "name": "Stora Coop Ljusdal",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ljusdal/"
+  },
+  {
+    "code": "stora-coop/stora-coop-burlov/",
+    "name": "Stora Coop Burlöv",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-burlov/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ronneby/",
+    "name": "Stora Coop Ronneby",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ronneby/"
+  },
+  {
+    "code": "stora-coop/stora-coop-norrbole/",
+    "name": "Stora Coop Norrböle",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-norrbole/"
+  },
+  {
+    "code": "stora-coop/stora-coop-svedala/",
+    "name": "Stora Coop Svedala",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-svedala/"
+  },
+  {
+    "code": "stora-coop/stora-coop-spanga/",
+    "name": "Stora Coop Spånga",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-spanga/"
+  },
+  {
+    "code": "stora-coop/stora-coop-ingelsta/",
+    "name": "Stora Coop Ingelsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-ingelsta/"
+  },
+  {
+    "code": "stora-coop/stora-coop-barkarby/",
+    "name": "Stora Coop Barkarby",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-barkarby/"
+  },
+  {
+    "code": "stora-coop/stora-coop-avion/",
+    "name": "Stora Coop Avion",
+    "url": "https://www.coop.se/butiker-erbjudanden/stora-coop/stora-coop-avion/"
+  },
+  {
+    "code": "coop-konsum/coop-konsum-frillesas/",
+    "name": "Coop Konsum Frillesås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop-konsum/coop-konsum-frillesas/"
+  },
+  {
+    "code": "coop-forum/coop-forum-jagersro/",
+    "name": "Coop Forum Jägersro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop-forum/coop-forum-jagersro/"
+  },
+  {
+    "code": "coop/coop-alvkarleby/",
+    "name": "Coop Älvkarleby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvkarleby/"
+  },
+  {
+    "code": "coop/coop-arjang/",
+    "name": "Coop Årjäng",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-arjang/"
+  },
+  {
+    "code": "coop/coop-bergvik/",
+    "name": "Coop Bergvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergvik/"
+  },
+  {
+    "code": "coop/coop-extra-haparanda/",
+    "name": "Coop Haparanda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-extra-haparanda/"
+  },
+  {
+    "code": "coop/coop-sunne/",
+    "name": "Coop Sunne",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sunne/"
+  },
+  {
+    "code": "coop/coop-saffle/",
+    "name": "Coop Säffle",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-saffle/"
+  },
+  {
+    "code": "coop/coop-filipstad/",
+    "name": "Coop Filipstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-filipstad/"
+  },
+  {
+    "code": "coop/coop-hagfors/",
+    "name": "Coop Hagfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hagfors/"
+  },
+  {
+    "code": "coop/coop-bengtsfors/",
+    "name": "Coop Bengtsfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bengtsfors/"
+  },
+  {
+    "code": "coop/coop-hunnebostrand/",
+    "name": "Coop Hunnebostrand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hunnebostrand/"
+  },
+  {
+    "code": "coop/coop-grebbestad/",
+    "name": "Coop Grebbestad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grebbestad/"
+  },
+  {
+    "code": "coop/coop-sjuntorp/",
+    "name": "Coop Sjuntorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sjuntorp/"
+  },
+  {
+    "code": "coop/coop-ed/",
+    "name": "Coop Ed",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ed/"
+  },
+  {
+    "code": "coop/coop-grycksbo/",
+    "name": "Coop Grycksbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grycksbo/"
+  },
+  {
+    "code": "coop/coop-bjursas/",
+    "name": "Coop Bjursås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjursas/"
+  },
+  {
+    "code": "coop/coop-enen/",
+    "name": "Coop Enen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-enen/"
+  },
+  {
+    "code": "coop/coop-storvik/",
+    "name": "Coop Storvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storvik/"
+  },
+  {
+    "code": "coop/coop-forsbacka/",
+    "name": "Coop Forsbacka",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-forsbacka/"
+  },
+  {
+    "code": "coop/coop-ljusne/",
+    "name": "Coop Ljusne",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ljusne/"
+  },
+  {
+    "code": "coop/coop-kilafors/",
+    "name": "Coop Kilafors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kilafors/"
+  },
+  {
+    "code": "coop/coop-arjeplog/",
+    "name": "Coop Arjeplog",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-arjeplog/"
+  },
+  {
+    "code": "coop/coop-konsum-ranea/",
+    "name": "Coop Råneå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-konsum-ranea/"
+  },
+  {
+    "code": "coop/coop-pajala/",
+    "name": "Coop Pajala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-pajala/"
+  },
+  {
+    "code": "coop/coop-skutskar/",
+    "name": "Coop Skutskär",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skutskar/"
+  },
+  {
+    "code": "coop/coop-fargelanda/",
+    "name": "Coop Färgelanda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fargelanda/"
+  },
+  {
+    "code": "coop/coop-klintehamn/",
+    "name": "Coop Klintehamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-klintehamn/"
+  },
+  {
+    "code": "coop/coop-roma/",
+    "name": "Coop Roma",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-roma/"
+  },
+  {
+    "code": "coop/coop-ljugarn/",
+    "name": "Coop Ljugarn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ljugarn/"
+  },
+  {
+    "code": "coop/coop-hemse/",
+    "name": "Coop Hemse",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hemse/"
+  },
+  {
+    "code": "coop/coop-larbro/",
+    "name": "Coop Lärbro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-larbro/"
+  },
+  {
+    "code": "coop/coop-slite/",
+    "name": "Coop Slite",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-slite/"
+  },
+  {
+    "code": "coop/coop-eslov/",
+    "name": "Coop Eslöv",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eslov/"
+  },
+  {
+    "code": "coop/coop-morrum/",
+    "name": "Coop Mörrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-morrum/"
+  },
+  {
+    "code": "coop/coop-degeberga/",
+    "name": "Coop Degeberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-degeberga/"
+  },
+  {
+    "code": "coop/coop-rodeby/",
+    "name": "Coop Rödeby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rodeby/"
+  },
+  {
+    "code": "coop/coop-kallinge/",
+    "name": "Coop Kallinge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kallinge/"
+  },
+  {
+    "code": "coop/coop-asarum/",
+    "name": "Coop Asarum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-asarum/"
+  },
+  {
+    "code": "coop/coop-osterport/",
+    "name": "Coop Österport",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterport/"
+  },
+  {
+    "code": "coop/coop-grabo/",
+    "name": "Coop Gråbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grabo/"
+  },
+  {
+    "code": "coop/coop-kungsberga/",
+    "name": "Coop Kungsberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsberga/"
+  },
+  {
+    "code": "coop/coop-bergslagshallen/",
+    "name": "Coop Bergslagshallen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergslagshallen/"
+  },
+  {
+    "code": "coop/coop-amal/",
+    "name": "Coop Åmål Mellanbrogatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-amal/"
+  },
+  {
+    "code": "coop/coop-kungshamn/",
+    "name": "Coop Kungshamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungshamn/"
+  },
+  {
+    "code": "coop/coop-brastad/",
+    "name": "Coop Brastad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-brastad/"
+  },
+  {
+    "code": "coop/coop-munkedal/",
+    "name": "Coop Munkedal",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-munkedal/"
+  },
+  {
+    "code": "coop/coop-stromslund/",
+    "name": "Coop Strömslund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stromslund/"
+  },
+  {
+    "code": "coop/coop-nian/",
+    "name": "Coop Nian",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nian/"
+  },
+  {
+    "code": "coop/coop-sandviken/",
+    "name": "Coop Sandviken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sandviken/"
+  },
+  {
+    "code": "coop/coop-krysset/",
+    "name": "Coop Krysset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-krysset/"
+  },
+  {
+    "code": "coop/coop-bjorkskatan/",
+    "name": "Coop Björkskatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjorkskatan/"
+  },
+  {
+    "code": "coop/coop-sveafaltet/",
+    "name": "Coop Sveafältet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sveafaltet/"
+  },
+  {
+    "code": "coop/coop-triangeln-gavle/",
+    "name": "Coop Triangeln Gävle",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-triangeln-gavle/"
+  },
+  {
+    "code": "coop/coop-osterbymo/",
+    "name": "Coop Österbymo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterbymo/"
+  },
+  {
+    "code": "coop/coop-karlholm/",
+    "name": "Coop Karlholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlholm/"
+  },
+  {
+    "code": "coop/coop-hallen/",
+    "name": "Coop Hallen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hallen/"
+  },
+  {
+    "code": "coop/coop-asensbruk/",
+    "name": "Coop Åsensbruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-asensbruk/"
+  },
+  {
+    "code": "coop/coop-torup/",
+    "name": "Coop Torup",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-torup/"
+  },
+  {
+    "code": "coop/coop-unnaryd/",
+    "name": "Coop Unnaryd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-unnaryd/"
+  },
+  {
+    "code": "coop/coop-almhult/",
+    "name": "Coop Älmhult",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-almhult/"
+  },
+  {
+    "code": "coop/coop-gnosjo/",
+    "name": "Coop Gnosjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gnosjo/"
+  },
+  {
+    "code": "coop/coop-kosta/",
+    "name": "Coop Kosta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kosta/"
+  },
+  {
+    "code": "coop/coop-overum/",
+    "name": "Coop Överum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-overum/"
+  },
+  {
+    "code": "coop/coop-aseda/",
+    "name": "Coop Åseda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-aseda/"
+  },
+  {
+    "code": "coop/coop-bankeryd/",
+    "name": "Coop Bankeryd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bankeryd/"
+  },
+  {
+    "code": "coop/coop-savsjo/",
+    "name": "Coop Sävsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-savsjo/"
+  },
+  {
+    "code": "coop/coop-habo/",
+    "name": "Coop Habo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-habo/"
+  },
+  {
+    "code": "coop/coop-granna/",
+    "name": "Coop Gränna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-granna/"
+  },
+  {
+    "code": "coop/coop-aneby/",
+    "name": "Coop Aneby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-aneby/"
+  },
+  {
+    "code": "coop/coop-lessebo/",
+    "name": "Coop Lessebo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lessebo/"
+  },
+  {
+    "code": "coop/coop-nassjo/",
+    "name": "Coop Nässjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nassjo/"
+  },
+  {
+    "code": "coop/coop-oxtorget/",
+    "name": "Coop Oxtorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oxtorget/"
+  },
+  {
+    "code": "coop/coop-torsas/",
+    "name": "Coop Torsås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-torsas/"
+  },
+  {
+    "code": "coop/coop-norrliden/",
+    "name": "Coop Norrliden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrliden/"
+  },
+  {
+    "code": "coop/coop-mullsjo/",
+    "name": "Coop Mullsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mullsjo/"
+  },
+  {
+    "code": "coop/coop-dalviksringen/",
+    "name": "Coop Dalviksringen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dalviksringen/"
+  },
+  {
+    "code": "coop/coop-ekenassjon/",
+    "name": "Coop Ekenässjön",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ekenassjon/"
+  },
+  {
+    "code": "coop/coop-hogo/",
+    "name": "Coop Högö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogo/"
+  },
+  {
+    "code": "coop/coop-paskallavik/",
+    "name": "Coop Påskallavik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-paskallavik/"
+  },
+  {
+    "code": "coop/coop-figeholm/",
+    "name": "Coop Figeholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-figeholm/"
+  },
+  {
+    "code": "coop/coop-kristdala/",
+    "name": "Coop Kristdala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kristdala/"
+  },
+  {
+    "code": "coop/coop-hogsby/",
+    "name": "Coop Högsby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogsby/"
+  },
+  {
+    "code": "coop/coop-veberod/",
+    "name": "Coop Veberöd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-veberod/"
+  },
+  {
+    "code": "coop/coop-getinge/",
+    "name": "Coop Getinge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-getinge/"
+  },
+  {
+    "code": "coop/coop-styrso/",
+    "name": "Coop Styrsö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-styrso/"
+  },
+  {
+    "code": "coop/coop-hajom/",
+    "name": "Coop Hajom",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hajom/"
+  },
+  {
+    "code": "coop/coop-forshaga/",
+    "name": "Coop Forshaga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-forshaga/"
+  },
+  {
+    "code": "coop/coop-lesjofors/",
+    "name": "Coop Lesjöfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lesjofors/"
+  },
+  {
+    "code": "coop/coop-norrstrand/",
+    "name": "Coop Norrstrand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrstrand/"
+  },
+  {
+    "code": "coop/coop-herrhagen/",
+    "name": "Coop Herrhagen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-herrhagen/"
+  },
+  {
+    "code": "coop/coop-kronoparken/",
+    "name": "Coop Kronoparken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kronoparken/"
+  },
+  {
+    "code": "coop/coop-syssleback/",
+    "name": "Coop Sysslebäck",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-syssleback/"
+  },
+  {
+    "code": "coop/coop-froding/",
+    "name": "Coop Fröding",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-froding/"
+  },
+  {
+    "code": "coop/coop-storangen/",
+    "name": "Coop Storängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storangen/"
+  },
+  {
+    "code": "coop/coop-solleron/",
+    "name": "Coop Sollerön",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-solleron/"
+  },
+  {
+    "code": "coop/coop-byske/",
+    "name": "Coop Byske",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-byske/"
+  },
+  {
+    "code": "coop/coop-norsjo/",
+    "name": "Coop Norsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norsjo/"
+  },
+  {
+    "code": "coop/coop-mala/",
+    "name": "Coop Malå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mala/"
+  },
+  {
+    "code": "coop/coop-tarnaby/",
+    "name": "Coop Tärnaby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tarnaby/"
+  },
+  {
+    "code": "coop/coop-burtrask/",
+    "name": "Coop Burträsk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-burtrask/"
+  },
+  {
+    "code": "coop/coop-alidhem/",
+    "name": "Coop Ålidhem",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alidhem/"
+  },
+  {
+    "code": "coop/coop-nordmaling/",
+    "name": "Coop Nordmaling",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nordmaling/"
+  },
+  {
+    "code": "coop/coop-storuman/",
+    "name": "Coop Storuman",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storuman/"
+  },
+  {
+    "code": "coop/coop-robertsfors/",
+    "name": "Coop Robertsfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-robertsfors/"
+  },
+  {
+    "code": "coop/coop-hornett/",
+    "name": "Coop Hörnett",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hornett/"
+  },
+  {
+    "code": "coop/coop-hammarstrand/",
+    "name": "Coop Hammarstrand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hammarstrand/"
+  },
+  {
+    "code": "coop/coop-are/",
+    "name": "Coop Åre",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-are/"
+  },
+  {
+    "code": "coop/coop-jarpen/",
+    "name": "Coop Järpen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jarpen/"
+  },
+  {
+    "code": "coop/coop-bjurholm/",
+    "name": "Coop Bjurholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjurholm/"
+  },
+  {
+    "code": "coop/coop-ursviken/",
+    "name": "Coop Ursviken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ursviken/"
+  },
+  {
+    "code": "coop/coop-erikslid/",
+    "name": "Coop Erikslid",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-erikslid/"
+  },
+  {
+    "code": "coop/coop-sjalevad/",
+    "name": "Coop Själevad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sjalevad/"
+  },
+  {
+    "code": "coop/coop-knared/",
+    "name": "Coop Knäred",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-knared/"
+  },
+  {
+    "code": "coop/coop-kramfors/",
+    "name": "Coop Kramfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kramfors/"
+  },
+  {
+    "code": "coop/coop-timra/",
+    "name": "Coop Timrå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-timra/"
+  },
+  {
+    "code": "coop/coop-stromsund/",
+    "name": "Coop Strömsund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stromsund/"
+  },
+  {
+    "code": "coop/coop-froson/",
+    "name": "Coop Frösön",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-froson/"
+  },
+  {
+    "code": "coop/coop-vannas/",
+    "name": "Coop Vännäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vannas/"
+  },
+  {
+    "code": "coop/coop-ange/",
+    "name": "Coop Ånge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ange/"
+  },
+  {
+    "code": "coop/coop-nacksta/",
+    "name": "Coop Nacksta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nacksta/"
+  },
+  {
+    "code": "coop/coop-lonsboda/",
+    "name": "Coop Lönsboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lonsboda/"
+  },
+  {
+    "code": "coop/coop-farjestaden/",
+    "name": "Coop Färjestaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farjestaden/"
+  },
+  {
+    "code": "coop/coop-svangsta/",
+    "name": "Coop Svängsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svangsta/"
+  },
+  {
+    "code": "coop/coop-brunflo/",
+    "name": "Coop Brunflo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-brunflo/"
+  },
+  {
+    "code": "coop/coop-lysekil/",
+    "name": "Coop Lysekil",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lysekil/"
+  },
+  {
+    "code": "coop/coop-amotfors/",
+    "name": "Coop Åmotfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-amotfors/"
+  },
+  {
+    "code": "coop/coop-tranas/",
+    "name": "Coop Tranås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tranas/"
+  },
+  {
+    "code": "coop/coop-horngatan/",
+    "name": "Coop Hörngatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-horngatan/"
+  },
+  {
+    "code": "coop/coop-karlstadsvagen/",
+    "name": "Coop Karlstadsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlstadsvagen/"
+  },
+  {
+    "code": "coop/coop-alvsbyn/",
+    "name": "Coop Älvsbyn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvsbyn/"
+  },
+  {
+    "code": "coop/coop-varnamo/",
+    "name": "Coop Värnamo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varnamo/"
+  },
+  {
+    "code": "coop/coop-kolberga/",
+    "name": "Coop Kolberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kolberga/"
+  },
+  {
+    "code": "coop/coop-broby/",
+    "name": "Coop Broby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-broby/"
+  },
+  {
+    "code": "coop/coop-ostra-torget/",
+    "name": "Coop Östra Torget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostra-torget/"
+  },
+  {
+    "code": "coop/coop-burea/",
+    "name": "Coop Bureå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-burea/"
+  },
+  {
+    "code": "coop/coop-rosviksgatan/",
+    "name": "Coop Rosviksgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rosviksgatan/"
+  },
+  {
+    "code": "coop/coop-norrsundet/",
+    "name": "Coop Norrsundet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrsundet/"
+  },
+  {
+    "code": "coop/coop-hassleholm/",
+    "name": "Coop Hässleholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hassleholm/"
+  },
+  {
+    "code": "coop/coop-solvesborg/",
+    "name": "Coop Sölvesborg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-solvesborg/"
+  },
+  {
+    "code": "coop/coop-knislinge/",
+    "name": "Coop Knislinge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-knislinge/"
+  },
+  {
+    "code": "coop/coop-mustadfors/",
+    "name": "Coop Mustadfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mustadfors/"
+  },
+  {
+    "code": "coop/coop-skogslyckan/",
+    "name": "Coop Skogslyckan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skogslyckan/"
+  },
+  {
+    "code": "coop/coop-backefors/",
+    "name": "Coop Bäckefors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-backefors/"
+  },
+  {
+    "code": "coop/coop-hogsater/",
+    "name": "Coop Högsäter",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogsater/"
+  },
+  {
+    "code": "coop/coop-fjallbacka/",
+    "name": "Coop Fjällbacka",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fjallbacka/"
+  },
+  {
+    "code": "coop/coop-flanaden/",
+    "name": "Coop Flanaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-flanaden/"
+  },
+  {
+    "code": "coop/coop-boxholm/",
+    "name": "Coop Boxholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-boxholm/"
+  },
+  {
+    "code": "coop/coop-kisa/",
+    "name": "Coop Kisa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kisa/"
+  },
+  {
+    "code": "coop/coop-nykoping/",
+    "name": "Coop Stenbärsvägen Nyköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nykoping/"
+  },
+  {
+    "code": "coop/coop-gnesta/",
+    "name": "Coop Gnesta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gnesta/"
+  },
+  {
+    "code": "coop/coop-tungelsta/",
+    "name": "Coop Tungelsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tungelsta/"
+  },
+  {
+    "code": "coop/coop-skarphagen/",
+    "name": "Coop Skarphagen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skarphagen/"
+  },
+  {
+    "code": "coop/coop-vasterhaninge-c/",
+    "name": "Coop Västerhaninge Centrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vasterhaninge-c/"
+  },
+  {
+    "code": "coop/coop-bjorkhagen/",
+    "name": "Coop Björkhagen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjorkhagen/"
+  },
+  {
+    "code": "coop/coop-tomelilla/",
+    "name": "Coop Tomelilla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tomelilla/"
+  },
+  {
+    "code": "coop/coop-vintertullen/",
+    "name": "Coop Vintertullen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vintertullen/"
+  },
+  {
+    "code": "coop/coop-varnhem/",
+    "name": "Coop Värnhem",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varnhem/"
+  },
+  {
+    "code": "coop/coop-farsta-strand/",
+    "name": "Coop Farsta Strand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farsta-strand/"
+  },
+  {
+    "code": "coop/coop-hogalid/",
+    "name": "Coop Högalid",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogalid/"
+  },
+  {
+    "code": "coop/coop-halleforsnas/",
+    "name": "Coop Hälleforsnäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-halleforsnas/"
+  },
+  {
+    "code": "coop/coop-ostgotagatan/",
+    "name": "Coop Östgötagatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostgotagatan/"
+  },
+  {
+    "code": "coop/coop-vendelsomalm/",
+    "name": "Coop Vendelsömalm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vendelsomalm/"
+  },
+  {
+    "code": "coop/coop-holo/",
+    "name": "Coop Hölö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-holo/"
+  },
+  {
+    "code": "coop/coop-tibble/",
+    "name": "Coop Tibble",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tibble/"
+  },
+  {
+    "code": "coop/coop-ringgatan/",
+    "name": "Coop Ringgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ringgatan/"
+  },
+  {
+    "code": "coop/coop-konsum-vastertorg/",
+    "name": "Coop Västertorg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-konsum-vastertorg/"
+  },
+  {
+    "code": "coop/coop-storvreta/",
+    "name": "Coop Storvreta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storvreta/"
+  },
+  {
+    "code": "coop/coop-sockenplan/",
+    "name": "Coop Sockenplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sockenplan/"
+  },
+  {
+    "code": "coop/coop-eksjo/",
+    "name": "Coop Eksjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eksjo/"
+  },
+  {
+    "code": "coop/coop-tenhult/",
+    "name": "Coop Tenhult",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tenhult/"
+  },
+  {
+    "code": "coop/coop-kristinedal/",
+    "name": "Coop Kristinedal",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kristinedal/"
+  },
+  {
+    "code": "coop/coop-alvangen/",
+    "name": "Coop Älvängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvangen/"
+  },
+  {
+    "code": "coop/coop-spanga-torg/",
+    "name": "Coop Spånga Torg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-spanga-torg/"
+  },
+  {
+    "code": "coop/coop-skived/",
+    "name": "Coop Skived",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skived/"
+  },
+  {
+    "code": "coop/coop-solleftea/",
+    "name": "Coop Sollefteå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-solleftea/"
+  },
+  {
+    "code": "coop/coop-sodertalje-c/",
+    "name": "Coop Södertälje C",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sodertalje-c/"
+  },
+  {
+    "code": "coop/coop-molkom/",
+    "name": "Coop Molkom",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-molkom/"
+  },
+  {
+    "code": "coop/coop-charlottenberg/",
+    "name": "Coop Charlottenberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-charlottenberg/"
+  },
+  {
+    "code": "coop/coop-koppom/",
+    "name": "Coop Koppom",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-koppom/"
+  },
+  {
+    "code": "coop/coop-krylbo/",
+    "name": "Coop Krylbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-krylbo/"
+  },
+  {
+    "code": "coop/coop-salen/",
+    "name": "Coop Sälen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-salen/"
+  },
+  {
+    "code": "coop/coop-forssa/",
+    "name": "Coop Forssa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-forssa/"
+  },
+  {
+    "code": "coop/coop-rattvik/",
+    "name": "Coop Rättvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rattvik/"
+  },
+  {
+    "code": "coop/coop-kvarnberget/",
+    "name": "Coop Kvarnberget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kvarnberget/"
+  },
+  {
+    "code": "coop/coop-ludvika-gard/",
+    "name": "Coop Ludvika Gård",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ludvika-gard/"
+  },
+  {
+    "code": "coop/coop-vansbro/",
+    "name": "Coop Vansbro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vansbro/"
+  },
+  {
+    "code": "coop/coop-grangesberg/",
+    "name": "Coop Grängesberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grangesberg/"
+  },
+  {
+    "code": "coop/coop-smedjebacken/",
+    "name": "Coop Smedjebacken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-smedjebacken/"
+  },
+  {
+    "code": "coop/coop-orsa/",
+    "name": "Coop Orsa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-orsa/"
+  },
+  {
+    "code": "coop/coop-sater/",
+    "name": "Coop Säter",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sater/"
+  },
+  {
+    "code": "coop/coop-ostervala/",
+    "name": "Coop Östervåla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostervala/"
+  },
+  {
+    "code": "coop/coop-heby/",
+    "name": "Coop Heby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-heby/"
+  },
+  {
+    "code": "coop/coop-skinnskatteberg/",
+    "name": "Coop Skinnskatteberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skinnskatteberg/"
+  },
+  {
+    "code": "coop/coop-norberg/",
+    "name": "Coop Norberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norberg/"
+  },
+  {
+    "code": "coop/coop-fagersta/",
+    "name": "Coop Fagersta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fagersta/"
+  },
+  {
+    "code": "coop/coop-osthammar-centrum/",
+    "name": "Coop Östhammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osthammar-centrum/"
+  },
+  {
+    "code": "coop/coop-hallstavik/",
+    "name": "Coop Hallstavik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hallstavik/"
+  },
+  {
+    "code": "coop/coop-tierp/",
+    "name": "Coop Tierp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tierp/"
+  },
+  {
+    "code": "coop/coop-osterbybruk/",
+    "name": "Coop Österbybruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterbybruk/"
+  },
+  {
+    "code": "coop/coop-anghagen-lidkoping/",
+    "name": "Coop Änghagen Lidköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-anghagen-lidkoping/"
+  },
+  {
+    "code": "coop/coop-vipans-grand-skovde/",
+    "name": "Coop Vipans Gränd Skövde",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vipans-grand-skovde/"
+  },
+  {
+    "code": "coop/coop-karlsborg/",
+    "name": "Coop Karlsborg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlsborg/"
+  },
+  {
+    "code": "coop/coop-kyrkogatan-toreboda/",
+    "name": "Coop Kyrkogatan Töreboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kyrkogatan-toreboda/"
+  },
+  {
+    "code": "coop/coop-mariestad/",
+    "name": "Coop Sydport Mariestad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariestad/"
+  },
+  {
+    "code": "coop/coop-tidaholm/",
+    "name": "Coop Tidaholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tidaholm/"
+  },
+  {
+    "code": "coop/coop-falkoping/",
+    "name": "Coop Falköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-falkoping/"
+  },
+  {
+    "code": "coop/coop-skene/",
+    "name": "Coop Skene",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skene/"
+  },
+  {
+    "code": "coop/coop-surte/",
+    "name": "Coop Surte",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-surte/"
+  },
+  {
+    "code": "coop/coop-gamlestaden/",
+    "name": "Coop Gamlestaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gamlestaden/"
+  },
+  {
+    "code": "coop/coop-eriksberg/",
+    "name": "Coop Eriksberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eriksberg/"
+  },
+  {
+    "code": "coop/coop-munkebackstorget/",
+    "name": "Coop Munkebäckstorg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-munkebackstorget/"
+  },
+  {
+    "code": "coop/coop-friggagatan/",
+    "name": "Coop Friggagatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-friggagatan/"
+  },
+  {
+    "code": "coop/coop-landala/",
+    "name": "Coop Landala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-landala/"
+  },
+  {
+    "code": "coop/coop-avenyn/",
+    "name": "Coop Avenyn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-avenyn/"
+  },
+  {
+    "code": "coop/coop-stenungsund/",
+    "name": "Coop Stenungsund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stenungsund/"
+  },
+  {
+    "code": "coop/coop-lundby/",
+    "name": "Coop Lundby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lundby/"
+  },
+  {
+    "code": "coop/coop-garphyttan/",
+    "name": "Coop Garphyttan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-garphyttan/"
+  },
+  {
+    "code": "coop/coop-virserum/",
+    "name": "Coop Virserum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-virserum/"
+  },
+  {
+    "code": "coop/coop-alvdalen/",
+    "name": "Coop Älvdalen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvdalen/"
+  },
+  {
+    "code": "coop/coop-sarna/",
+    "name": "Coop Särna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sarna/"
+  },
+  {
+    "code": "coop/coop-idre/",
+    "name": "Coop Idre",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-idre/"
+  },
+  {
+    "code": "coop/coop-tyreso-centrum/",
+    "name": "Coop Tyresö Centrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tyreso-centrum/"
+  },
+  {
+    "code": "coop/coop-bjornboda/",
+    "name": "Coop Björnboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjornboda/"
+  },
+  {
+    "code": "coop/coop-pilgatan-vasteras/",
+    "name": "Coop Pilgatan Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-pilgatan-vasteras/"
+  },
+  {
+    "code": "coop/coop-simrishamn/",
+    "name": "Coop Simrishamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-simrishamn/"
+  },
+  {
+    "code": "coop/coop-smygehamn/",
+    "name": "Coop Smygehamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-smygehamn/"
+  },
+  {
+    "code": "coop/coop-kallered/",
+    "name": "Coop Kållered",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kallered/"
+  },
+  {
+    "code": "coop/coop-hasslo/",
+    "name": "Coop Hasslö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hasslo/"
+  },
+  {
+    "code": "coop/coop-anggatan/",
+    "name": "Coop Änggatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-anggatan/"
+  },
+  {
+    "code": "coop/coop-varmlandsgatan/",
+    "name": "Coop Värmlandsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varmlandsgatan/"
+  },
+  {
+    "code": "coop/coop-trozelligatan/",
+    "name": "Coop Trozelligatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-trozelligatan/"
+  },
+  {
+    "code": "coop/coop-lysvik/",
+    "name": "Coop Lysvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lysvik/"
+  },
+  {
+    "code": "coop/coop-tratorget/",
+    "name": "Coop Trätorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tratorget/"
+  },
+  {
+    "code": "coop/coop-daglivs/",
+    "name": "Coop Daglivs",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-daglivs/"
+  },
+  {
+    "code": "coop/coop-ingmarso/",
+    "name": "Coop Ingmarsö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ingmarso/"
+  },
+  {
+    "code": "coop/coop-kronhjorten-trollhattan/",
+    "name": "Coop Kronhjorten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kronhjorten-trollhattan/"
+  },
+  {
+    "code": "coop/coop-jarntorget/",
+    "name": "Coop Järntorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jarntorget/"
+  },
+  {
+    "code": "coop/coop-svanskog/",
+    "name": "Coop Svanskog",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svanskog/"
+  },
+  {
+    "code": "coop/coop-kungsgarden/",
+    "name": "Coop Kungsgården",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsgarden/"
+  },
+  {
+    "code": "coop/coop-hassela/",
+    "name": "Coop Hassela",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hassela/"
+  },
+  {
+    "code": "coop/coop-sangis/",
+    "name": "Coop Sangis",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sangis/"
+  },
+  {
+    "code": "coop/coop-rejmyre/",
+    "name": "Coop Rejmyre",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rejmyre/"
+  },
+  {
+    "code": "coop/coop-kristinatorget/",
+    "name": "Coop Kristinatorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kristinatorget/"
+  },
+  {
+    "code": "coop/coop-traryd/",
+    "name": "Coop Traryd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-traryd/"
+  },
+  {
+    "code": "coop/coop-vikene/",
+    "name": "Coop Vikene",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vikene/"
+  },
+  {
+    "code": "coop/coop-hogboda/",
+    "name": "Coop Högboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogboda/"
+  },
+  {
+    "code": "coop/coop-skillingsfors/",
+    "name": "Coop Skillingsfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skillingsfors/"
+  },
+  {
+    "code": "coop/coop-hagastrom/",
+    "name": "Coop Hagaström",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hagastrom/"
+  },
+  {
+    "code": "coop/coop-harads/",
+    "name": "Coop Harads",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-harads/"
+  },
+  {
+    "code": "coop/coop-berg/",
+    "name": "Coop Berg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-berg/"
+  },
+  {
+    "code": "coop/coop-langvik/",
+    "name": "Coop Långvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-langvik/"
+  },
+  {
+    "code": "coop/coop-visingso/",
+    "name": "Coop Visingsö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-visingso/"
+  },
+  {
+    "code": "coop/coop-bor/",
+    "name": "Coop Bor",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bor/"
+  },
+  {
+    "code": "coop/coop-edsbruk/",
+    "name": "Coop Edsbruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-edsbruk/"
+  },
+  {
+    "code": "coop/coop-farbo/",
+    "name": "Coop Fårbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farbo/"
+  },
+  {
+    "code": "coop/coop-berga/",
+    "name": "Coop Berga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-berga/"
+  },
+  {
+    "code": "coop/coop-alsterbro/",
+    "name": "Coop Alsterbro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alsterbro/"
+  },
+  {
+    "code": "coop/coop-sunnemo/",
+    "name": "Coop Sunnemo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sunnemo/"
+  },
+  {
+    "code": "coop/coop-stollet/",
+    "name": "Coop Stöllet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stollet/"
+  },
+  {
+    "code": "coop/coop-sorsele/",
+    "name": "Coop Sorsele",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sorsele/"
+  },
+  {
+    "code": "coop/coop-dorotea/",
+    "name": "Coop Dorotea",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dorotea/"
+  },
+  {
+    "code": "coop/coop-asele/",
+    "name": "Coop Åsele",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-asele/"
+  },
+  {
+    "code": "coop/coop-hornefors/",
+    "name": "Coop Hörnefors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hornefors/"
+  },
+  {
+    "code": "coop/coop-bollstabruk/",
+    "name": "Coop Bollstabruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bollstabruk/"
+  },
+  {
+    "code": "coop/coop-ersboda/",
+    "name": "Coop Ersboda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ersboda/"
+  },
+  {
+    "code": "coop/coop-vannasby/",
+    "name": "Coop Vännäsby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vannasby/"
+  },
+  {
+    "code": "coop/coop-haga-umea/",
+    "name": "Coop Haga Umeå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-haga-umea/"
+  },
+  {
+    "code": "coop/coop-jorn/",
+    "name": "Coop Jörn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jorn/"
+  },
+  {
+    "code": "coop/coop-lovanger/",
+    "name": "Coop Lövånger",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lovanger/"
+  },
+  {
+    "code": "coop/coop-kopmanholmen/",
+    "name": "Coop Köpmanholmen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kopmanholmen/"
+  },
+  {
+    "code": "coop/coop-mellansel/",
+    "name": "Coop Mellansel",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mellansel/"
+  },
+  {
+    "code": "coop/coop-bredbyn/",
+    "name": "Coop Bredbyn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bredbyn/"
+  },
+  {
+    "code": "coop/coop-torpshammar/",
+    "name": "Coop Torpshammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-torpshammar/"
+  },
+  {
+    "code": "coop/coop-bergsaker/",
+    "name": "Coop Bergsåker",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergsaker/"
+  },
+  {
+    "code": "coop/coop-fransta/",
+    "name": "Coop Fränsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fransta/"
+  },
+  {
+    "code": "coop/coop-nasaker/",
+    "name": "Coop Näsåker",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nasaker/"
+  },
+  {
+    "code": "coop/coop-torvalla/",
+    "name": "Coop Torvalla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-torvalla/"
+  },
+  {
+    "code": "coop/coop-braten/",
+    "name": "Coop Bråten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-braten/"
+  },
+  {
+    "code": "coop/coop-vallaplan/",
+    "name": "Coop Vallaplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vallaplan/"
+  },
+  {
+    "code": "coop/coop-hantverkaregatan/",
+    "name": "Coop Hantverkaregatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hantverkaregatan/"
+  },
+  {
+    "code": "coop/coop-tystberga/",
+    "name": "Coop Tystberga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tystberga/"
+  },
+  {
+    "code": "coop/coop-mariatorget/",
+    "name": "Coop Mariatorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariatorget/"
+  },
+  {
+    "code": "coop/coop-kopenhamnsvagen/",
+    "name": "Coop Köpenhamnsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kopenhamnsvagen/"
+  },
+  {
+    "code": "coop/coop-furuvagen/",
+    "name": "Coop Furuvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-furuvagen/"
+  },
+  {
+    "code": "coop/coop-tranebergsvagen/",
+    "name": "Coop Tranebergsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tranebergsvagen/"
+  },
+  {
+    "code": "coop/coop-vastertorp/",
+    "name": "Coop Västertorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastertorp/"
+  },
+  {
+    "code": "coop/coop-nobeltorget/",
+    "name": "Coop Nobeltorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nobeltorget/"
+  },
+  {
+    "code": "coop/coop-malmo-central/",
+    "name": "Coop Malmö Central",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-malmo-central/"
+  },
+  {
+    "code": "coop/coop-kornettsgatan/",
+    "name": "Coop Kornettsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kornettsgatan/"
+  },
+  {
+    "code": "coop/coop-trollebergsvagen/",
+    "name": "Coop Trollebergsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-trollebergsvagen/"
+  },
+  {
+    "code": "coop/coop-flojtvagen/",
+    "name": "Coop Flöjtvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-flojtvagen/"
+  },
+  {
+    "code": "coop/coop-orebrogatan/",
+    "name": "Coop Örebrogatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-orebrogatan/"
+  },
+  {
+    "code": "coop/coop-nara-tomtebogatan/",
+    "name": "Coop Tomtebogatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nara-tomtebogatan/"
+  },
+  {
+    "code": "coop/coop-hogsjo/",
+    "name": "Coop Högsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogsjo/"
+  },
+  {
+    "code": "coop/coop-kyrkogatan/",
+    "name": "Coop Kyrkogatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kyrkogatan/"
+  },
+  {
+    "code": "coop/coop-skogstorp/",
+    "name": "Coop Skogstorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skogstorp/"
+  },
+  {
+    "code": "coop/coop-arla/",
+    "name": "Coop Ärla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-arla/"
+  },
+  {
+    "code": "coop/coop-alvsjo/",
+    "name": "Coop Älvsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alvsjo/"
+  },
+  {
+    "code": "coop/coop-stamgatan/",
+    "name": "Coop Stamgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stamgatan/"
+  },
+  {
+    "code": "coop/coop-vasalund/",
+    "name": "Coop Vasalund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vasalund/"
+  },
+  {
+    "code": "coop/coop-ribby/",
+    "name": "Coop Ribby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ribby/"
+  },
+  {
+    "code": "coop/coop-centralen/",
+    "name": "Coop Centralen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-centralen/"
+  },
+  {
+    "code": "coop/coop-essingen/",
+    "name": "Coop Essingen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-essingen/"
+  },
+  {
+    "code": "coop/coop-farmarstigen/",
+    "name": "Coop Farmarstigen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farmarstigen/"
+  },
+  {
+    "code": "coop/coop-sveavagen/",
+    "name": "Coop Sveavägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sveavagen/"
+  },
+  {
+    "code": "coop/coop-svandammsplan/",
+    "name": "Coop Svandammsplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svandammsplan/"
+  },
+  {
+    "code": "coop/coop-vasby-station/",
+    "name": "Coop Väsby Station",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vasby-station/"
+  },
+  {
+    "code": "coop/coop-barkarby/",
+    "name": "Coop Barkarby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-barkarby/"
+  },
+  {
+    "code": "coop/coop-veckovagen/",
+    "name": "Coop Veckovägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-veckovagen/"
+  },
+  {
+    "code": "coop/coop-sunnersta/",
+    "name": "Coop Sunnersta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sunnersta/"
+  },
+  {
+    "code": "coop/coop-ekeby-uppsala/",
+    "name": "Coop Ekeby Uppsala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ekeby-uppsala/"
+  },
+  {
+    "code": "coop/coop-almunge/",
+    "name": "Coop Almunge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-almunge/"
+  },
+  {
+    "code": "coop/coop-grindvagen/",
+    "name": "Coop Grindvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grindvagen/"
+  },
+  {
+    "code": "coop/coop-bromsten/",
+    "name": "Coop Bromsten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bromsten/"
+  },
+  {
+    "code": "coop/coop-city-kristianstad/",
+    "name": "Coop City Kristianstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-kristianstad/"
+  },
+  {
+    "code": "coop/coop-spangbro/",
+    "name": "Coop Spångbro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-spangbro/"
+  },
+  {
+    "code": "coop/coop-lycksele/",
+    "name": "Coop Lycksele",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lycksele/"
+  },
+  {
+    "code": "coop/coop-spangavagen/",
+    "name": "Coop Spångavägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-spangavagen/"
+  },
+  {
+    "code": "coop/coop-fruangen/",
+    "name": "Coop Fruängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fruangen/"
+  },
+  {
+    "code": "coop/coop-sodra-ringvaegen/",
+    "name": "Coop Södra Ringvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sodra-ringvaegen/"
+  },
+  {
+    "code": "coop/coop-odenplan/",
+    "name": "Coop Odenplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-odenplan/"
+  },
+  {
+    "code": "coop/coop-reimersholme/",
+    "name": "Coop Reimersholme",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-reimersholme/"
+  },
+  {
+    "code": "coop/coop-kristineberg/",
+    "name": "Coop Kristineberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kristineberg/"
+  },
+  {
+    "code": "coop/coop-malarhojden/",
+    "name": "Coop Mälarhöjden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-malarhojden/"
+  },
+  {
+    "code": "coop/coop-lomma/",
+    "name": "Coop Lomma",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lomma/"
+  },
+  {
+    "code": "coop/coop-hotorget/",
+    "name": "Coop Hötorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hotorget/"
+  },
+  {
+    "code": "coop/coop-knutpunkten/",
+    "name": "Coop Knutpunkten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-knutpunkten/"
+  },
+  {
+    "code": "coop/coop-renstiernas-gata/",
+    "name": "Coop Renstiernas Gata",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-renstiernas-gata/"
+  },
+  {
+    "code": "coop/coop-forserum/",
+    "name": "Coop Forserum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-forserum/"
+  },
+  {
+    "code": "coop/coop-lenhovda/",
+    "name": "Coop Lenhovda",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lenhovda/"
+  },
+  {
+    "code": "coop/coop-gamletull-halmstad/",
+    "name": "Coop Gamletull Halmstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gamletull-halmstad/"
+  },
+  {
+    "code": "coop/coop-eken-gavle/",
+    "name": "Coop Eken Gävle",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eken-gavle/"
+  },
+  {
+    "code": "coop/coop-jarna/",
+    "name": "Coop Järna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jarna/"
+  },
+  {
+    "code": "coop/coop-malmon/",
+    "name": "Coop Malmön",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-malmon/"
+  },
+  {
+    "code": "coop/coop-enanger/",
+    "name": "Coop Enånger",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-enanger/"
+  },
+  {
+    "code": "coop/coop-sunnansjo/",
+    "name": "Coop Sunnansjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sunnansjo/"
+  },
+  {
+    "code": "coop/coop-djuras/",
+    "name": "Coop Djurås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-djuras/"
+  },
+  {
+    "code": "coop/coop-fredriksberg/",
+    "name": "Coop Fredriksberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fredriksberg/"
+  },
+  {
+    "code": "coop/coop-hallekis/",
+    "name": "Coop Hällekis",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hallekis/"
+  },
+  {
+    "code": "coop/coop-kyrkbytorget/",
+    "name": "Coop Kyrkbytorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kyrkbytorget/"
+  },
+  {
+    "code": "coop/coop-gastorp/",
+    "name": "Coop Gastorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gastorp/"
+  },
+  {
+    "code": "coop/coop-alingsas/",
+    "name": "Coop Alingsås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alingsas/"
+  },
+  {
+    "code": "coop/coop-marstrand/",
+    "name": "Coop Marstrand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-marstrand/"
+  },
+  {
+    "code": "coop/coop-mariagatan/",
+    "name": "Coop Mariagatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariagatan/"
+  },
+  {
+    "code": "coop/coop-karingberget/",
+    "name": "Coop Käringberget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karingberget/"
+  },
+  {
+    "code": "coop/coop-dr-bex-gata/",
+    "name": "Coop Dr Bex Gata",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dr-bex-gata/"
+  },
+  {
+    "code": "coop/coop-ostanas/",
+    "name": "Coop Östanås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostanas/"
+  },
+  {
+    "code": "coop/coop-karlfeldtsplatsen/",
+    "name": "Coop Karlfeldtsplatsen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karlfeldtsplatsen/"
+  },
+  {
+    "code": "coop/coop-rosta/",
+    "name": "Coop Rosta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rosta/"
+  },
+  {
+    "code": "coop/coop-osterplan/",
+    "name": "Coop Österplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osterplan/"
+  },
+  {
+    "code": "coop/coop-anderstorp/",
+    "name": "Coop Anderstorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-anderstorp/"
+  },
+  {
+    "code": "coop/coop-atollen-jonkoping/",
+    "name": "Coop Atollen Jönköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-atollen-jonkoping/"
+  },
+  {
+    "code": "coop/coop-baronen-kalmar/",
+    "name": "Coop Baronen Kalmar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-baronen-kalmar/"
+  },
+  {
+    "code": "coop/coop-bergshamra/",
+    "name": "Coop Bergshamra",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergshamra/"
+  },
+  {
+    "code": "coop/coop-nytorgsgatan/",
+    "name": "Coop Nytorgsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nytorgsgatan/"
+  },
+  {
+    "code": "coop/coop-storsjovagen/",
+    "name": "Coop Storsjövägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storsjovagen/"
+  },
+  {
+    "code": "coop/coop-soder/",
+    "name": "Coop Söder",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-soder/"
+  },
+  {
+    "code": "coop/coop-hasten/",
+    "name": "Coop Håsten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hasten/"
+  },
+  {
+    "code": "coop/coop-vittangi/",
+    "name": "Coop Vittangi",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vittangi/"
+  },
+  {
+    "code": "coop/coop-svappavaara/",
+    "name": "Coop Svappavaara",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svappavaara/"
+  },
+  {
+    "code": "coop/coop-jukkasjarvi/",
+    "name": "Coop Jukkasjärvi",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jukkasjarvi/"
+  },
+  {
+    "code": "coop/coop-gallivare-luleavagen/",
+    "name": "Coop Gällivare Luleåvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gallivare-luleavagen/"
+  },
+  {
+    "code": "coop/coop-vuollerim/",
+    "name": "Coop Vuollerim",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vuollerim/"
+  },
+  {
+    "code": "coop/coop-gullanget/",
+    "name": "Coop Gullänget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gullanget/"
+  },
+  {
+    "code": "coop/coop-nynashamn/",
+    "name": "Coop Nynäshamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nynashamn/"
+  },
+  {
+    "code": "coop/coop--zinken-/",
+    "name": "Coop Zinken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop--zinken-/"
+  },
+  {
+    "code": "coop/coop-overtornea/",
+    "name": "Coop Övertorneå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-overtornea/"
+  },
+  {
+    "code": "coop/coop-loet/",
+    "name": "Coop Loet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-loet/"
+  },
+  {
+    "code": "coop/coop-munksund/",
+    "name": "Coop Munksund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-munksund/"
+  },
+  {
+    "code": "coop/coop-mjolkudden/",
+    "name": "Coop Mjölkudden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mjolkudden/"
+  },
+  {
+    "code": "coop/coop-city-umea/",
+    "name": "Coop City Umeå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-umea/"
+  },
+  {
+    "code": "coop/coop-laholm/",
+    "name": "Coop Laholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-laholm/"
+  },
+  {
+    "code": "coop/coop-grondal/",
+    "name": "Coop Gröndal",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grondal/"
+  },
+  {
+    "code": "coop/coop-hogdalen/",
+    "name": "Coop Högdalen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hogdalen/"
+  },
+  {
+    "code": "coop/coop-bagarmossen/",
+    "name": "Coop Bagarmossen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bagarmossen/"
+  },
+  {
+    "code": "coop/coop--norra-parkgatan/",
+    "name": "Coop Norra Parkgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop--norra-parkgatan/"
+  },
+  {
+    "code": "coop/coop-farsta/",
+    "name": "Coop Farsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farsta/"
+  },
+  {
+    "code": "coop/coop-norrahammar/",
+    "name": "Coop Norrahammar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrahammar/"
+  },
+  {
+    "code": "coop/coop-hovslatt/",
+    "name": "Coop Hovslätt",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hovslatt/"
+  },
+  {
+    "code": "coop/coop-taberg/",
+    "name": "Coop Taberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-taberg/"
+  },
+  {
+    "code": "coop/coop-bergnaset/",
+    "name": "Coop Bergnäset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bergnaset/"
+  },
+  {
+    "code": "coop/coop-jokkmokk/",
+    "name": "Coop Jokkmokk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jokkmokk/"
+  },
+  {
+    "code": "coop/coop-orkelljunga/",
+    "name": "Coop Örkelljunga",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-orkelljunga/"
+  },
+  {
+    "code": "coop/coop-trehorningsjo/",
+    "name": "Coop Trehörningsjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-trehorningsjo/"
+  },
+  {
+    "code": "coop/coop-tanumshede/",
+    "name": "Coop Tanumshede",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tanumshede/"
+  },
+  {
+    "code": "coop/coop-grisbacka/",
+    "name": "Coop Grisbacka",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grisbacka/"
+  },
+  {
+    "code": "coop/coop-haga-sundsvall/",
+    "name": "Coop Haga Sundsvall",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-haga-sundsvall/"
+  },
+  {
+    "code": "coop/coop-medborgarplatsen/",
+    "name": "Coop Medborgarplatsen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-medborgarplatsen/"
+  },
+  {
+    "code": "coop/coop-sundborn/",
+    "name": "Coop Sundborn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sundborn/"
+  },
+  {
+    "code": "coop/coop-stromstad-/",
+    "name": "Coop Strömstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stromstad-/"
+  },
+  {
+    "code": "coop/coop-oster/",
+    "name": "Coop Öster",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oster/"
+  },
+  {
+    "code": "coop/coop-funasdalen-/",
+    "name": "Coop Funäsdalen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-funasdalen-/"
+  },
+  {
+    "code": "coop/coop-holmsund/",
+    "name": "Coop Holmsund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-holmsund/"
+  },
+  {
+    "code": "coop/coop-monsteras/",
+    "name": "Coop Mönsterås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-monsteras/"
+  },
+  {
+    "code": "coop/coop-hultsfred/",
+    "name": "Coop Hultsfred",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hultsfred/"
+  },
+  {
+    "code": "coop/coop-blomstermala/",
+    "name": "Coop Blomstermåla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-blomstermala/"
+  },
+  {
+    "code": "coop/coop-malilla/",
+    "name": "Coop Målilla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-malilla/"
+  },
+  {
+    "code": "coop/coop-hollviken/",
+    "name": "Coop Höllviken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hollviken/"
+  },
+  {
+    "code": "coop/coop-klostergarden/",
+    "name": "Coop Klostergården",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-klostergarden/"
+  },
+  {
+    "code": "coop/coop-kopparmollegatan/",
+    "name": "Coop Kopparmöllegatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kopparmollegatan/"
+  },
+  {
+    "code": "coop/coop-stenbocksgatan/",
+    "name": "Coop Stenbocksgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stenbocksgatan/"
+  },
+  {
+    "code": "coop/coop-hoor/",
+    "name": "Coop Höör",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hoor/"
+  },
+  {
+    "code": "coop/coop-krokek/",
+    "name": "Coop Krokek",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-krokek/"
+  },
+  {
+    "code": "coop/coop-smalandsstenar/",
+    "name": "Coop Smålandsstenar",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-smalandsstenar/"
+  },
+  {
+    "code": "coop/coop--leksand/",
+    "name": "Coop Leksand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop--leksand/"
+  },
+  {
+    "code": "coop/coop-storfors/",
+    "name": "Coop Storfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storfors/"
+  },
+  {
+    "code": "coop/coop-skattkarr/",
+    "name": "Coop Skattkärr",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skattkarr/"
+  },
+  {
+    "code": "coop/coop-nattraby/",
+    "name": "Coop Nättraby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nattraby/"
+  },
+  {
+    "code": "coop/coop-vallingby-centrum/",
+    "name": "Coop Vällingby Centrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vallingby-centrum/"
+  },
+  {
+    "code": "coop/coop-triangeln-eskilstuna/",
+    "name": "Coop Triangeln Eskilstuna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-triangeln-eskilstuna/"
+  },
+  {
+    "code": "coop/coop-angelholm/",
+    "name": "Coop Ängelholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-angelholm/"
+  },
+  {
+    "code": "coop/coop-molnlycke/",
+    "name": "Coop Mölnlycke",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-molnlycke/"
+  },
+  {
+    "code": "coop/coop-skeppet/",
+    "name": "Coop Skeppet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skeppet/"
+  },
+  {
+    "code": "coop/coop-torsvik/",
+    "name": "Coop Torsvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-torsvik/"
+  },
+  {
+    "code": "coop/coop-martenstorget/",
+    "name": "Coop Mårtenstorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-martenstorget/"
+  },
+  {
+    "code": "coop/coop-djupadal/",
+    "name": "Coop Djupadal",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-djupadal/"
+  },
+  {
+    "code": "coop/coop-lagerhyddan/",
+    "name": "Coop Lägerhyddan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lagerhyddan/"
+  },
+  {
+    "code": "coop/coop-hemmesta/",
+    "name": "Coop Hemmesta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hemmesta/"
+  },
+  {
+    "code": "coop/coop-vastra-skogen/",
+    "name": "Coop Västra Skogen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastra-skogen/"
+  },
+  {
+    "code": "coop/coop-va/",
+    "name": "Coop Vä",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-va/"
+  },
+  {
+    "code": "coop/coop-kallhall/",
+    "name": "Coop Kallhäll",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kallhall/"
+  },
+  {
+    "code": "coop/coop-sveg/",
+    "name": "Coop Sveg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sveg/"
+  },
+  {
+    "code": "coop/coop-vindeln/",
+    "name": "Coop Vindeln",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vindeln/"
+  },
+  {
+    "code": "coop/coop-vilhelmina/",
+    "name": "Coop Vilhelmina",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vilhelmina/"
+  },
+  {
+    "code": "coop/coop-bracke/",
+    "name": "Coop Bräcke",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bracke/"
+  },
+  {
+    "code": "coop/coop-overkalix/",
+    "name": "Coop Överkalix",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-overkalix/"
+  },
+  {
+    "code": "coop/coop-ystad/",
+    "name": "Coop Ystad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ystad/"
+  },
+  {
+    "code": "coop/coop-radhuset/",
+    "name": "Coop Rådhuset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-radhuset/"
+  },
+  {
+    "code": "coop/coop-ornsberg/",
+    "name": "Coop Örnsberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ornsberg/"
+  },
+  {
+    "code": "coop/coop-centralhuset/",
+    "name": "Coop Centralhuset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-centralhuset/"
+  },
+  {
+    "code": "coop/coop-sjobo/",
+    "name": "Coop Sjöbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sjobo/"
+  },
+  {
+    "code": "coop/coop-sveaplan-eskilstuna/",
+    "name": "Coop Sveaplan Eskilstuna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sveaplan-eskilstuna/"
+  },
+  {
+    "code": "coop/coop-dragonen/",
+    "name": "Coop Dragonen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dragonen/"
+  },
+  {
+    "code": "coop/coop-rasundavagen/",
+    "name": "Coop Råsundavägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rasundavagen/"
+  },
+  {
+    "code": "coop/coop-stenhamra/",
+    "name": "Coop Stenhamra",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stenhamra/"
+  },
+  {
+    "code": "coop/coop-oregrund/",
+    "name": "Coop Öregrund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oregrund/"
+  },
+  {
+    "code": "coop/coop-aby/",
+    "name": "Coop Åby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-aby/"
+  },
+  {
+    "code": "coop/coop-ahus/",
+    "name": "Coop Åhus",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ahus/"
+  },
+  {
+    "code": "coop/coop-hyltebruk/",
+    "name": "Coop Hyltebruk",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hyltebruk/"
+  },
+  {
+    "code": "coop/coop-brommaplan/",
+    "name": "Coop Brommaplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-brommaplan/"
+  },
+  {
+    "code": "coop/coop-sala/",
+    "name": "Coop Sala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sala/"
+  },
+  {
+    "code": "coop/coop-svampen/",
+    "name": "Coop Svampen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svampen/"
+  },
+  {
+    "code": "coop/coop-karolingatan/",
+    "name": "Coop Karolingatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karolingatan/"
+  },
+  {
+    "code": "coop/coop-kirseberg/",
+    "name": "Coop Kirseberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kirseberg/"
+  },
+  {
+    "code": "coop/coop-norra-djurgardsstaden/",
+    "name": "Coop Norra Djurgårdsstaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norra-djurgardsstaden/"
+  },
+  {
+    "code": "coop/coop-saluhallen/",
+    "name": "Coop Saluhallen Norrköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-saluhallen/"
+  },
+  {
+    "code": "coop/coop-vastervik/",
+    "name": "Coop Västervik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastervik/"
+  },
+  {
+    "code": "coop/coop-askersund/",
+    "name": "Coop Askersund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-askersund/"
+  },
+  {
+    "code": "coop/coop-roback/",
+    "name": "Coop Röbäck",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-roback/"
+  },
+  {
+    "code": "coop/coop-sibbhult/",
+    "name": "Coop Sibbhult",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sibbhult/"
+  },
+  {
+    "code": "coop/coop-malmkoping/",
+    "name": "Coop Malmköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-malmkoping/"
+  },
+  {
+    "code": "coop/coop-foraregatan/",
+    "name": "Coop Föraregatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-foraregatan/"
+  },
+  {
+    "code": "coop/coop-vadstena/",
+    "name": "Coop Vadstena",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vadstena/"
+  },
+  {
+    "code": "coop/coop-fjugesta/",
+    "name": "Coop Fjugesta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fjugesta/"
+  },
+  {
+    "code": "coop/coop-mariefred/",
+    "name": "Coop Mariefred",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariefred/"
+  },
+  {
+    "code": "coop/coop-skurup/",
+    "name": "Coop Skurup",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skurup/"
+  },
+  {
+    "code": "coop/coop-genarp/",
+    "name": "Coop Genarp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-genarp/"
+  },
+  {
+    "code": "coop/coop-bulltofta/",
+    "name": "Coop Bulltofta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bulltofta/"
+  },
+  {
+    "code": "coop/coop-lappgatan/",
+    "name": "Coop Lappgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lappgatan/"
+  },
+  {
+    "code": "coop/coop-midsommarkransen/",
+    "name": "Coop Midsommarkransen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-midsommarkransen/"
+  },
+  {
+    "code": "coop/coop-vaxholm/",
+    "name": "Coop Vaxholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vaxholm/"
+  },
+  {
+    "code": "coop/coop-tyreso-strand/",
+    "name": "Coop Tyresö Strand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tyreso-strand/"
+  },
+  {
+    "code": "coop/coop-trosa/",
+    "name": "Coop Trosa",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-trosa/"
+  },
+  {
+    "code": "coop/coop-rimbo/",
+    "name": "Coop Rimbo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rimbo/"
+  },
+  {
+    "code": "coop/coop-gustavsberg/",
+    "name": "Coop Gustavsberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gustavsberg/"
+  },
+  {
+    "code": "coop/coop-horby/",
+    "name": "Coop Hörby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-horby/"
+  },
+  {
+    "code": "coop/coop-kungsangen/",
+    "name": "Coop Kungsängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsangen/"
+  },
+  {
+    "code": "coop/coop-anaset/",
+    "name": "Coop Ånäset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-anaset/"
+  },
+  {
+    "code": "coop/coop-bondegatan/",
+    "name": "Coop Bondegatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bondegatan/"
+  },
+  {
+    "code": "coop/coop-valberg/",
+    "name": "Coop Vålberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-valberg/"
+  },
+  {
+    "code": "coop/coop-osby/",
+    "name": "Coop Osby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-osby/"
+  },
+  {
+    "code": "coop/coop-city-ostersund/",
+    "name": "Coop City Östersund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-ostersund/"
+  },
+  {
+    "code": "coop/coop-munkfors/",
+    "name": "Coop Munkfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-munkfors/"
+  },
+  {
+    "code": "coop/coop-ojebyn/",
+    "name": "Coop Öjebyn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ojebyn/"
+  },
+  {
+    "code": "coop/coop-djursholm/",
+    "name": "Coop Djursholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-djursholm/"
+  },
+  {
+    "code": "coop/coop-rosvik/",
+    "name": "Coop Rosvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-rosvik/"
+  },
+  {
+    "code": "coop/coop-odengatan/",
+    "name": "Coop Odengatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-odengatan/"
+  },
+  {
+    "code": "coop/coop-hammarby-sjostad/",
+    "name": "Coop Hammarby Sjöstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hammarby-sjostad/"
+  },
+  {
+    "code": "coop/coop-ostra-torget-torshalla/",
+    "name": "Coop Östra Torget Torshälla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostra-torget-torshalla/"
+  },
+  {
+    "code": "coop/coop-stjarnan-vasteras/",
+    "name": "Coop Stjärnan Västerås",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stjarnan-vasteras/"
+  },
+  {
+    "code": "coop/coop-karrtorp/",
+    "name": "Coop Kärrtorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-karrtorp/"
+  },
+  {
+    "code": "coop/coop-finn-malmgren/",
+    "name": "Coop Finn Malmgren",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-finn-malmgren/"
+  },
+  {
+    "code": "coop/coop-city-hallsberg/",
+    "name": "Coop City Hallsberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-hallsberg/"
+  },
+  {
+    "code": "coop/coop-teg/",
+    "name": "Coop Teg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-teg/"
+  },
+  {
+    "code": "coop/coop-alta-gard/",
+    "name": "Coop Älta Gård",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alta-gard/"
+  },
+  {
+    "code": "coop/coop-granlo/",
+    "name": "Coop Granlo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-granlo/"
+  },
+  {
+    "code": "coop/coop-storgatan/",
+    "name": "Coop Storgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-storgatan/"
+  },
+  {
+    "code": "coop/coop-erik-dahlbergsgatan/",
+    "name": "Coop Erik Dahlbergsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-erik-dahlbergsgatan/"
+  },
+  {
+    "code": "coop/coop-garnisonen/",
+    "name": "Coop Garnisonen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-garnisonen/"
+  },
+  {
+    "code": "coop/coop-kvarnen/",
+    "name": "Coop Kvarnen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kvarnen/"
+  },
+  {
+    "code": "coop/coop-liljeholmen/",
+    "name": "Coop Liljeholmen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-liljeholmen/"
+  },
+  {
+    "code": "coop/coop-folkparken/",
+    "name": "Coop Folkparken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-folkparken/"
+  },
+  {
+    "code": "coop/coop-sodra-station-/",
+    "name": "Coop Södra Station",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sodra-station-/"
+  },
+  {
+    "code": "coop/coop-ronninge/",
+    "name": "Coop Rönninge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ronninge/"
+  },
+  {
+    "code": "coop/coop-norrtull/",
+    "name": "Coop Norrtull",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norrtull/"
+  },
+  {
+    "code": "coop/coop-lambohov/",
+    "name": "Coop Lambohov",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lambohov/"
+  },
+  {
+    "code": "coop/coop-oxie/",
+    "name": "Coop Oxie",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oxie/"
+  },
+  {
+    "code": "coop/coop-kungsor/",
+    "name": "Coop Kungsör",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kungsor/"
+  },
+  {
+    "code": "coop/coop-sommarlust/",
+    "name": "Coop Sommarlust",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-sommarlust/"
+  },
+  {
+    "code": "coop/coop-skarpnack-/",
+    "name": "Coop Skarpnäck",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skarpnack-/"
+  },
+  {
+    "code": "coop/coop-nora/",
+    "name": "Coop Nora",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nora/"
+  },
+  {
+    "code": "coop/coop-vingaker/",
+    "name": "Coop Vingåker",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vingaker/"
+  },
+  {
+    "code": "coop/coop-engstroms-livs/",
+    "name": "Coop Engströms Livs",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-engstroms-livs/"
+  },
+  {
+    "code": "coop/coop-gubbangen/",
+    "name": "Coop Gubbängen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gubbangen/"
+  },
+  {
+    "code": "coop/coop-grindsgatan-/",
+    "name": "Coop Grindsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-grindsgatan-/"
+  },
+  {
+    "code": "coop/coop-brunne/",
+    "name": "Coop Brunne",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-brunne/"
+  },
+  {
+    "code": "coop/coop-tullporten/",
+    "name": "Coop Tullporten",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tullporten/"
+  },
+  {
+    "code": "coop/coop-mariehem/",
+    "name": "Coop Mariehem",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariehem/"
+  },
+  {
+    "code": "coop/coop-gunnarn/",
+    "name": "Coop Gunnarn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gunnarn/"
+  },
+  {
+    "code": "coop/coop-city-karlstad/",
+    "name": "Coop City Karlstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-karlstad/"
+  },
+  {
+    "code": "coop/coop-dalsjofors/",
+    "name": "Coop Dalsjöfors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dalsjofors/"
+  },
+  {
+    "code": "coop/coop-dikanas/",
+    "name": "Coop Dikanäs",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-dikanas/"
+  },
+  {
+    "code": "coop/coop-skorped/",
+    "name": "Coop Skorped",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skorped/"
+  },
+  {
+    "code": "coop/coop-kvarnholmen/",
+    "name": "Coop Kvarnholmen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kvarnholmen/"
+  },
+  {
+    "code": "coop/coop-minneberg/",
+    "name": "Coop Minneberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-minneberg/"
+  },
+  {
+    "code": "coop/coop-haningeterrassen/",
+    "name": "Coop Haningeterrassen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-haningeterrassen/"
+  },
+  {
+    "code": "coop/coop-alsike/",
+    "name": "Coop Alsike",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alsike/"
+  },
+  {
+    "code": "coop/coop-ullanger/",
+    "name": "Coop Ullånger",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ullanger/"
+  },
+  {
+    "code": "coop/coop-kongahalla/",
+    "name": "Coop Kongahälla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kongahalla/"
+  },
+  {
+    "code": "coop/coop-partille/",
+    "name": "Coop Partille",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-partille/"
+  },
+  {
+    "code": "coop/coop-varvet/",
+    "name": "Coop Varvet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varvet/"
+  },
+  {
+    "code": "coop/coop-limhamn/",
+    "name": "Coop Limhamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-limhamn/"
+  },
+  {
+    "code": "coop/coop-norra-ringen/",
+    "name": "Coop Norra Ringen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-norra-ringen/"
+  },
+  {
+    "code": "coop/coop-slattenvagen/",
+    "name": "Coop Slättenvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-slattenvagen/"
+  },
+  {
+    "code": "coop/coop-mellerud/",
+    "name": "Coop Mellerud",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mellerud/"
+  },
+  {
+    "code": "coop/coop-tibro/",
+    "name": "Coop Tibro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tibro/"
+  },
+  {
+    "code": "coop/coop-mariestad-marieforsleden/",
+    "name": "Coop Mariestad Marieforsleden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mariestad-marieforsleden/"
+  },
+  {
+    "code": "coop/coop-skovde-henriksbergsgatan-ostermalm/",
+    "name": "Coop Skövde Henriksbergsgatan Östermalm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skovde-henriksbergsgatan-ostermalm/"
+  },
+  {
+    "code": "coop/coop-hjo/",
+    "name": "Coop Hjo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hjo/"
+  },
+  {
+    "code": "coop/coop-lidkoping-rada-mossevagen/",
+    "name": "Coop Lidköping Råda Mossevägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lidkoping-rada-mossevagen/"
+  },
+  {
+    "code": "coop/coop-vara/",
+    "name": "Coop Vara",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vara/"
+  },
+  {
+    "code": "coop/coop-boras-sjobotorg/",
+    "name": "Coop Borås Sjöbotorg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-boras-sjobotorg/"
+  },
+  {
+    "code": "coop/coop-ulricehamn/",
+    "name": "Coop Ulricehamn",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ulricehamn/"
+  },
+  {
+    "code": "coop/coop-boras-byttorp/",
+    "name": "Coop Borås Byttorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-boras-byttorp/"
+  },
+  {
+    "code": "coop/coop-uddevalla-goteborgsvagen/",
+    "name": "Coop Uddevalla Göteborgsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-uddevalla-goteborgsvagen/"
+  },
+  {
+    "code": "coop/coop-aby-molndal-katrinebergsgatan/",
+    "name": "Coop Mölndal Åby Katrinebergsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-aby-molndal-katrinebergsgatan/"
+  },
+  {
+    "code": "coop/coop-skanegatan/",
+    "name": "Coop Skånegatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-skanegatan/"
+  },
+  {
+    "code": "coop/coop-goteborg-marklandsgatan/",
+    "name": "Coop Göteborg Marklandsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-goteborg-marklandsgatan/"
+  },
+  {
+    "code": "coop/coop-bohus/",
+    "name": "Coop Bohus",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bohus/"
+  },
+  {
+    "code": "coop/coop-mjornbotorget/",
+    "name": "Coop Mjörnbotorget",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mjornbotorget/"
+  },
+  {
+    "code": "coop/coop-goteborg-molndalsvagen/",
+    "name": "Coop Göteborg Mölndalsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-goteborg-molndalsvagen/"
+  },
+  {
+    "code": "coop/coop-kagerod/",
+    "name": "Coop Kågeröd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kagerod/"
+  },
+  {
+    "code": "coop/coop-linden-motala/",
+    "name": "Coop Linden Motala",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-linden-motala/"
+  },
+  {
+    "code": "coop/coop-domino/",
+    "name": "Coop Domino",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-domino/"
+  },
+  {
+    "code": "coop/coop-stockholmsvagen/",
+    "name": "Coop Stockholmsvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stockholmsvagen/"
+  },
+  {
+    "code": "coop/coop-ullstamma/",
+    "name": "Coop Ullstämma",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ullstamma/"
+  },
+  {
+    "code": "coop/coop-drottninggatan-linkoping/",
+    "name": "Coop Drottninggatan Linköping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-drottninggatan-linkoping/"
+  },
+  {
+    "code": "coop/coop-oxelosund/",
+    "name": "Coop Oxelösund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oxelosund/"
+  },
+  {
+    "code": "coop/coop-braddgatan/",
+    "name": "Coop Bråddgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-braddgatan/"
+  },
+  {
+    "code": "coop/coop-engelbrektsgatan-trelleborg/",
+    "name": "Coop Engelbrektsgatan Trelleborg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-engelbrektsgatan-trelleborg/"
+  },
+  {
+    "code": "coop/coop-eskilstunavagen-torshalla/",
+    "name": "Coop Eskilstunavägen Torshälla",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-eskilstunavagen-torshalla/"
+  },
+  {
+    "code": "coop/coop-vingakersvagen-katrineholm/",
+    "name": "Coop Vingåkersvägen Katrineholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vingakersvagen-katrineholm/"
+  },
+  {
+    "code": "coop/coop-koping/",
+    "name": "Coop Köping",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-koping/"
+  },
+  {
+    "code": "coop/coop-laxa/",
+    "name": "Coop Laxå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-laxa/"
+  },
+  {
+    "code": "coop/coop-mjolby/",
+    "name": "Coop Mjölby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mjolby/"
+  },
+  {
+    "code": "coop/coop-slottsstaden/",
+    "name": "Coop Slottsstaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-slottsstaden/"
+  },
+  {
+    "code": "coop/coop-bjorna/",
+    "name": "Coop Björna",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjorna/"
+  },
+  {
+    "code": "coop/coop-staffanstorp/",
+    "name": "Coop Staffanstorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-staffanstorp/"
+  },
+  {
+    "code": "coop/coop-vastra-hamnen/",
+    "name": "Coop Västra Hamnen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastra-hamnen/"
+  },
+  {
+    "code": "coop/coop-vildgasen-lund/",
+    "name": "Coop Vildgåsen Lund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vildgasen-lund/"
+  },
+  {
+    "code": "coop/coop-bjarred/",
+    "name": "Coop Bjärred",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjarred/"
+  },
+  {
+    "code": "coop/coop-varpinge-lund/",
+    "name": "Coop Värpinge Lund",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varpinge-lund/"
+  },
+  {
+    "code": "coop/coop-bjuv/",
+    "name": "Coop Bjuv",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bjuv/"
+  },
+  {
+    "code": "coop/coop-nybrovagen/",
+    "name": "Coop Nybrovägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nybrovagen/"
+  },
+  {
+    "code": "coop/coop-fyllinge/",
+    "name": "Coop Fyllinge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fyllinge/"
+  },
+  {
+    "code": "coop/coop-ratorp/",
+    "name": "Coop Råtorp",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ratorp/"
+  },
+  {
+    "code": "coop/coop-strand/",
+    "name": "Coop Strand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-strand/"
+  },
+  {
+    "code": "coop/coop-fiskaregatan-vimmerby/",
+    "name": "Coop Fiskaregatan Vimmerby",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-fiskaregatan-vimmerby/"
+  },
+  {
+    "code": "coop/coop-folkparksvagen/",
+    "name": "Coop Folkparksvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-folkparksvagen/"
+  },
+  {
+    "code": "coop/coop-vastervik-vapengrand/",
+    "name": "Coop Västervik Vapengränd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastervik-vapengrand/"
+  },
+  {
+    "code": "coop/coop-ostermalmshallen/",
+    "name": "Coop Östermalmshallen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostermalmshallen/"
+  },
+  {
+    "code": "coop/coop-vaggeryd/",
+    "name": "Coop Vaggeryd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vaggeryd/"
+  },
+  {
+    "code": "coop/coop-jonkoping-anders-blomstrands-vag/",
+    "name": "Coop Jönköping Anders Blomstrands Väg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-jonkoping-anders-blomstrands-vag/"
+  },
+  {
+    "code": "coop/coop-hagaberg/",
+    "name": "Coop Hagaberg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hagaberg/"
+  },
+  {
+    "code": "coop/coop-asavagen/",
+    "name": "Coop Åsavägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-asavagen/"
+  },
+  {
+    "code": "coop/coop-funkabo/",
+    "name": "Coop Funkabo",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-funkabo/"
+  },
+  {
+    "code": "coop/coop-kalmar-sandasgatan/",
+    "name": "Coop Kalmar Sandåsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kalmar-sandasgatan/"
+  },
+  {
+    "code": "coop/coop-borgholm/",
+    "name": "Coop Borgholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-borgholm/"
+  },
+  {
+    "code": "coop/coop-farjestaden-brofastet/",
+    "name": "Coop Färjestaden Brofästet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-farjestaden-brofastet/"
+  },
+  {
+    "code": "coop/coop-nydalavagen/",
+    "name": "Coop Nydalavägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nydalavagen/"
+  },
+  {
+    "code": "coop/coop-nybro/",
+    "name": "Coop Nybro",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-nybro/"
+  },
+  {
+    "code": "coop/coop-vaxjo-emil-lindells-vag/",
+    "name": "Coop Växjö Emil Lindells Väg",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vaxjo-emil-lindells-vag/"
+  },
+  {
+    "code": "coop/coop-hagastaden/",
+    "name": "Coop Hagastaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hagastaden/"
+  },
+  {
+    "code": "coop/coop-vastra-vallgatan/",
+    "name": "Coop Västra Vallgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vastra-vallgatan/"
+  },
+  {
+    "code": "coop/coop-varnamo-fredsgatan/",
+    "name": "Coop Värnamo Fredsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-varnamo-fredsgatan/"
+  },
+  {
+    "code": "coop/coop-gislaved/",
+    "name": "Coop Gislaved",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gislaved/"
+  },
+  {
+    "code": "coop/coop-liljegatan/",
+    "name": "Coop Liljegatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-liljegatan/"
+  },
+  {
+    "code": "coop/coop-tullhuset/",
+    "name": "Coop Tullhuset",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tullhuset/"
+  },
+  {
+    "code": "coop/coop-stationsstaden/",
+    "name": "Coop Stationsstaden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stationsstaden/"
+  },
+  {
+    "code": "coop/coop-kalleback/",
+    "name": "Coop Kallebäck",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kalleback/"
+  },
+  {
+    "code": "coop/coop-goteborg-andra-langgatan/",
+    "name": "Coop Göteborg Andra Långgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-goteborg-andra-langgatan/"
+  },
+  {
+    "code": "coop/coop-odinsgatan/",
+    "name": "Coop Odinsgatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-odinsgatan/"
+  },
+  {
+    "code": "coop/coop-svalov/",
+    "name": "Coop Svalöv",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-svalov/"
+  },
+  {
+    "code": "coop/coop-markaryd/",
+    "name": "Coop Markaryd",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-markaryd/"
+  },
+  {
+    "code": "coop/coop-gamla-riksvagen/",
+    "name": "Coop Gamla Riksvägen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gamla-riksvagen/"
+  },
+  {
+    "code": "coop/coop-balsta/",
+    "name": "Coop Bålsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-balsta/"
+  },
+  {
+    "code": "coop/coop-gallerian/",
+    "name": "Coop Gallerian",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gallerian/"
+  },
+  {
+    "code": "coop/coop-bredden/",
+    "name": "Coop Bredden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bredden/"
+  },
+  {
+    "code": "coop/coop-flygaregatan/",
+    "name": "Coop Flygaregatan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-flygaregatan/"
+  },
+  {
+    "code": "coop/coop-bredsand/",
+    "name": "Coop Bredsand",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-bredsand/"
+  },
+  {
+    "code": "coop/coop-ankarsrum/",
+    "name": "Coop Ankarsrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ankarsrum/"
+  },
+  {
+    "code": "coop/coop-borstahusen/",
+    "name": "Coop Borstahusen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-borstahusen/"
+  },
+  {
+    "code": "coop/coop-kolla-parkstad/",
+    "name": "Coop Kolla Parkstad",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kolla-parkstad/"
+  },
+  {
+    "code": "coop/coop-hofors/",
+    "name": "Coop Hofors",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hofors/"
+  },
+  {
+    "code": "coop/coop-city-ornskoldsvik/",
+    "name": "Coop City Örnsköldsvik",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-ornskoldsvik/"
+  },
+  {
+    "code": "coop/coop-kallkallan/",
+    "name": "Coop Kallkällan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kallkallan/"
+  },
+  {
+    "code": "coop/coop-kittelfjall/",
+    "name": "Coop Kittelfjäll",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kittelfjall/"
+  },
+  {
+    "code": "coop/coop-stromlida/",
+    "name": "Coop Strömlida",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-stromlida/"
+  },
+  {
+    "code": "coop/coop-kiruna-c/",
+    "name": "Coop Kiruna C",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-kiruna-c/"
+  },
+  {
+    "code": "coop/coop-matboden/",
+    "name": "Coop Matboden",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-matboden/"
+  },
+  {
+    "code": "coop/coop-tullholmen/",
+    "name": "Coop Tullholmen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-tullholmen/"
+  },
+  {
+    "code": "coop/coop-oxbacken/",
+    "name": "Coop Oxbacken",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-oxbacken/"
+  },
+  {
+    "code": "coop/coop-flen/",
+    "name": "Coop Flen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-flen/"
+  },
+  {
+    "code": "coop/coop-katrineholm/",
+    "name": "Coop Katrineholm",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-katrineholm/"
+  },
+  {
+    "code": "coop/coop-mini-trakvista/",
+    "name": "Coop Träkvista Alltid Öppet",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mini-trakvista/"
+  },
+  {
+    "code": "coop/coop-lima/",
+    "name": "Coop Lima",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-lima/"
+  },
+  {
+    "code": "coop/coop-city-skelleftea/",
+    "name": "Coop City Skellefteå",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-city-skelleftea/"
+  },
+  {
+    "code": "coop/coop-savast/",
+    "name": "Coop Sävast",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-savast/"
+  },
+  {
+    "code": "coop/coop-mini-haninge/",
+    "name": "Coop Mini Haninge",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mini-haninge/"
+  },
+  {
+    "code": "coop/coop-mini-gavsta/",
+    "name": "Coop Mini Gåvsta",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-mini-gavsta/"
+  },
+  {
+    "code": "coop/coop-punkt/",
+    "name": "Coop Punkt",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-punkt/"
+  },
+  {
+    "code": "coop/coop-hjarup/",
+    "name": "Coop Hjärup",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-hjarup/"
+  },
+  {
+    "code": "coop/coop-ojersjo/",
+    "name": "Coop Öjersjö",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ojersjo/"
+  },
+  {
+    "code": "coop/coop-vemdalen/",
+    "name": "Coop Vemdalen",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-vemdalen/"
+  },
+  {
+    "code": "coop/coop-ostra-station/",
+    "name": "Coop Östra Station",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-ostra-station/"
+  },
+  {
+    "code": "coop/coop-gallivare-centrum/",
+    "name": "Coop Gällivare Centrum",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-gallivare-centrum/"
+  },
+  {
+    "code": "coop/coop-backaplan/",
+    "name": "Coop Backaplan",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-backaplan/"
+  },
+  {
+    "code": "coop/coop-arvidsjaur/",
+    "name": "Coop Arvidsjaur",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-arvidsjaur/"
+  },
+  {
+    "code": "coop-mini/coop-mini-taby-park/",
+    "name": "Coop Mini Täby Park",
+    "url": "https://www.coop.se/butiker-erbjudanden/coop-mini/coop-mini-taby-park/"
+  }
+]
