@@ -1,89 +1,114 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 
-let page;
+function extractStoreNameFromUrl(url) {
+    const match = url.match(/\/([^/]+)\/?$/);
+    return match ? match[1] : 'store';
+}
 
-async function getProducts() {
+async function scrapeUrl(url) {
+    const storeName = extractStoreNameFromUrl(url);
+    const products = []; // Store-specific products array
+
     const browser = await puppeteer.launch({
-    headless: false // Opens visible browser
+        headless: true// Opens visible browser
     });
 
-    page = await browser.newPage();
-    await page.goto('https://www.coop.se/butiker-erbjudanden/coop/coop-skurup/');
+    try {
+        const page = await browser.newPage();
+        await page.goto(url);
 
-    await page.waitForSelector('.yHxPkLdx');
-    const categoriesDiv = await page.$('.yHxPkLdx');
-
-    // Get all buttons inside the container
-    const categoryButtons = await categoriesDiv.$$('button');
-
-    for (let i = 1; i < categoryButtons.length; i++) {
-        const button = categoryButtons[i];
-
-        // Get the category name from the span inside the button
-        const rawText = await button.evaluate(el =>
-            el.textContent.replace(/\s+/g, ' ').trim()
-        );
-
-        const match = rawText.match(/^(.+?)\s*\(\s*(\d+)\s*\)$/);
-        const categoryName = match ? match[1].trim() : rawText;
-        const expectedCount = match ? parseInt(match[2], 10) : null;
-
-        
-        console.log('Scraping category:', categoryName);
-
-        // Click the category button to filter products
-        await button.evaluate(el => el.click());
-
-        // Wait for the products to load
-        await page.waitForSelector('article.ohKiwh8z.xSu5Uapq');
-
-        // Get all product elements
-        let productElements = await page.$$('article.ohKiwh8z.xSu5Uapq');
-
-        while (productElements.length !== expectedCount) {
-            productElements = await page.$$('article.ohKiwh8z.xSu5Uapq');
+        // Check if categories selector exists
+        try {
+            await page.waitForSelector('.yHxPkLdx', { timeout: 10000 });
+        } catch (err) {
+            console.log(`[${storeName}] No categories found (.yHxPkLdx). Store has no products. Terminating.`);
+            await browser.close();
+            return;
         }
 
-        console.log(`Found ${productElements.length} products in category: ${categoryName} with expected count: ${expectedCount}`);
+        const categoriesDiv = await page.$('.yHxPkLdx');
 
-        // Loop through products in this category
-        for (const productElement of productElements) {
-            await scrapeProductData(productElement, false, categoryName);
+        // Get all buttons inside the container
+        const categoryButtons = await categoriesDiv.$$('button');
+
+        for (let i = 1; i < categoryButtons.length; i++) {
+            const button = categoryButtons[i];
+
+            // Get the category name from the span inside the button
+            const rawText = await button.evaluate(el =>
+                el.textContent.replace(/\s+/g, ' ').trim()
+            );
+
+            const match = rawText.match(/^(.+?)\s*\(\s*(\d+)\s*\)$/);
+            const categoryName = match ? match[1].trim() : rawText;
+            const expectedCount = match ? parseInt(match[2], 10) : null;
+
+            
+            console.log(`[${storeName}] Scraping category:`, categoryName);
+
+            // Click the category button to filter products
+            await button.evaluate(el => el.click());
+
+            // Check if products selector exists
+            try {
+                await page.waitForSelector('article.ohKiwh8z.xSu5Uapq', { timeout: 10000 });
+            } catch (err) {
+                console.log(`[${storeName}] No products found for category ${categoryName}. Terminating store scrape.`);
+                await browser.close();
+                return;
+            }
+
+            // Get all product elements
+            let productElements = await page.$$('article.ohKiwh8z.xSu5Uapq');
+
+            while (productElements.length !== expectedCount) {
+                productElements = await page.$$('article.ohKiwh8z.xSu5Uapq');
+            }
+
+            console.log(`[${storeName}] Found ${productElements.length} products in category: ${categoryName} with expected count: ${expectedCount}`);
+
+            // Loop through products in this category
+            for (const productElement of productElements) {
+                await scrapeProductData(productElement, false, categoryName, page, products, storeName);
+            }
+
+            // Click the category button again to reset the filter
+            await categoryButtons[1].evaluate(el => el.click());
         }
 
-        // Click the category button again to reset the filter
-        await categoryButtons[1].evaluate(el => el.click());
+        await browser.close();
+    } catch (err) {
+        console.error(`[${storeName}] Unexpected error during scraping:`, err.message);
+        await browser.close();
     }
-
-    await browser.close();
 }
 
 
-async function scrapeProductVariants(productElement) {
+async function scrapeProductVariants(productElement, pageInstance, products, storeName) {
     let variants = [];
 
     // Get the parent of productElement, then find the div within it
     await productElement.evaluate(element => {
         element.querySelector('.Wy2NiM6K.iyTkejCQ._yrJb637.mOvy16Ff').click();
     });
-    const variantsDiv = await page.$('.BwcVHsZk.vqviwfSt')
+    const variantsDiv = await pageInstance.$('.BwcVHsZk.vqviwfSt')
     
     const variantsElements = await variantsDiv.$$('article.ohKiwh8z.xSu5Uapq');
     
     for (const productElement of variantsElements) {
-        variants.push(await scrapeProductData(productElement, true));
+        variants.push(await scrapeProductData(productElement, true, null, pageInstance, products, storeName));
     }
     
     await variantsDiv.evaluate(element => {
         element.querySelector('.Wy2NiM6K.tkw4k9hc.dIzgXmHF.MV0OfllN').click();
     });
-    await page.waitForSelector('.BwcVHsZk.vqviwfSt', { hidden: true });
+    await pageInstance.waitForSelector('.BwcVHsZk.vqviwfSt', { hidden: true });
     
     return variants;
 }
 
-async function scrapeProductData(productElement, isVariant, categoryName) {
+async function scrapeProductData(productElement, isVariant, categoryName, pageInstance, products, storeName) {
     const productData = await productElement.evaluate(element => {
         const title = element.querySelector('.OXTlHT32')?.textContent?.trim() || null;
         // Coop sometimes has "30,00" or just "30"
@@ -142,27 +167,29 @@ async function scrapeProductData(productElement, isVariant, categoryName) {
   
     // if the product has variants and itself is not variant of another product then scrape the variants of that product
     if (!isVariant && productData.hasVariants) {
-        productData.variants = await scrapeProductVariants(productElement);
+        productData.variants = await scrapeProductVariants(productElement, pageInstance, products, storeName);
         delete productData.hasVariants;
     }
 
     // if the product is not a variant of another product then add the product as its own product in json
     if (!isVariant) {
-        pushProductsToJson(productData);
+        pushProductsToJson(productData, products, storeName);
     }
 
     console.log(`Scraped: ${productData.title}`);
     return productData;
 }
 
-let products = [];
-
-async function pushProductsToJson(productData) {
+async function pushProductsToJson(productData, products, storeName) {
     products.push(productData);
   
-    // Save to JSON file
-    fs.writeFileSync('coop.json', JSON.stringify(products, null, 2));
-
+    // Save to store-specific JSON file
+    const filename = `${storeName}.json`;
+    fs.writeFileSync(filename, JSON.stringify(products, null, 2));
 }
 
-getProducts();
+// Scrape multiple URLs concurrently, each in its own browser instance
+export async function scrapeUrlsConcurrently(urls) {
+    const promises = urls.map(url => scrapeUrl(url));
+    await Promise.all(promises);
+}

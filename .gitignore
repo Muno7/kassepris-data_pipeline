@@ -1,7 +1,6 @@
 node_modules
-products.json
-ica.json
-coop.json
-willys.json
 venv
 .env
+products/coop/*.json
+products/ica/*.json
+products/willys/*.json
