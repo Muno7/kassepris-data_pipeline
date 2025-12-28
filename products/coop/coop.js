@@ -1,13 +1,19 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 
-function extractStoreNameFromUrl(url) {
+function extractJsonFileName(url) {
     const match = url.match(/\/([^/]+)\/?$/);
     return match ? match[1] : 'store';
 }
 
+function extractStorePathFromUrl(url) {
+    const prefix = 'https://www.coop.se/butiker-erbjudanden/';
+    return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, '') : url;
+}
+
 async function scrapeUrl(url) {
-    const storeName = extractStoreNameFromUrl(url);
+    const storeName = extractJsonFileName(url);
+    const storePath = extractStorePathFromUrl(url);
     const products = []; // Store-specific products array
 
     const browser = await puppeteer.launch({
@@ -70,7 +76,7 @@ async function scrapeUrl(url) {
 
             // Loop through products in this category
             for (const productElement of productElements) {
-                await scrapeProductData(productElement, false, categoryName, page, products, storeName);
+                await scrapeProductData(productElement, false, categoryName, page, products, storeName, storePath);
             }
 
             // Click the category button again to reset the filter
@@ -85,7 +91,7 @@ async function scrapeUrl(url) {
 }
 
 
-async function scrapeProductVariants(productElement, pageInstance, products, storeName) {
+async function scrapeProductVariants(productElement, pageInstance, products, storeName, storePath) {
     let variants = [];
 
     // Get the parent of productElement, then find the div within it
@@ -97,7 +103,7 @@ async function scrapeProductVariants(productElement, pageInstance, products, sto
     const variantsElements = await variantsDiv.$$('article.ohKiwh8z.xSu5Uapq');
     
     for (const productElement of variantsElements) {
-        variants.push(await scrapeProductData(productElement, true, null, pageInstance, products, storeName));
+        variants.push(await scrapeProductData(productElement, true, null, pageInstance, products, storeName, storePath));
     }
     
     await variantsDiv.evaluate(element => {
@@ -108,7 +114,22 @@ async function scrapeProductVariants(productElement, pageInstance, products, sto
     return variants;
 }
 
-async function scrapeProductData(productElement, isVariant, categoryName, pageInstance, products, storeName) {
+function generateFingerprint(productData) {
+    // Create fingerprint from all properties except badges, variants, categoryName, image, and fingerprint
+    const {badges, variants, categoryName, store, fingerprint, image, ...fingerprintProps} = productData;
+    const fingerprints = Object.values(fingerprintProps)
+        .map(v => {
+            // Handle null/undefined explicitly, preserve booleans and other falsy values
+            if (v === null || v === undefined) {
+                return 'NULL';
+            }
+            return String(v).toUpperCase().replace(/\s/g, '');
+        })
+        .join('');
+    return fingerprints;
+}
+
+async function scrapeProductData(productElement, isVariant, categoryName, pageInstance, products, storeName, storePath) {
     const productData = await productElement.evaluate(element => {
         const title = element.querySelector('.OXTlHT32')?.textContent?.trim() || null;
         // Coop sometimes has "30,00" or just "30"
@@ -146,7 +167,7 @@ async function scrapeProductData(productElement, isVariant, categoryName, pageIn
         const isMember = element.querySelector('.aP5TkjG6.Er3da50N') ? true : false;
         const badges = Array.from(element.querySelectorAll('.VFIPn1KI img')).map(img => img.src) || null;
         const hasVariants = element.querySelector('.Wy2NiM6K.iyTkejCQ._yrJb637.mOvy16Ff') !== null
-            
+        
         return {
         title,
         priceCents,
@@ -163,11 +184,17 @@ async function scrapeProductData(productElement, isVariant, categoryName, pageIn
         };
     });
 
-    productData.categoryName = categoryName;
+    // Generate fingerprint and add metadata only for parent products (not variants)
+    if (!isVariant) {
+        productData.categoryName = categoryName;
+        productData.store = storePath;
+        const fingerprint = generateFingerprint(productData);
+        productData.fingerprint = fingerprint;
+    }
   
     // if the product has variants and itself is not variant of another product then scrape the variants of that product
     if (!isVariant && productData.hasVariants) {
-        productData.variants = await scrapeProductVariants(productElement, pageInstance, products, storeName);
+        productData.variants = await scrapeProductVariants(productElement, pageInstance, products, storeName, storePath);
         delete productData.hasVariants;
     }
 
