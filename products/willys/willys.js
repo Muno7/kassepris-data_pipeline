@@ -2,7 +2,7 @@ import puppeteer from 'puppeteer';
 import fs from 'fs';
 
 
-async function selectStore(city) {
+async function selectStore(code) {
     await page.waitForSelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL'); // wait for the välj butik button
     await page.evaluate(() => {
         const button = document.querySelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL');
@@ -13,9 +13,9 @@ async function selectStore(city) {
     // Wait for input field to be visible and ready
     await page.waitForSelector('input.sc-29a0f90e-0.bCPowe')
 
-    // Click the input field and type the city
+    // Click the input field and type the code
     await page.click('input.sc-29a0f90e-0.bCPowe');
-    await page.type('input.sc-29a0f90e-0.bCPowe', city);
+    await page.type('input.sc-29a0f90e-0.bCPowe', code);
     
     await page.waitForSelector('div.sc-1a26c59f-1.hwwhnV');
 
@@ -38,14 +38,19 @@ async function loadProducts(expectedCount) {
 
     let currentCount = 0
 
-    while (currentCount < expectedCount) {
+    const maxWaitTime = 3000; // 30 seconds timeout
+    const startTime = Date.now();
+
+    while (currentCount !== expectedCount && Date.now() - startTime < maxWaitTime) {
         // Count loaded products
         currentCount = await page.evaluate(() =>
             document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length
         );
+        console.log('Loaded products:', currentCount);
+        
         // Scroll to bottom
         await page.evaluate(() => {
-            const products = document.querySelectorAll('div.sc-c933ef91-0.eWnNDe'); // product cards
+            const products = document.querySelectorAll('div.sc-c933ef91-0.eWnNDe');
             const lastProduct = products[products.length - 1];
             if (lastProduct) {
                 lastProduct.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -53,9 +58,33 @@ async function loadProducts(expectedCount) {
         });
     }
 
+    // If we didn't get the expected count, take the last expectedCount products
+    let productsToProcess;
+    if (currentCount !== expectedCount) {
+        console.log(`Timeout: Expected ${expectedCount} products but found ${currentCount}. Taking last ${expectedCount} products.`);
+        
+        const productElements = await page.$$('div.sc-c933ef91-0.eWnNDe');
+        
+        // Take only the last expectedCount products
+        productsToProcess = productElements.slice(-expectedCount);
+        
+        // Continue with productsToProcess instead of all productElements
+    } else {
+        console.log(`Successfully loaded all ${expectedCount} products`);
+        productsToProcess = await page.$$('div.sc-c933ef91-0.eWnNDe');
+    }
+
+    await page.evaluate(() => {
+        window.scrollTo({
+            top: 0,
+            left: 0,
+            behavior: 'smooth'
+        });
+    });
+
     console.log(`✅ Done! Total loaded: ${currentCount} products.`);
 
-    return await page.$$('div.sc-c933ef91-0.eWnNDe'); // return product elements
+    return productsToProcess; // return product elements
 }
 
 let page;
@@ -69,7 +98,7 @@ async function getProducts() {
     await page.goto('https://www.willys.se/erbjudanden/butik');
 
     await selectStore('skurup');
-
+    
     // Open filter panel
     await page.evaluate(() => {
         const button = document.querySelector('button.sc-7c8770a6-0.hqchDi.sc-3afb827d-6.dmSoed');
@@ -82,36 +111,43 @@ async function getProducts() {
         button.click();
     });
 
-    // Extract category metadata ONCE (no ElementHandles)
-    const categories = await page.$$eval(
-        'div.sc-c78942f3-2.CXxSM div a',
-        anchors =>
-            anchors.map(a => {
-                const aria = a.getAttribute('aria-label') || '';
-                const cleaned = aria.replace(/\s+/g, ' ').trim();
+    // Get all category links
+    const categoryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
+    const categoryCount = categoryLinks.length;
 
-                let name = cleaned;
-                let expectedCount = null;
+    console.log(`\nFound ${categoryCount} categories`);
 
-                const match = cleaned.match(/^(.+?)\s+(\d+)\s+produkter$/i);
-                if (match) {
-                    name = match[1].trim();
-                    expectedCount = parseInt(match[2], 10);
-                }
+    // Iterate through each category link by index
+    for (let i = 0; i < categoryCount; i++) {
+        // Re-query the category links and get the link at index i
+        const freshCategoryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
+        const link = freshCategoryLinks[i];
 
-                return {
-                    name,
-                    expectedCount,
-                    url: a.href
-                };
-            })
-    );
+        // Get category name and expected count from the link
+        const { name: categoryName, expectedCount } = await link.evaluate(el => {
+            const aria = el.getAttribute('aria-label') || '';
+            const cleaned = aria.replace(/\s+/g, ' ').trim();
 
-    // Iterate categories as independent pages
-    for (const { name: categoryName, expectedCount, url } of categories) {
+            let name = cleaned;
+            let expectedCount = null;
+
+            const match = cleaned.match(/^(.+?)\s+(\d+)\s+produkter$/i);
+            if (match) {
+                name = match[1].trim();
+                expectedCount = parseInt(match[2], 10);
+            }
+            return { name, expectedCount };
+        });
+        await link.evaluate(el => el.click());
+        // Wait for the visa varor button and click it
+        await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
+        await page.evaluate(() => {
+            const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
+            button.click();
+        });
         console.log(`\nScraping category: ${categoryName}`);
-
-        await page.goto(url);
+        console.log('link clicked');
+        console.log('expectedCount', expectedCount);
 
         const productElements = await loadProducts(expectedCount);
 
@@ -122,7 +158,27 @@ async function getProducts() {
         for (const productElement of productElements) {
             await scrapeProductData(productElement, categoryName);
         }
+
+        await page.evaluate(() => {
+            const button = document.querySelector('button.sc-7c8770a6-0.jtQuAZ.sc-6e230f45-0.jdTVKr');
+            button.click();
+        });
+        await page.evaluate(() => {
+            const button = document.querySelector('button.sc-7c8770a6-0.hqchDi.sc-3afb827d-6.dmSoed');
+            button.click();
+        });
     }
+
+    await page.evaluate(() => {
+        const button = document.querySelector('button.sc-7c8770a6-0.cUBBNt.sc-c78942f3-0.iEfkXE');
+        button.click();
+    });
+
+    await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
+    await page.evaluate(() => {
+        const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
+        button.click();
+    });
 
     await browser.close();
 }
