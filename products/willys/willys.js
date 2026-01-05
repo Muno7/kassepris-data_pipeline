@@ -1,6 +1,8 @@
 import puppeteer from 'puppeteer';
 import fs from 'fs';
 
+let page;
+let products = [];
 
 async function selectStore(code) {
     await page.waitForSelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL'); // wait for the välj butik button
@@ -8,7 +10,6 @@ async function selectStore(code) {
         const button = document.querySelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL');
         button.click();
     });
-
 
     // Wait for input field to be visible and ready
     await page.waitForSelector('input.sc-29a0f90e-0.bCPowe')
@@ -32,8 +33,7 @@ async function loadProducts(expectedCount) {
     await page.waitForSelector('div.sc-c933ef91-0.eWnNDe'); // wait for product cards to load
 
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    // Get expected number of products from the paragraph
-
+    
     console.log(`Expecting ${expectedCount} products...`);
 
     let currentCount = 0
@@ -68,7 +68,6 @@ async function loadProducts(expectedCount) {
         // Take only the last expectedCount products
         productsToProcess = productElements.slice(-expectedCount);
         
-        // Continue with productsToProcess instead of all productElements
     } else {
         console.log(`Successfully loaded all ${expectedCount} products`);
         productsToProcess = await page.$$('div.sc-c933ef91-0.eWnNDe');
@@ -87,17 +86,11 @@ async function loadProducts(expectedCount) {
     return productsToProcess; // return product elements
 }
 
-let page;
-
-async function getProducts() {
-    const browser = await puppeteer.launch({
-        headless: false
-    });
-
+async function getProducts(code, browser) {
     page = await browser.newPage();
     await page.goto('https://www.willys.se/erbjudanden/butik');
 
-    await selectStore('skurup');
+    await selectStore(code);
     
     // Open filter panel
     await page.evaluate(() => {
@@ -156,7 +149,7 @@ async function getProducts() {
         );
 
         for (const productElement of productElements) {
-            await scrapeProductData(productElement, categoryName);
+            await scrapeProductData(productElement, categoryName, code);
         }
 
         await page.evaluate(() => {
@@ -180,11 +173,10 @@ async function getProducts() {
         button.click();
     });
 
-    await browser.close();
+    await page.close();
 }
 
-
-async function scrapeProductData(productElement, categoryName) {
+async function scrapeProductData(productElement, categoryName, code) {
   const productData = await productElement.evaluate(element => {
     const title = element.querySelector('.sc-c933ef91-7.dfhPxx')?.textContent?.trim() || null;
 
@@ -229,19 +221,41 @@ async function scrapeProductData(productElement, categoryName) {
 
   productData.categoryName = categoryName;
 
-  pushProductsToJson(productData);
+  pushProductsToJson(productData, code);
 }
 
-
-
-let products = [];
-
-async function pushProductsToJson(productData) {
+async function pushProductsToJson(productData, code) {
     products.push(productData);
   
     // Save to JSON file
-    fs.writeFileSync('willys.json', JSON.stringify(products, null, 2));
-
+    fs.writeFileSync(`${code}.json`, JSON.stringify(products, null, 2));
 }
 
-getProducts();
+// Main execution
+async function main() {
+    const storeCodes = ['willys', 'willys-hemma'];
+    
+    
+    for (const code of storeCodes) {
+        console.log(`\n${'='.repeat(60)}`);
+        console.log(`Starting scrape for: ${code}`);
+        console.log(`${'='.repeat(60)}\n`);
+        
+        const browser = await puppeteer.launch({
+            headless: false
+        });
+        // Reset products array for each store
+        products = [];
+        
+        await getProducts(code, browser);
+        
+        console.log(`\n✅ Completed scraping for ${code}`);
+        console.log(`   Total products saved: ${products.length}`);
+        console.log(`   File saved as: ${code}.json\n`);
+        await browser.close();
+    }
+
+    console.log('\n🎉 All stores scraped successfully!');
+}
+
+await main();
