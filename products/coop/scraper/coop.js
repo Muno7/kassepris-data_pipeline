@@ -212,11 +212,18 @@ async function pushProductsToJson(productData, products, storeName) {
   
     // Save to store-specific JSON file
     const filename = `${storeName}.json`;
-    fs.writeFileSync(filename, JSON.stringify(products, null, 2));
+    fs.writeFileSync(`../data/${filename}`, JSON.stringify(products, null, 2));
 }
 
 // Scrape multiple URLs concurrently, each in its own browser instance
-export async function scrapeUrlsConcurrently(urls) {
-    const promises = urls.map(url => scrapeUrl(url));
-    await Promise.all(promises);
+// Scrape multiple URLs concurrently in batches of 10
+export async function scrapeUrlsConcurrently(urls, batchSize = 10) {
+    for (let i = 0; i < urls.length; i += batchSize) {
+        const batch = urls.slice(i, i + batchSize);
+        console.log(`Scraping batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(urls.length / batchSize)} (${batch.length} URLs)`);
+
+        // Wait for this batch to finish before moving to the next
+        await Promise.all(batch.map(url => scrapeUrl(url)));
+    }
 }
+
