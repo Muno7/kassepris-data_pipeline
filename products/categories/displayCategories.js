@@ -36,4 +36,12 @@ export const DISPLAY_CATEGORIES = {
     slug: 'home_and_leisure',
     name: 'Hem & fritid',
   },
+  other: {
+    slug: 'other',
+    name: 'Övrigt',
+  },
+  health_and_beauty: {
+    slug: 'health_and_beauty',
+    name: 'Hälsa & skönhet',
+  },
 };
