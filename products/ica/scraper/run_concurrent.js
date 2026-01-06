@@ -1,7 +1,7 @@
 import { Pool } from "pg";
 import dotenv from "dotenv";
 import path from "path";
-import { scrapeUrlsConcurrently } from "./ica.js";
+import { scrapeUrlsConcurrently } from "../../ica.js";
 
 // Load env
 dotenv.config({ path: path.resolve("../../.env") });
