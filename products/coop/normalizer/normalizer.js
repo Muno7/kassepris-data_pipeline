@@ -42,7 +42,7 @@ function normalizeVariant(variant) {
     isMember: variant.isMember,
     
     // restrictions & badges
-    max: removeTrailingPeriod(variant.max),
+    moreInfo: removeTrailingPeriod(variant.max),
     badges: variant.badges ?? [],
   };
 }
@@ -83,7 +83,7 @@ export function normalizeCoopProduct(rawProduct) {
     isMember: rawProduct.isMember,
     
     // restrictions & badges
-    max: removeTrailingPeriod(rawProduct.max),
+    moreInfo: removeTrailingPeriod(rawProduct.max),
     badges: rawProduct.badges,
     
     // categorization

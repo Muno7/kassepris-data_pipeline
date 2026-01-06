@@ -82,7 +82,7 @@ export function normalizeIcaProduct(rawProduct) {
     isMember: rawProduct.isMember,
     
     // restrictions & badges
-    max: removeTrailingPeriod(rawProduct.moreInfo), // ICA uses "moreInfo" instead of "max"
+    moreInfo: removeTrailingPeriod(rawProduct.moreInfo), // ICA uses "moreInfo" instead of "max"
     badges: [], // ICA doesn't have badges, so empty array
     
     // categorization
