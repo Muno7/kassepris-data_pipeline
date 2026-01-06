@@ -4,3 +4,5 @@ venv
 stores/*/*.json
 products/*/*.json
 products/*/*/*.json
+assortments/*.json
+assortments/*/*.json
