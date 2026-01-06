@@ -1,6 +1,6 @@
 node_modules
 venv
 .env
-products/coop/*.json
-products/ica/*.json
-products/willys/*.json
+stores/*/*.json
+products/*/*.json
+products/*/*/*.json
