@@ -11,7 +11,7 @@ function extractStorePathFromUrl(url) {
     return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, '') : url;
 }
 
-async function scrapeUrl(url) {
+async function scrapeUrl(url, outputDir) {
     const storeName = extractJsonFileName(url);
     const storePath = extractStorePathFromUrl(url);
     const products = []; // Store-specific products array
@@ -26,14 +26,14 @@ async function scrapeUrl(url) {
 
         // Check if categories selector exists
         try {
-            await page.waitForSelector('.yHxPkLdx', { timeout: 10000 });
+            await page.waitForSelector('.OIcyRgfT', { timeout: 10000 });
         } catch (err) {
-            console.log(`[${storeName}] No categories found (.yHxPkLdx). Store has no products. Terminating.`);
+            console.log(`[${storeName}] No categories found (.OIcyRgfT). Store has no products. Terminating.`);
             await browser.close();
             return;
         }
 
-        const categoriesDiv = await page.$('.yHxPkLdx');
+        const categoriesDiv = await page.$('.OIcyRgfT');
 
         // Get all buttons inside the container
         const categoryButtons = await categoriesDiv.$$('button');
@@ -76,7 +76,7 @@ async function scrapeUrl(url) {
 
             // Loop through products in this category
             for (const productElement of productElements) {
-                await scrapeProductData(productElement, false, categoryName, page, products, storeName, storePath);
+                await scrapeProductData(productElement, false, categoryName, page, products, storeName, storePath, outputDir);
             }
 
             // Click the category button again to reset the filter
@@ -91,7 +91,7 @@ async function scrapeUrl(url) {
 }
 
 
-async function scrapeProductVariants(productElement, pageInstance, products, storeName, storePath) {
+async function scrapeProductVariants(productElement, pageInstance, products, storeName, storePath, outputDir) {
     let variants = [];
 
     // Get the parent of productElement, then find the div within it
@@ -99,11 +99,11 @@ async function scrapeProductVariants(productElement, pageInstance, products, sto
         element.querySelector('.Wy2NiM6K.iyTkejCQ._yrJb637.mOvy16Ff').click();
     });
     const variantsDiv = await pageInstance.$('.BwcVHsZk.vqviwfSt')
-    
+
     const variantsElements = await variantsDiv.$$('article.ohKiwh8z.xSu5Uapq');
-    
+
     for (const productElement of variantsElements) {
-        variants.push(await scrapeProductData(productElement, true, null, pageInstance, products, storeName, storePath));
+        variants.push(await scrapeProductData(productElement, true, null, pageInstance, products, storeName, storePath, outputDir));
     }
     
     await variantsDiv.evaluate(element => {
@@ -129,7 +129,7 @@ function generateFingerprint(productData) {
     return fingerprints;
 }
 
-async function scrapeProductData(productElement, isVariant, categoryName, pageInstance, products, storeName, storePath) {
+async function scrapeProductData(productElement, isVariant, categoryName, pageInstance, products, storeName, storePath, outputDir) {
     const productData = await productElement.evaluate(element => {
         const title = element.querySelector('.OXTlHT32')?.textContent?.trim() || null;
         // Coop sometimes has "30,00" or just "30"
@@ -194,36 +194,35 @@ async function scrapeProductData(productElement, isVariant, categoryName, pageIn
   
     // if the product has variants and itself is not variant of another product then scrape the variants of that product
     if (!isVariant && productData.hasVariants) {
-        productData.variants = await scrapeProductVariants(productElement, pageInstance, products, storeName, storePath);
+        productData.variants = await scrapeProductVariants(productElement, pageInstance, products, storeName, storePath, outputDir);
         delete productData.hasVariants;
     }
 
     // if the product is not a variant of another product then add the product as its own product in json
     if (!isVariant) {
-        pushProductsToJson(productData, products, storeName);
+        pushProductsToJson(productData, products, storeName, outputDir);
     }
 
     console.log(`Scraped: ${productData.title}`);
     return productData;
 }
 
-async function pushProductsToJson(productData, products, storeName) {
+async function pushProductsToJson(productData, products, storeName, outputDir = '../data') {
     products.push(productData);
-  
+
     // Save to store-specific JSON file
     const filename = `${storeName}.json`;
-    fs.writeFileSync(`../data/${filename}`, JSON.stringify(products, null, 2));
+    fs.writeFileSync(`${outputDir}/${filename}`, JSON.stringify(products, null, 2));
 }
 
 // Scrape multiple URLs concurrently, each in its own browser instance
 // Scrape multiple URLs concurrently in batches of 10
-export async function scrapeUrlsConcurrently(urls, batchSize = 10) {
+export async function scrapeUrlsConcurrently(urls, batchSize = 10, outputDir) {
     for (let i = 0; i < urls.length; i += batchSize) {
         const batch = urls.slice(i, i + batchSize);
         console.log(`Scraping batch ${Math.floor(i / batchSize) + 1} of ${Math.ceil(urls.length / batchSize)} (${batch.length} URLs)`);
 
         // Wait for this batch to finish before moving to the next
-        await Promise.all(batch.map(url => scrapeUrl(url)));
+        await Promise.all(batch.map(url => scrapeUrl(url, outputDir)));
     }
 }
-
