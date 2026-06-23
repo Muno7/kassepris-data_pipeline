@@ -154,7 +154,9 @@ async function getProducts(code, browser) {
 
         await page.evaluate(() => {
             const button = document.querySelector('button.sc-7c8770a6-0.jtQuAZ.sc-6e230f45-0.jdTVKr');
-            button.click();
+            if (button) {
+                button.click();
+            }
         });
         await page.evaluate(() => {
             const button = document.querySelector('button.sc-7c8770a6-0.hqchDi.sc-3afb827d-6.dmSoed');
@@ -205,6 +207,15 @@ async function scrapeProductData(productElement, categoryName, code) {
     const badges = Array.from(element.querySelectorAll('.sc-c933ef91-20.bLaPaP')).map(img => img.src) || null;
     const isMemeber = !!element.querySelector('.sc-e20bc8d3-1.bdMExn.sc-4b8cc2f9-7.chdLmu svg');
     const image = element.querySelector('img[itemprop="image"]')?.src || null;
+    const moreInfoDiv = element.querySelector('.sc-c933ef91-15.hfSVFg');
+    const text = moreInfoDiv?.textContent.trim() || null;
+    let moreInfo = null;
+    let max = null;
+    if (text) {
+        const parts = text.split('•').map(p => p.trim());
+        moreInfo = parts[0] || null;
+        max = parts[1] || null;
+    }
 
     return {
       title,
@@ -213,6 +224,8 @@ async function scrapeProductData(productElement, categoryName, code) {
       deal,
       size,
       brand,
+      moreInfo,
+      max,
       image,
       isMemeber,
       badges
