@@ -103,7 +103,7 @@ async function importProducts() {
         insertedProducts++;
 
         for (const storePath of product.stores) {
-          const storeId = storeIdByPath.get(storePath);
+          const storeId = storeIdByPath.get(storePath.replace(/\/$/, ""));
           if (!storeId) {
             unmatchedStores++;
             continue;
