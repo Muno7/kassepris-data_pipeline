@@ -1,6 +1,3 @@
--- Documents the live "supermarket" database schema and adds the product tables.
--- Safe to run against the existing DB: chain/assortment/stores already exist and are left untouched.
-
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS chain (
@@ -9,6 +6,10 @@ CREATE TABLE IF NOT EXISTS chain (
   slug character varying NOT NULL UNIQUE
 );
 
+-- `assortment` and `stores.assortment_id` exist only for Willys, which (unlike
+-- Coop/ICA) groups stores into shared "standard"/"hemma" newspaper
+-- assortments rather than scraping each store individually. Still used by
+-- the old Puppeteer-based stores/scripts/import_stores.js.
 CREATE TABLE IF NOT EXISTS assortment (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   chain_id uuid NOT NULL REFERENCES chain(id) ON DELETE CASCADE,
@@ -27,24 +28,37 @@ CREATE TABLE IF NOT EXISTS stores (
   name text NOT NULL,
   url text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  address text,
+  city text,
+  latitude double precision,
+  longitude double precision
 );
-
--- Not populated by any scraper yet (raw store JSON only has code/name/url).
--- Columns added now so a future scraping pass can fill them without a migration.
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS address text;
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS city text;
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS latitude double precision;
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS longitude double precision;
 
 CREATE INDEX IF NOT EXISTS idx_stores_chain_id ON stores (chain_id);
 CREATE INDEX IF NOT EXISTS idx_stores_city ON stores (city);
 
--- One row per unique product (deduplicated by fingerprint, same as the JSON normalizers).
+-- `gtin` is the product's real barcode (Coop: offer.externalId or
+-- clusterInteriorOffers[].externalId, ICA: offer.eans[].id) - a far more
+-- reliable identity than the text fingerprint, since it doesn't break on
+-- formatting differences. Not every offer carries one, so `fingerprint` (the
+-- old text-based identity) stays as a fallback. Identity for dedup/upsert
+-- purposes is COALESCE(gtin, fingerprint), enforced below as an
+-- expression-based unique index rather than a plain column constraint.
+--
+-- `variant_group` links sibling SKUs that were sold under one shared offer
+-- (e.g. Coop's "Bryggkaffe" campaign covers several actual roasts/flavors,
+-- each with its own gtin and its own product row here; ICA's eans[] work the
+-- same way). Each variant is a real, independently queryable/comparable
+-- product - not JSON nested inside a "parent" row - they just share this key
+-- so the UI can still display them as one group. Null when an offer wasn't
+-- part of any cluster.
 CREATE TABLE IF NOT EXISTS product (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   chain_id uuid NOT NULL REFERENCES chain(id) ON DELETE CASCADE,
+  gtin text,
   fingerprint text NOT NULL,
+  variant_group text,
   title text,
   image text,
   brand text,
@@ -59,22 +73,28 @@ CREATE TABLE IF NOT EXISTS product (
   category_slug text,
   category_name text,
   raw_category_name text,
+  valid_until timestamptz,
+  -- Willys's old normalizer still nests sibling SKUs as JSON here, unlike
+  -- Coop/ICA which use variant_group + their own product rows now.
   variants jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  CONSTRAINT unique_product_per_chain UNIQUE (chain_id, fingerprint)
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE UNIQUE INDEX IF NOT EXISTS product_chain_identity_idx
+  ON product (chain_id, COALESCE(gtin, fingerprint));
 CREATE INDEX IF NOT EXISTS idx_product_chain_id ON product (chain_id);
 CREATE INDEX IF NOT EXISTS idx_product_category_slug ON product (category_slug);
+CREATE INDEX IF NOT EXISTS idx_product_gtin ON product (gtin);
+CREATE INDEX IF NOT EXISTS idx_product_variant_group ON product (variant_group);
 
--- Replaces the "stores": [...] array from the normalized JSON with a real many-to-many join.
 CREATE TABLE IF NOT EXISTS store_product (
   store_id uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
   PRIMARY KEY (store_id, product_id)
 );
 
--- PK above covers "products at this store" lookups (store_id leads).
--- This covers the reverse direction: "which stores sell this product".
 CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (product_id);
+
+INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;
+INSERT INTO chain (name, slug) VALUES ('ICA', 'ica') ON CONFLICT (slug) DO NOTHING;

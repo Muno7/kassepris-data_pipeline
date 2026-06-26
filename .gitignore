@@ -1,8 +1,10 @@
 node_modules
-venv
 .env
-stores/*/*.json
-products/*/*.json
-products/*/*/*.json
-assortments/*.json
-assortments/*/*.json
+stores/data/*
+products/coop/data/*
+products/ica/data/*
+products/coop/normalized/*.json
+products/ica/normalized/*.json
+products/normalized_data/*.json
+products/willys/willys.json
+products/willys/willys-hemma.json

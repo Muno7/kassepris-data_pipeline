@@ -1,15 +1,16 @@
 {
-  "name": "pupeteer",
+  "name": "supermarket-api",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "Fetch-based (no browser) pipeline for store discovery, location enrichment, product offers, and DB import for Coop and ICA. Willys still uses the old Puppeteer scraper.",
+  "main": "run.js",
   "type": "module",
+  "scripts": {
+    "stores:fetch": "node stores/run.js",
+    "stores:update-db": "node stores/update_db.js",
+    "products:fetch": "node products/run.js",
+    "products:update-db": "node products/update_db.js"
+  },
+  "license": "ISC",
   "dependencies": {
     "dotenv": "^17.2.3",
     "pg": "^8.16.3",
