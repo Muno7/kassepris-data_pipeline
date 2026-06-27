@@ -8,7 +8,9 @@
     "stores:fetch": "node stores/run.js",
     "stores:update-db": "node stores/update_db.js",
     "products:fetch": "node products/run.js",
-    "products:update-db": "node products/update_db.js"
+    "products:update-db": "node products/update_db.js",
+    "products:willys:fetch": "node products/willys/fetch.js",
+    "products:willys:normalize": "node products/willys/normalize.js"
   },
   "license": "ISC",
   "dependencies": {

@@ -6,5 +6,5 @@ products/ica/data/*
 products/coop/normalized/*.json
 products/ica/normalized/*.json
 products/normalized_data/*.json
-products/willys/willys.json
-products/willys/willys-hemma.json
+products/willys/data/*.json
+products/willys/normalized/*.json

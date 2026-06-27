@@ -1,5 +1,21 @@
+// Step 1: FETCH
+//
+// Willys's storefront has no plain JSON API for offers (confirmed: the one
+// public endpoint that exists, /axfood/rest/v1/search/campaigns, requires a
+// per-session "active store" switch that's CSRF-protected in a way that
+// resists scripted requests - looks like TLS-fingerprint-level bot detection,
+// not a header trick). Willys also only has two real assortments ("willys"
+// and "willys-hemma" newspaper assortments, confirmed identical across every
+// store within each), so this still scrapes via Puppeteer, same as before -
+// just restructured to match the data/ + fetch.js layout Coop/ICA use.
+
 import puppeteer from 'puppeteer';
 import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const DATA_DIR = path.resolve(__dirname, 'data');
 
 let page;
 let products = [];
@@ -239,36 +255,38 @@ async function scrapeProductData(productElement, categoryName, code) {
 
 async function pushProductsToJson(productData, code) {
     products.push(productData);
-  
+
     // Save to JSON file
-    fs.writeFileSync(`${code}.json`, JSON.stringify(products, null, 2));
+    fs.writeFileSync(path.join(DATA_DIR, `${code}.json`), JSON.stringify(products, null, 2));
 }
 
-// Main execution
-async function main() {
-    const storeCodes = ['willys', 'willys-hemma'];
-    
-    
-    for (const code of storeCodes) {
+const ASSORTMENT_CODES = ['willys', 'willys-hemma'];
+
+export async function fetchAllWillysStores() {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+
+    for (const code of ASSORTMENT_CODES) {
         console.log(`\n${'='.repeat(60)}`);
         console.log(`Starting scrape for: ${code}`);
         console.log(`${'='.repeat(60)}\n`);
-        
+
         const browser = await puppeteer.launch({
             headless: false
         });
         // Reset products array for each store
         products = [];
-        
+
         await getProducts(code, browser);
-        
+
         console.log(`\n✅ Completed scraping for ${code}`);
         console.log(`   Total products saved: ${products.length}`);
-        console.log(`   File saved as: ${code}.json\n`);
+        console.log(`   File saved as: data/${code}.json\n`);
         await browser.close();
     }
 
-    console.log('\n🎉 All stores scraped successfully!');
+    console.log('\n🎉 All assortments scraped successfully!');
 }
 
-await main();
+if (path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])) {
+    await fetchAllWillysStores();
+}
