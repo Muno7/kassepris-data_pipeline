@@ -271,7 +271,8 @@ export async function fetchAllWillysStores() {
         console.log(`${'='.repeat(60)}\n`);
 
         const browser = await puppeteer.launch({
-            headless: false
+            headless: false,
+            channel: 'chrome'
         });
         // Reset products array for each store
         products = [];

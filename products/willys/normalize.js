@@ -24,6 +24,7 @@ const ASSORTMENT_FILES = [
 ];
 
 const WILLYS_CATEGORY_MAP = {
+  Apotek: "health_and_beauty",
   Barn: "other",
   "Blommor & trädgård": "home_and_leisure",
   "Bröd & Kakor": "bread_and_bakery",
