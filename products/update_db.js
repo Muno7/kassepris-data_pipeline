@@ -66,15 +66,12 @@ async function importProducts() {
         const { rows } = await client.query(
           `INSERT INTO product (
              chain_id, gtin, fingerprint, variant_group, title, image, brand, size,
-             price_cents, unit, comparison_price, deal, is_member,
-             more_info, badges, category_slug, category_name, raw_category_name, valid_until
+             more_info, badges, category_slug, category_name, raw_category_name
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            ON CONFLICT (chain_id, COALESCE(gtin, fingerprint)) DO UPDATE SET
              title = EXCLUDED.title,
-             price_cents = EXCLUDED.price_cents,
              variant_group = EXCLUDED.variant_group,
-             valid_until = EXCLUDED.valid_until,
              updated_at = now()
            RETURNING id`,
           [
@@ -86,31 +83,35 @@ async function importProducts() {
             product.image,
             product.brand,
             product.size,
-            product.priceCents,
-            product.unit,
-            product.comparisonPrice,
-            product.deal,
-            product.isMember,
             product.moreInfo,
             JSON.stringify(product.badges ?? []),
             product.categorySlug,
             product.categoryName,
             product.rawCategoryName,
-            product.validUntil,
           ]
         );
         const productId = rows[0].id;
         insertedProducts++;
 
-        for (const storePath of product.stores) {
-          const storeId = storeIdByPath.get(storePath.replace(/\/$/, ""));
+        for (const offer of product.storeOffers) {
+          const storeId = storeIdByPath.get(offer.store.replace(/\/$/, ""));
           if (!storeId) {
             unmatchedStores++;
             continue;
           }
           await client.query(
-            `INSERT INTO store_product (store_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-            [storeId, productId]
+            `INSERT INTO store_product (
+               store_id, product_id, price_cents, unit, comparison_price, deal, is_member, valid_until
+             )
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             ON CONFLICT (store_id, product_id) DO UPDATE SET
+               price_cents = EXCLUDED.price_cents,
+               unit = EXCLUDED.unit,
+               comparison_price = EXCLUDED.comparison_price,
+               deal = EXCLUDED.deal,
+               is_member = EXCLUDED.is_member,
+               valid_until = EXCLUDED.valid_until`,
+            [storeId, productId, offer.priceCents, offer.unit, offer.comparisonPrice, offer.deal, offer.isMember, offer.validUntil]
           );
           insertedLinks++;
         }

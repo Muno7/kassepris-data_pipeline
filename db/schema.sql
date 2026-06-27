@@ -63,17 +63,11 @@ CREATE TABLE IF NOT EXISTS product (
   image text,
   brand text,
   size text,
-  price_cents integer,
-  unit text,
-  comparison_price text,
-  deal text,
-  is_member boolean,
   more_info text,
   badges jsonb,
   category_slug text,
   category_name text,
   raw_category_name text,
-  valid_until timestamptz,
   -- Willys's old normalizer still nests sibling SKUs as JSON here, unlike
   -- Coop/ICA which use variant_group + their own product rows now.
   variants jsonb,
@@ -88,9 +82,20 @@ CREATE INDEX IF NOT EXISTS idx_product_category_slug ON product (category_slug);
 CREATE INDEX IF NOT EXISTS idx_product_gtin ON product (gtin);
 CREATE INDEX IF NOT EXISTS idx_product_variant_group ON product (variant_group);
 
+-- Price, deal, and expiry are per-(store, product) facts, not per-product:
+-- confirmed empirically that ~37% of ICA products carry a genuinely different
+-- price across different stores in the same chain (Coop barely varies, ~0.3%,
+-- since its prices are centrally set, but storing it here costs nothing extra
+-- either way - same number of rows as before, just wider).
 CREATE TABLE IF NOT EXISTS store_product (
   store_id uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
+  price_cents integer,
+  unit text,
+  comparison_price text,
+  deal text,
+  is_member boolean,
+  valid_until timestamptz,
   PRIMARY KEY (store_id, product_id)
 );
 

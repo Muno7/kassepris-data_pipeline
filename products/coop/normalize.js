@@ -4,7 +4,8 @@
 // the shared display shape, and deduplicates products that exist in multiple
 // stores - keyed by gtin (the real barcode) when the offer has one, falling
 // back to the text fingerprint otherwise - collapsing them into one product
-// with a `stores` array.
+// with a `storeOffers` array. Price/deal/validUntil stay per-store (a real
+// price-comparison product), not collapsed onto the product itself.
 
 import fs from "fs";
 import path from "path";
@@ -43,19 +44,11 @@ function normalizeProduct(rawProduct) {
     gtin: rawProduct.gtin || null,
     fingerprint: rawProduct.fingerprint,
     variantGroup: rawProduct.variantGroup || null,
-    stores: [rawProduct.store],
 
     title: removeTrailingPeriod(rawProduct.title),
     image: rawProduct.image,
     brand: rawProduct.brand,
     size: removeTrailingPeriod(rawProduct.size),
-
-    priceCents: rawProduct.priceCents,
-    unit: rawProduct.unit,
-    comparisonPrice: removeTrailingPeriod(rawProduct.comparisonPrice),
-    deal: rawProduct.deal,
-    isMember: rawProduct.isMember,
-    validUntil: rawProduct.validUntil || null,
 
     moreInfo: removeTrailingPeriod(rawProduct.max),
     badges: rawProduct.badges,
@@ -63,6 +56,16 @@ function normalizeProduct(rawProduct) {
     categorySlug: displayCategory.slug,
     categoryName: displayCategory.name,
     rawCategoryName: rawCategory,
+
+    storeOffer: {
+      store: rawProduct.store,
+      priceCents: rawProduct.priceCents,
+      unit: rawProduct.unit,
+      comparisonPrice: removeTrailingPeriod(rawProduct.comparisonPrice),
+      deal: rawProduct.deal,
+      isMember: rawProduct.isMember,
+      validUntil: rawProduct.validUntil || null,
+    },
   };
 }
 
@@ -84,9 +87,12 @@ export function normalizeAllCoopStores() {
         const key = normalized.gtin || normalized.fingerprint;
         const existing = productMap.get(key);
         if (existing) {
-          if (!existing.stores.includes(normalized.stores[0])) existing.stores.push(normalized.stores[0]);
+          if (!existing.storeOffers.some((o) => o.store === normalized.storeOffer.store)) {
+            existing.storeOffers.push(normalized.storeOffer);
+          }
         } else {
-          productMap.set(key, normalized);
+          const { storeOffer, ...identity } = normalized;
+          productMap.set(key, { ...identity, storeOffers: [storeOffer] });
         }
         totalProcessed++;
       } catch (err) {
