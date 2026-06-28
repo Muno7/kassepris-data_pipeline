@@ -45,16 +45,27 @@ async function selectStore(code) {
 }
 
 async function loadProducts(expectedCount) {
+    // Switching category is a client-side filter, not a page navigation, so
+    // the previous category's product cards can still be sitting in the DOM
+    // for a moment after the click - counting/scraping immediately mixes
+    // leftover old-category cards in with the new ones ("glitched" products).
+    // Wait for the grid to actually clear out first, so we know we're looking
+    // at a fresh render. Swallow the timeout: on the very first category
+    // there's nothing to clear, so this is expected to no-op there.
+    await page
+        .waitForFunction(() => document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length === 0, { timeout: 3000 })
+        .catch(() => {});
+
     await page.waitForSelector('p.sc-117d48af-0.dGUcxD'); // wait for the expected count paragraph
     await page.waitForSelector('div.sc-c933ef91-0.eWnNDe'); // wait for product cards to load
 
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-    
+
     console.log(`Expecting ${expectedCount} products...`);
 
     let currentCount = 0
 
-    const maxWaitTime = 3000; // 30 seconds timeout
+    const maxWaitTime = 30000; // 30 seconds timeout
     const startTime = Date.now();
 
     while (currentCount !== expectedCount && Date.now() - startTime < maxWaitTime) {
@@ -147,16 +158,45 @@ async function getProducts(code, browser) {
             }
             return { name, expectedCount };
         });
-        await link.evaluate(el => el.click());
-        // Wait for the visa varor button and click it
-        await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
-        await page.evaluate(() => {
-            const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
-            button.click();
-        });
         console.log(`\nScraping category: ${categoryName}`);
-        console.log('link clicked');
         console.log('expectedCount', expectedCount);
+
+        // Occasionally the "close filter" click between categories (below)
+        // silently no-ops, and the category click that follows doesn't
+        // actually apply a filter - the grid then shows the WHOLE catalog
+        // (hundreds of products) instead of this category's handful. That's
+        // a much bigger gap than normal incremental loading ever produces, so
+        // detect it and re-click the category instead of quietly scraping
+        // whatever happens to be on screen as if it belonged to this category.
+        const sanityMargin = Math.max(expectedCount * 3, expectedCount + 30);
+        let filterApplied = false;
+        for (let attempt = 1; attempt <= 3 && !filterApplied; attempt++) {
+            if (attempt > 1) {
+                console.log(`  Category filter didn't apply, retrying (attempt ${attempt})...`);
+                const retryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
+                await retryLinks[i].evaluate(el => el.click());
+            } else {
+                await link.evaluate(el => el.click());
+            }
+
+            await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
+            await page.evaluate(() => {
+                const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
+                button.click();
+            });
+
+            filterApplied = await page
+                .waitForFunction(
+                    (max) => document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length <= max,
+                    { timeout: 4000 },
+                    sanityMargin
+                )
+                .then(() => true)
+                .catch(() => false);
+        }
+        if (!filterApplied) {
+            console.warn(`  WARNING: category filter never applied for "${categoryName}" after 3 attempts - results may be wrong.`);
+        }
 
         const productElements = await loadProducts(expectedCount);
 
