@@ -23,7 +23,6 @@ CREATE TABLE IF NOT EXISTS assortment (
 CREATE TABLE IF NOT EXISTS stores (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   chain_id uuid NOT NULL REFERENCES chain(id),
-  assortment_id uuid REFERENCES assortment(id) ON DELETE CASCADE,
   external_id text NOT NULL UNIQUE,
   name text NOT NULL,
   url text NOT NULL,
@@ -34,6 +33,11 @@ CREATE TABLE IF NOT EXISTS stores (
   latitude double precision,
   longitude double precision
 );
+
+-- Added after the table already existed in earlier runs of this schema, so
+-- it needs an explicit ALTER (CREATE TABLE IF NOT EXISTS above is a no-op
+-- once the table exists, it won't add new columns on its own).
+ALTER TABLE stores ADD COLUMN IF NOT EXISTS assortment_id uuid REFERENCES assortment(id) ON DELETE CASCADE;
 
 CREATE INDEX IF NOT EXISTS idx_stores_chain_id ON stores (chain_id);
 CREATE INDEX IF NOT EXISTS idx_stores_city ON stores (city);
@@ -103,3 +107,14 @@ CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (produc
 
 INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;
 INSERT INTO chain (name, slug) VALUES ('ICA', 'ica') ON CONFLICT (slug) DO NOTHING;
+INSERT INTO chain (name, slug) VALUES ('Willys', 'willys') ON CONFLICT (slug) DO NOTHING;
+
+-- Every real Willys store belongs to one of these two shared newspaper
+-- assortments (confirmed: every store within each shares the exact same
+-- product catalog) - slugs match products/willys/fetch.js's ASSORTMENTS.
+INSERT INTO assortment (chain_id, slug, name)
+  SELECT id, 'willys', 'Willys' FROM chain WHERE slug = 'willys'
+  ON CONFLICT (chain_id, slug) DO NOTHING;
+INSERT INTO assortment (chain_id, slug, name)
+  SELECT id, 'willys-hemma', 'Willys Hemma' FROM chain WHERE slug = 'willys'
+  ON CONFLICT (chain_id, slug) DO NOTHING;

@@ -1,12 +1,13 @@
 {
   "name": "supermarket-api",
   "version": "1.0.0",
-  "description": "Fetch-based (no browser) pipeline for store discovery, location enrichment, product offers, and DB import for Coop and ICA. Willys still uses the old Puppeteer scraper.",
+  "description": "Fetch-based (no browser) pipeline for store discovery, location enrichment, and product offers for Coop, ICA, and Willys. Willys store discovery still uses Puppeteer; its product offers are now API-based too.",
   "main": "run.js",
   "type": "module",
   "scripts": {
     "stores:fetch": "node stores/run.js",
     "stores:update-db": "node stores/update_db.js",
+    "stores:willys:update-db": "node stores/scripts/import_stores.js",
     "products:fetch": "node products/run.js",
     "products:update-db": "node products/update_db.js",
     "products:willys:fetch": "node products/willys/fetch.js",

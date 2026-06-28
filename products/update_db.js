@@ -19,11 +19,47 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const productFiles = [
   { file: path.resolve(__dirname, "coop/normalized/coop_normalized.json"), slug: "coop" },
   { file: path.resolve(__dirname, "ica/normalized/ica_normalized.json"), slug: "ica" },
+  { file: path.resolve(__dirname, "willys/normalized/willys_normalized.json"), slug: "willys" },
 ];
 
 function extractIcaStorePathFromUrl(url) {
   const prefix = "https://www.ica.se/erbjudanden/";
   return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, "") : url;
+}
+
+// Willys's storeOffers[].store is an assortment slug ("willys"/"willys-hemma"),
+// not a single store's external_id - every store in that assortment shares
+// the same catalog (confirmed empirically), so one storeOffer expands into a
+// store_product row for every real store in the assortment, not just one.
+// This keeps "products at this store" a uniform store_product join for every
+// chain - no chain-specific branching needed outside this import step.
+async function buildStoreIdsLookup(client, slug, chainId) {
+  if (slug === "willys") {
+    const { rows } = await client.query(
+      `SELECT s.id, a.slug AS assortment_slug
+       FROM stores s
+       JOIN assortment a ON a.id = s.assortment_id
+       WHERE s.chain_id = $1`,
+      [chainId]
+    );
+    const storeIdsByAssortmentSlug = new Map();
+    for (const row of rows) {
+      if (!storeIdsByAssortmentSlug.has(row.assortment_slug)) storeIdsByAssortmentSlug.set(row.assortment_slug, []);
+      storeIdsByAssortmentSlug.get(row.assortment_slug).push(row.id);
+    }
+    return (offerStore) => storeIdsByAssortmentSlug.get(offerStore) ?? [];
+  }
+
+  const { rows } = await client.query("SELECT id, external_id, url FROM stores WHERE chain_id = $1", [chainId]);
+  const storeIdByPath = new Map();
+  for (const store of rows) {
+    const storePath = slug === "ica" ? extractIcaStorePathFromUrl(store.url) : store.external_id.replace(/\/$/, "");
+    storeIdByPath.set(storePath, store.id);
+  }
+  return (offerStore) => {
+    const storeId = storeIdByPath.get(offerStore.replace(/\/$/, ""));
+    return storeId ? [storeId] : [];
+  };
 }
 
 async function importProducts() {
@@ -46,14 +82,7 @@ async function importProducts() {
       }
       const chainId = chainRows[0].id;
 
-      const { rows: storeRows } = await client.query("SELECT id, external_id, url FROM stores WHERE chain_id = $1", [
-        chainId,
-      ]);
-      const storeIdByPath = new Map();
-      for (const store of storeRows) {
-        const storePath = slug === "ica" ? extractIcaStorePathFromUrl(store.url) : store.external_id.replace(/\/$/, "");
-        storeIdByPath.set(storePath, store.id);
-      }
+      const getStoreIdsForOffer = await buildStoreIdsLookup(client, slug, chainId);
 
       const products = JSON.parse(fs.readFileSync(file, "utf-8"));
       console.log(`Loaded ${products.length} normalized products for chain "${slug}"`);
@@ -94,26 +123,28 @@ async function importProducts() {
         insertedProducts++;
 
         for (const offer of product.storeOffers) {
-          const storeId = storeIdByPath.get(offer.store.replace(/\/$/, ""));
-          if (!storeId) {
+          const storeIds = getStoreIdsForOffer(offer.store);
+          if (storeIds.length === 0) {
             unmatchedStores++;
             continue;
           }
-          await client.query(
-            `INSERT INTO store_product (
-               store_id, product_id, price_cents, unit, comparison_price, deal, is_member, valid_until
-             )
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-             ON CONFLICT (store_id, product_id) DO UPDATE SET
-               price_cents = EXCLUDED.price_cents,
-               unit = EXCLUDED.unit,
-               comparison_price = EXCLUDED.comparison_price,
-               deal = EXCLUDED.deal,
-               is_member = EXCLUDED.is_member,
-               valid_until = EXCLUDED.valid_until`,
-            [storeId, productId, offer.priceCents, offer.unit, offer.comparisonPrice, offer.deal, offer.isMember, offer.validUntil]
-          );
-          insertedLinks++;
+          for (const storeId of storeIds) {
+            await client.query(
+              `INSERT INTO store_product (
+                 store_id, product_id, price_cents, unit, comparison_price, deal, is_member, valid_until
+               )
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+               ON CONFLICT (store_id, product_id) DO UPDATE SET
+                 price_cents = EXCLUDED.price_cents,
+                 unit = EXCLUDED.unit,
+                 comparison_price = EXCLUDED.comparison_price,
+                 deal = EXCLUDED.deal,
+                 is_member = EXCLUDED.is_member,
+                 valid_until = EXCLUDED.valid_until`,
+              [storeId, productId, offer.priceCents, offer.unit, offer.comparisonPrice, offer.deal, offer.isMember, offer.validUntil]
+            );
+            insertedLinks++;
+          }
         }
       }
 
