@@ -1,333 +1,152 @@
 // Step 1: FETCH
 //
-// Willys's storefront has no plain JSON API for offers (confirmed: the one
-// public endpoint that exists, /axfood/rest/v1/search/campaigns, requires a
-// per-session "active store" switch that's CSRF-protected in a way that
-// resists scripted requests - looks like TLS-fingerprint-level bot detection,
-// not a header trick). Willys also only has two real assortments ("willys"
-// and "willys-hemma" newspaper assortments, confirmed identical across every
-// store within each), so this still scrapes via Puppeteer, same as before -
-// just restructured to match the data/ + fetch.js layout Coop/ICA use.
+// Willys's offers page is a Next.js storefront, but the actual data comes
+// from a plain JSON endpoint: GET /axfood/rest/v1/search/campaigns/offline,
+// called with no cookies, no session, and no CSRF token - confirmed via a
+// captured browser network trace plus repeated plain `curl` calls. (The
+// previous version of this file claimed that endpoint was bot-protected -
+// that turned out to be wrong: it's just unauthenticated, store offers are
+// requested via the `q` query param, e.g. q=2102:categoryLevel1_string_mv:N16
+// for store "2102" filtered to category "N16". The Solr-style filter after
+// the colon is required to get a categoryName per product - the bare
+// `q=<storeCode>` response carries no category field on individual products,
+// only as a facet count summary - so this fetches once per category instead
+// of once per store, matching the Puppeteer scraper's old per-category-click
+// loop.)
+//
+// Like the old scraper, this only ever fetches two representative stores -
+// one per real assortment ("willys" and "willys-hemma") - since Willys
+// (unlike Coop/ICA) groups every store's offers into one of those two shared
+// newspaper assortments. Confirmed empirically: every regular Willys store
+// returns the exact same totalNumberOfResults as every other regular store,
+// and a different (smaller) total for every Hemma store.
 
-import puppeteer from 'puppeteer';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, 'data');
+const DATA_DIR = path.resolve(__dirname, "data");
+const STORES_FILE = path.resolve(__dirname, "../../stores/willys/willys_stores.json");
 
-let page;
-let products = [];
+const BASE_URL = "https://www.willys.se/axfood/rest/v1/search/campaigns/offline";
+const SITE_ORIGIN = "https://www.willys.se";
+const PAGE_SIZE = 100;
 
-async function selectStore(code) {
-    await page.waitForSelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL'); // wait for the välj butik button
-    await page.evaluate(() => {
-        const button = document.querySelector('button.sc-7c8770a6-0.gXFZsu.sc-459c5700-1.fKtGeL');
-        button.click();
-    });
+const USER_AGENT =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
 
-    // Wait for input field to be visible and ready
-    await page.waitForSelector('input.sc-29a0f90e-0.bCPowe')
+const ASSORTMENTS = [
+  { slug: "willys", isHemma: false },
+  { slug: "willys-hemma", isHemma: true },
+];
 
-    // Click the input field and type the code
-    await page.click('input.sc-29a0f90e-0.bCPowe');
-    await page.type('input.sc-29a0f90e-0.bCPowe', code);
-    
-    await page.waitForSelector('div.sc-1a26c59f-1.hwwhnV');
-
-    await page.evaluate(() => {
-        const div = document.querySelector('div.sc-1a26c59f-1.hwwhnV');
-        div.click();
-    });
-
-    await page.waitForSelector('div.sc-c933ef91-0.eWnNDe') // wait for the first product to appear
+function pickRepresentativeStore(isHemma) {
+  const stores = JSON.parse(fs.readFileSync(STORES_FILE, "utf8"));
+  const match = stores.find((s) => s.name.toLowerCase().includes("hemma") === isHemma);
+  if (!match) throw new Error(`No Willys store found for isHemma=${isHemma}`);
+  return match.code;
 }
 
-async function loadProducts(expectedCount) {
-    // Switching category is a client-side filter, not a page navigation, so
-    // the previous category's product cards can still be sitting in the DOM
-    // for a moment after the click - counting/scraping immediately mixes
-    // leftover old-category cards in with the new ones ("glitched" products).
-    // Wait for the grid to actually clear out first, so we know we're looking
-    // at a fresh render. Swallow the timeout: on the very first category
-    // there's nothing to clear, so this is expected to no-op there.
-    await page
-        .waitForFunction(() => document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length === 0, { timeout: 3000 })
-        .catch(() => {});
-
-    await page.waitForSelector('p.sc-117d48af-0.dGUcxD'); // wait for the expected count paragraph
-    await page.waitForSelector('div.sc-c933ef91-0.eWnNDe'); // wait for product cards to load
-
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-
-    console.log(`Expecting ${expectedCount} products...`);
-
-    let currentCount = 0
-
-    const maxWaitTime = 30000; // 30 seconds timeout
-    const startTime = Date.now();
-
-    while (currentCount !== expectedCount && Date.now() - startTime < maxWaitTime) {
-        // Count loaded products
-        currentCount = await page.evaluate(() =>
-            document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length
-        );
-        console.log('Loaded products:', currentCount);
-        
-        // Scroll to bottom
-        await page.evaluate(() => {
-            const products = document.querySelectorAll('div.sc-c933ef91-0.eWnNDe');
-            const lastProduct = products[products.length - 1];
-            if (lastProduct) {
-                lastProduct.scrollIntoView({ behavior: 'smooth', block: 'end' });
-            }
-        });
-    }
-
-    // If we didn't get the expected count, take the last expectedCount products
-    let productsToProcess;
-    if (currentCount !== expectedCount) {
-        console.log(`Timeout: Expected ${expectedCount} products but found ${currentCount}. Taking last ${expectedCount} products.`);
-        
-        const productElements = await page.$$('div.sc-c933ef91-0.eWnNDe');
-        
-        // Take only the last expectedCount products
-        productsToProcess = productElements.slice(-expectedCount);
-        
-    } else {
-        console.log(`Successfully loaded all ${expectedCount} products`);
-        productsToProcess = await page.$$('div.sc-c933ef91-0.eWnNDe');
-    }
-
-    await page.evaluate(() => {
-        window.scrollTo({
-            top: 0,
-            left: 0,
-            behavior: 'smooth'
-        });
-    });
-
-    console.log(`✅ Done! Total loaded: ${currentCount} products.`);
-
-    return productsToProcess; // return product elements
+function parsePriceToCents(str) {
+  if (!str) return null;
+  const match = str.match(/(\d+(?:[.,]\d+)?)/);
+  if (!match) return null;
+  const val = parseFloat(match[1].replace(",", "."));
+  return Number.isFinite(val) ? Math.round(val * 100) : null;
 }
 
-async function getProducts(code, browser) {
-    page = await browser.newPage();
-    await page.goto('https://www.willys.se/erbjudanden/butik');
-
-    await selectStore(code);
-    
-    // Open filter panel
-    await page.evaluate(() => {
-        const button = document.querySelector('button.sc-7c8770a6-0.hqchDi.sc-3afb827d-6.dmSoed');
-        button.click();
-    });
-
-    // Open category panel
-    await page.evaluate(() => {
-        const button = document.querySelector('button.sc-7c8770a6-0.cUBBNt.sc-c78942f3-0.danpMf');
-        button.click();
-    });
-
-    // Get all category links
-    const categoryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
-    const categoryCount = categoryLinks.length;
-
-    console.log(`\nFound ${categoryCount} categories`);
-
-    // Iterate through each category link by index
-    for (let i = 0; i < categoryCount; i++) {
-        // Re-query the category links and get the link at index i
-        const freshCategoryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
-        const link = freshCategoryLinks[i];
-
-        // Get category name and expected count from the link
-        const { name: categoryName, expectedCount } = await link.evaluate(el => {
-            const aria = el.getAttribute('aria-label') || '';
-            const cleaned = aria.replace(/\s+/g, ' ').trim();
-
-            let name = cleaned;
-            let expectedCount = null;
-
-            const match = cleaned.match(/^(.+?)\s+(\d+)\s+produkter$/i);
-            if (match) {
-                name = match[1].trim();
-                expectedCount = parseInt(match[2], 10);
-            }
-            return { name, expectedCount };
-        });
-        console.log(`\nScraping category: ${categoryName}`);
-        console.log('expectedCount', expectedCount);
-
-        // Occasionally the "close filter" click between categories (below)
-        // silently no-ops, and the category click that follows doesn't
-        // actually apply a filter - the grid then shows the WHOLE catalog
-        // (hundreds of products) instead of this category's handful. That's
-        // a much bigger gap than normal incremental loading ever produces, so
-        // detect it and re-click the category instead of quietly scraping
-        // whatever happens to be on screen as if it belonged to this category.
-        const sanityMargin = Math.max(expectedCount * 3, expectedCount + 30);
-        let filterApplied = false;
-        for (let attempt = 1; attempt <= 3 && !filterApplied; attempt++) {
-            if (attempt > 1) {
-                console.log(`  Category filter didn't apply, retrying (attempt ${attempt})...`);
-                const retryLinks = await page.$$('div.sc-c78942f3-2.CXxSM div a');
-                await retryLinks[i].evaluate(el => el.click());
-            } else {
-                await link.evaluate(el => el.click());
-            }
-
-            await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
-            await page.evaluate(() => {
-                const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
-                button.click();
-            });
-
-            filterApplied = await page
-                .waitForFunction(
-                    (max) => document.querySelectorAll('div.sc-c933ef91-0.eWnNDe').length <= max,
-                    { timeout: 4000 },
-                    sanityMargin
-                )
-                .then(() => true)
-                .catch(() => false);
-        }
-        if (!filterApplied) {
-            console.warn(`  WARNING: category filter never applied for "${categoryName}" after 3 attempts - results may be wrong.`);
-        }
-
-        const productElements = await loadProducts(expectedCount);
-
-        console.log(
-            `Found ${productElements.length} products (expected ${expectedCount})`
-        );
-
-        for (const productElement of productElements) {
-            await scrapeProductData(productElement, categoryName, code);
-        }
-
-        await page.evaluate(() => {
-            const button = document.querySelector('button.sc-7c8770a6-0.jtQuAZ.sc-6e230f45-0.jdTVKr');
-            if (button) {
-                button.click();
-            }
-        });
-        await page.evaluate(() => {
-            const button = document.querySelector('button.sc-7c8770a6-0.hqchDi.sc-3afb827d-6.dmSoed');
-            button.click();
-        });
-    }
-
-    await page.evaluate(() => {
-        const button = document.querySelector('button.sc-7c8770a6-0.cUBBNt.sc-c78942f3-0.iEfkXE');
-        button.click();
-    });
-
-    await page.waitForSelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb');
-    await page.evaluate(() => {
-        const button = document.querySelector('button.sc-7c8770a6-0.dbbSSn.sc-3afb827d-5.dkTgEb')
-        button.click();
-    });
-
-    await page.close();
+// "kr/st" -> "/st", "kr/kg" -> "/kg"
+function unitFromPriceUnit(priceUnit) {
+  const match = priceUnit?.match(/\/(\w+)$/);
+  return match ? `/${match[1]}` : null;
 }
 
-async function scrapeProductData(productElement, categoryName, code) {
-  const productData = await productElement.evaluate(element => {
-    const title = element.querySelector('.sc-c933ef91-7.dfhPxx')?.textContent?.trim() || null;
-
-    // Brand & size
-    const brandSizeText = element.querySelector('.sc-c933ef91-9.dQtuYt')?.textContent?.trim() || null;
-    let brand = null, size = null;
-    if (brandSizeText) {
-      const parts = brandSizeText.split(/\s+/);
-      brand = parts[0] || null;
-      size = parts.slice(1).join(' ') || null;
-    }
-    const unit = element.querySelector('.sc-4b8cc2f9-6.jxQDEl')?.textContent?.trim() || null;
-    // Price info
-    const priceMajor = element.querySelector('.sc-4b8cc2f9-2.cCZiOx')?.textContent?.trim() || '0';
-    const priceMinor = element.querySelector('.sc-4b8cc2f9-5.ggAScU')?.textContent?.trim() || '00';
-
-    // Combine into a float, normalize commas, and convert to cents
-    const normalizedPrice = `${priceMajor}.${priceMinor}`.replace(',', '.');
-    const floatPrice = parseFloat(normalizedPrice);
-    const priceCents = !isNaN(floatPrice) ? Math.round(floatPrice * 100) : null;
-
-    // Deal type (e.g. "5 för", "3 för")
-    const deal = element.querySelector('.sc-c933ef91-14.iSfvdv')?.textContent?.trim() || null;
-
-    // Multiple badges
-    const badges = Array.from(element.querySelectorAll('.sc-c933ef91-20.bLaPaP')).map(img => img.src) || null;
-    const isMemeber = !!element.querySelector('.sc-e20bc8d3-1.bdMExn.sc-4b8cc2f9-7.chdLmu svg');
-    const image = element.querySelector('img[itemprop="image"]')?.src || null;
-    const moreInfoDiv = element.querySelector('.sc-c933ef91-15.hfSVFg');
-    const text = moreInfoDiv?.textContent.trim() || null;
-    let moreInfo = null;
-    let max = null;
-    if (text) {
-        const parts = text.split('•').map(p => p.trim());
-        moreInfo = parts[0] || null;
-        max = parts[1] || null;
-    }
-
-    return {
-      title,
-      priceCents,
-      unit,
-      deal,
-      size,
-      brand,
-      moreInfo,
-      max,
-      image,
-      isMemeber,
-      badges
-    };
-  });
-
-  productData.categoryName = categoryName;
-
-  pushProductsToJson(productData, code);
+function resolveImageUrl(image) {
+  if (!image?.url) return null;
+  return image.url.startsWith("http") ? image.url : `${SITE_ORIGIN}${image.url}`;
 }
 
-async function pushProductsToJson(productData, code) {
-    products.push(productData);
-
-    // Save to JSON file
-    fs.writeFileSync(path.join(DATA_DIR, `${code}.json`), JSON.stringify(products, null, 2));
+// rewardLabel already carries the headline price exactly as Willys's UI
+// displays it (e.g. "69,00" for a "2 för 69:-" card, not divided per unit) -
+// matches what the old DOM scraper read straight off the product card, so
+// `deal` (conditionLabel, e.g. "2 för") stays a separate field rather than
+// being folded into the price.
+function mapProduct(rawItem, categoryName) {
+  const promo = rawItem.potentialPromotions?.[0] ?? {};
+  return {
+    title: rawItem.name ?? null,
+    priceCents: parsePriceToCents(promo.rewardLabel) ?? parsePriceToCents(rawItem.priceNoUnit),
+    unit: unitFromPriceUnit(rawItem.priceUnit),
+    deal: promo.conditionLabel ?? null,
+    size: rawItem.displayVolume ?? null,
+    brand: rawItem.manufacturer ?? null,
+    moreInfo: promo.description ?? null,
+    max: promo.redeemLimitLabel ?? null,
+    image: resolveImageUrl(rawItem.image),
+    isMemeber: promo.campaignType === "LOYALTY",
+    badges: rawItem.labels ?? [],
+    categoryName,
+  };
 }
 
-const ASSORTMENT_CODES = ['willys', 'willys-hemma'];
+async function fetchCampaignsPage(storeCode, query, page) {
+  const qs = new URLSearchParams({ q: query, type: "GENERAL", page: String(page), size: String(PAGE_SIZE) });
+  const res = await fetch(`${BASE_URL}?${qs}`, { headers: { "User-Agent": USER_AGENT, Accept: "application/json" } });
+  if (!res.ok) throw new Error(`API returned ${res.status} for store ${storeCode}`);
+  return res.json();
+}
+
+async function fetchCategoryFacets(storeCode) {
+  const data = await fetchCampaignsPage(storeCode, storeCode, 0);
+  const facet = data.facets?.find((f) => f.code === "categoryLevel1");
+  return facet?.values?.filter((v) => v.count > 0) ?? [];
+}
+
+async function fetchCategoryProducts(storeCode, categoryCode, categoryName) {
+  const query = `${storeCode}:categoryLevel1_string_mv:${categoryCode}`;
+  const products = [];
+  let page = 0;
+  while (true) {
+    const data = await fetchCampaignsPage(storeCode, query, page);
+    products.push(...(data.results ?? []).map((item) => mapProduct(item, categoryName)));
+    const total = data.pagination?.totalNumberOfResults ?? products.length;
+    if (products.length >= total || !data.results?.length) break;
+    page++;
+  }
+  return products;
+}
+
+async function fetchAssortment({ slug, isHemma }) {
+  const storeCode = pickRepresentativeStore(isHemma);
+  console.log(`[Willys] Fetching "${slug}" via representative store ${storeCode}...`);
+
+  const categories = await fetchCategoryFacets(storeCode);
+  console.log(`  Found ${categories.length} categories`);
+
+  const products = [];
+  for (const category of categories) {
+    const categoryProducts = await fetchCategoryProducts(storeCode, category.code, category.name);
+    console.log(`  ${category.name}: ${categoryProducts.length} products`);
+    products.push(...categoryProducts);
+  }
+
+  fs.writeFileSync(path.join(DATA_DIR, `${slug}.json`), JSON.stringify(products, null, 2));
+  console.log(`[Willys] Done: ${products.length} products -> data/${slug}.json`);
+  return products.length;
+}
 
 export async function fetchAllWillysStores() {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
+  fs.mkdirSync(DATA_DIR, { recursive: true });
 
-    for (const code of ASSORTMENT_CODES) {
-        console.log(`\n${'='.repeat(60)}`);
-        console.log(`Starting scrape for: ${code}`);
-        console.log(`${'='.repeat(60)}\n`);
-
-        const browser = await puppeteer.launch({
-            headless: false,
-            channel: 'chrome'
-        });
-        // Reset products array for each store
-        products = [];
-
-        await getProducts(code, browser);
-
-        console.log(`\n✅ Completed scraping for ${code}`);
-        console.log(`   Total products saved: ${products.length}`);
-        console.log(`   File saved as: data/${code}.json\n`);
-        await browser.close();
-    }
-
-    console.log('\n🎉 All assortments scraped successfully!');
+  let total = 0;
+  for (const assortment of ASSORTMENTS) {
+    total += await fetchAssortment(assortment);
+  }
+  console.log(`[Willys] All assortments fetched. Total products: ${total}`);
+  return { total };
 }
 
 if (path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])) {
-    await fetchAllWillysStores();
+  await fetchAllWillysStores();
 }
