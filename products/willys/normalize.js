@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
+import { WILLYS_BADGE_MAP, normalizeBadges } from "../categories/badges.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -91,7 +92,7 @@ function normalizeProduct(rawProduct, store) {
     size,
 
     moreInfo: removeTrailingPeriod(combineMoreInfo(rawProduct)),
-    badges: rawProduct.badges ?? [],
+    badges: normalizeBadges(rawProduct.badges, WILLYS_BADGE_MAP),
 
     categorySlug: displayCategory.slug,
     categoryName: displayCategory.name,

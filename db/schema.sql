@@ -68,16 +68,24 @@ CREATE TABLE IF NOT EXISTS product (
   brand text,
   size text,
   more_info text,
+  -- Normalized {slug, label, type} objects (see products/categories/badges.js)
+  -- - not each chain's raw codes verbatim, so the app never needs per-chain
+  -- switch statements to render them. Coop has no source data for these yet,
+  -- so its products always have an empty array here - that's a real "no
+  -- data" state, not a bug.
   badges jsonb,
   category_slug text,
   category_name text,
   raw_category_name text,
-  -- Willys's old normalizer still nests sibling SKUs as JSON here, unlike
-  -- Coop/ICA which use variant_group + their own product rows now.
-  variants jsonb,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+-- Dead column from when Willys nested sibling SKUs as JSON here - Willys now
+-- uses variant_group + its own product rows like Coop/ICA, and never wrote
+-- real data into this column even before that. Explicit DROP since the
+-- table already existed without this happening via CREATE TABLE IF NOT EXISTS.
+ALTER TABLE product DROP COLUMN IF EXISTS variants;
 
 CREATE UNIQUE INDEX IF NOT EXISTS product_chain_identity_idx
   ON product (chain_id, COALESCE(gtin, fingerprint));

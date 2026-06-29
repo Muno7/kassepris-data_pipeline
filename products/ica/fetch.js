@@ -35,7 +35,7 @@ function extractStorePathFromUrl(url) {
 // validUntil changes every campaign week, which would otherwise break dedup
 // across weekly runs.
 function generateFingerprint(productData) {
-  const { moreInfo, badges, categoryName, fingerprint, image, store, gtin, validUntil, variantGroup, ...rest } =
+  const { moreInfo, badges, traits, categoryName, fingerprint, image, store, gtin, validUntil, variantGroup, ...rest } =
     productData;
   return Object.values(rest)
     .map((v) => (v === null || v === undefined ? "NULL" : String(v).toUpperCase().replace(/\s/g, "")))
@@ -117,6 +117,7 @@ function mapOffer(offer, storePath) {
       comparisonPrice: offer.comparisonPrice ?? null,
       image: ean?.image ?? null,
       isMember: offer.traits?.includes("Stammis") ?? false,
+      traits: offer.traits ?? [],
       gtin: ean?.id ?? null,
       validUntil: offer.validTo ?? null,
       categoryName,

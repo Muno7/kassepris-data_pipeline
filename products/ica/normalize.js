@@ -13,6 +13,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
+import { ICA_TRAIT_MAP, normalizeBadges } from "../categories/badges.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -52,7 +53,7 @@ function normalizeProduct(rawProduct) {
     size: removeTrailingPeriod(rawProduct.size),
 
     moreInfo: removeTrailingPeriod(rawProduct.moreInfo),
-    badges: [],
+    badges: normalizeBadges(rawProduct.traits, ICA_TRAIT_MAP),
 
     categorySlug: displayCategory.slug,
     categoryName: displayCategory.name,
