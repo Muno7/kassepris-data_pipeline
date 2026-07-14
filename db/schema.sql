@@ -111,6 +111,13 @@ CREATE TABLE IF NOT EXISTS store_product (
   PRIMARY KEY (store_id, product_id)
 );
 
+-- Added after the table already existed, so it needs an explicit ALTER (see
+-- the `assortment_id` comment above for why). Amount saved vs. the regular
+-- price, computed at fetch time from each chain's raw API data - null when
+-- the chain's API doesn't expose a regular price (Coop never does; ICA and
+-- Willys do).
+ALTER TABLE store_product ADD COLUMN IF NOT EXISTS savings_cents integer;
+
 CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (product_id);
 
 INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;

@@ -74,6 +74,9 @@ function mapOfferFields(offer) {
     badges: [],
     gtin: offer.externalId ?? null,
     validUntil: offer.campaignEndDate ?? null,
+    // Coop's API never exposes a regular/original price - priceInformation
+    // only ever carries the already-discounted value.
+    savingsCents: null,
   };
 }
 

@@ -131,17 +131,28 @@ async function importProducts() {
           for (const storeId of storeIds) {
             await client.query(
               `INSERT INTO store_product (
-                 store_id, product_id, price_cents, unit, comparison_price, deal, is_member, valid_until
+                 store_id, product_id, price_cents, savings_cents, unit, comparison_price, deal, is_member, valid_until
                )
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                ON CONFLICT (store_id, product_id) DO UPDATE SET
                  price_cents = EXCLUDED.price_cents,
+                 savings_cents = EXCLUDED.savings_cents,
                  unit = EXCLUDED.unit,
                  comparison_price = EXCLUDED.comparison_price,
                  deal = EXCLUDED.deal,
                  is_member = EXCLUDED.is_member,
                  valid_until = EXCLUDED.valid_until`,
-              [storeId, productId, offer.priceCents, offer.unit, offer.comparisonPrice, offer.deal, offer.isMember, offer.validUntil]
+              [
+                storeId,
+                productId,
+                offer.priceCents,
+                offer.savingsCents,
+                offer.unit,
+                offer.comparisonPrice,
+                offer.deal,
+                offer.isMember,
+                offer.validUntil,
+              ]
             );
             insertedLinks++;
           }

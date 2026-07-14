@@ -101,6 +101,7 @@ function normalizeProduct(rawProduct, store) {
     storeOffer: {
       store,
       priceCents: rawProduct.priceCents,
+      savingsCents: rawProduct.savingsCents,
       unit: rawProduct.unit,
       comparisonPrice: null, // not extracted by the Willys scraper
       deal: rawProduct.deal,

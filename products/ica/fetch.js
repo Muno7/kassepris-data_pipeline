@@ -55,14 +55,31 @@ function parsePriceToCents(str) {
 // ("Köp X betala för Y") is now also resolved exactly: quantity items cost
 // value2 total, so the effective per-unit price is value2/quantity - rather
 // than falling back to the undiscounted regular price.
+// savingsCents is regularPriceCents - priceCents, computed the same way for
+// every mechanic below - null whenever there's nothing to compare against
+// (no regularPrice) or the "deal" isn't actually cheaper (e.g. rounding, or
+// a mismatched range - see parsePriceToCents' first-of-range behavior).
+function withSavings(priceCents, regularPriceCents) {
+  const savingsCents =
+    regularPriceCents != null && priceCents != null && regularPriceCents > priceCents
+      ? regularPriceCents - priceCents
+      : null;
+  return { priceCents, savingsCents };
+}
+
 function resolvePriceAndDeal(offer) {
   const regularPriceCents = parsePriceToCents(offer.stores?.[0]?.regularPrice);
   const m = offer.parsedMechanics;
 
-  if (!m) return { priceCents: regularPriceCents, unit: null, deal: null };
+  if (!m) return { ...withSavings(regularPriceCents, regularPriceCents), unit: null, deal: null };
 
   if (m.benefitType === "FIXED" && m.quantity >= 2) {
-    return { priceCents: parsePriceToCents(m.value2), unit: null, deal: m.value1 || null };
+    // value2 is the total for `quantity` items (e.g. "2 för 75" -> value2
+    // "75" means 75kr for 2, not 75kr each) - divide down to a per-item
+    // price like BENFIXED below, instead of storing the raw multi-buy total.
+    const totalCents = parsePriceToCents(m.value2);
+    const priceCents = totalCents != null ? Math.round(totalCents / m.quantity) : regularPriceCents;
+    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: m.value1 || null };
   }
 
   if (m.benefitType === "PERCOFF") {
@@ -71,21 +88,25 @@ function resolvePriceAndDeal(offer) {
       regularPriceCents != null && Number.isFinite(pct)
         ? Math.round(regularPriceCents * (1 - pct / 100))
         : regularPriceCents;
-    return { priceCents, unit: null, deal: offer.details?.mechanicInfo ?? null };
+    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: offer.details?.mechanicInfo ?? null };
   }
 
   if (m.benefitType === "BENFIXED" && m.quantity >= 1) {
     const totalCents = parsePriceToCents(m.value2);
     const priceCents = totalCents != null ? Math.round(totalCents / m.quantity) : regularPriceCents;
-    return { priceCents, unit: null, deal: offer.details?.mechanicInfo ?? null };
+    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: offer.details?.mechanicInfo ?? null };
   }
 
   if (m.quantity <= 1 && m.benefitType === "FIXED") {
-    return { priceCents: regularPriceCents, unit: "/st", deal: null };
+    return { ...withSavings(regularPriceCents, regularPriceCents), unit: "/st", deal: null };
   }
 
   // Any other/unknown mechanic.
-  return { priceCents: regularPriceCents, unit: null, deal: offer.details?.mechanicInfo ?? null };
+  return {
+    ...withSavings(regularPriceCents, regularPriceCents),
+    unit: null,
+    deal: offer.details?.mechanicInfo ?? null,
+  };
 }
 
 // Each ean is a real, separately barcoded SKU (e.g. one specific flavor under
@@ -94,7 +115,7 @@ function resolvePriceAndDeal(offer) {
 // than nested inside one row's JSON.
 function mapOffer(offer, storePath) {
   const details = offer.details ?? {};
-  const { priceCents, unit, deal } = resolvePriceAndDeal(offer);
+  const { priceCents, savingsCents, unit, deal } = resolvePriceAndDeal(offer);
   const categoryName = offer.category?.articleGroupName ?? "Ospecificerat";
 
   const moreInfoParts = [offer.restriction, details.customerInformation, details.disclaimer, offer.condition].filter(
@@ -109,6 +130,7 @@ function mapOffer(offer, storePath) {
     const productData = {
       title: ean?.articleDescription || details.name || null,
       priceCents,
+      savingsCents,
       unit,
       deal,
       size: details.packageInformation ?? null,

@@ -62,6 +62,7 @@ function normalizeProduct(rawProduct) {
     storeOffer: {
       store: rawProduct.store,
       priceCents: rawProduct.priceCents,
+      savingsCents: rawProduct.savingsCents,
       unit: rawProduct.unit,
       comparisonPrice: removeTrailingPeriod(rawProduct.comparisonPrice),
       deal: rawProduct.deal,

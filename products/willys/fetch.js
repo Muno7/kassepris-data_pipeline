@@ -74,9 +74,17 @@ function resolveImageUrl(image) {
 // being folded into the price.
 function mapProduct(rawItem, categoryName) {
   const promo = rawItem.potentialPromotions?.[0] ?? {};
+  const originalPriceCents = parsePriceToCents(rawItem.priceNoUnit);
+  const priceCents = parsePriceToCents(promo.rewardLabel) ?? originalPriceCents;
+  const savingsCents =
+    originalPriceCents != null && priceCents != null && originalPriceCents > priceCents
+      ? originalPriceCents - priceCents
+      : null;
+
   return {
     title: rawItem.name ?? null,
-    priceCents: parsePriceToCents(promo.rewardLabel) ?? parsePriceToCents(rawItem.priceNoUnit),
+    priceCents,
+    savingsCents,
     unit: unitFromPriceUnit(rawItem.priceUnit),
     deal: promo.conditionLabel ?? null,
     size: rawItem.displayVolume ?? null,
