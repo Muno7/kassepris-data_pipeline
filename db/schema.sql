@@ -120,6 +120,21 @@ ALTER TABLE store_product ADD COLUMN IF NOT EXISTS savings_cents integer;
 
 CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (product_id);
 
+-- Regular/reference price from each chain's general online catalog - not
+-- tied to a specific real store (unlike store_product), since these chains'
+-- online catalogs serve one shared assortment/price list rather than a
+-- per-store one. This is what lets us show savings on chains whose deal feed
+-- never carries an original price (Coop), and gives every product a
+-- ballpark price even when it isn't currently on deal anywhere - understood
+-- to be an approximation that may differ slightly from any single physical
+-- store's actual price.
+CREATE TABLE IF NOT EXISTS product_online_price (
+  product_id uuid PRIMARY KEY REFERENCES product(id) ON DELETE CASCADE,
+  price_cents integer,
+  comparison_price text,
+  fetched_at timestamptz NOT NULL DEFAULT now()
+);
+
 INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;
 INSERT INTO chain (name, slug) VALUES ('ICA', 'ica') ON CONFLICT (slug) DO NOTHING;
 INSERT INTO chain (name, slug) VALUES ('Willys', 'willys') ON CONFLICT (slug) DO NOTHING;

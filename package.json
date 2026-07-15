@@ -13,8 +13,12 @@
     "products:update-db": "node products/update_db.js",
     "products:willys:fetch": "node products/willys/fetch.js",
     "products:willys:normalize": "node products/willys/normalize.js",
+    "products:coop:catalog:fetch": "node products/coop/fetch_catalog.js",
+    "products:coop:catalog:normalize": "node products/coop/normalize_catalog.js",
+    "products:coop:catalog:update-db": "node products/coop/update_catalog_db.js",
     "db:init": "bash scripts/init-db.sh",
-    "products:update-all": "bash scripts/update-products.sh"
+    "products:update-all": "bash scripts/update-products.sh",
+    "products:catalog:update-all": "bash scripts/update-catalog.sh"
   },
   "license": "ISC",
   "dependencies": {

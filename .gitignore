@@ -8,3 +8,6 @@ products/ica/normalized/*.json
 products/normalized_data/*.json
 products/willys/data/*.json
 products/willys/normalized/*.json
+products/coop/catalog_data/*
+products/ica/catalog_data/*
+products/willys/catalog_data/*

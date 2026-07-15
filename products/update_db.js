@@ -66,8 +66,15 @@ async function importProducts() {
   const client = await pool.connect();
 
   try {
-    console.log("Truncating store_product and product tables...");
-    await client.query("TRUNCATE store_product, product");
+    // product is upserted, not truncated - it also holds catalog-sourced
+    // rows from products/coop/update_catalog_db.js (and eventually ICA/
+    // Willys equivalents) that this script never touches, so wiping the
+    // whole table here would delete them along with their
+    // product_online_price rows (ON DELETE CASCADE). store_product should
+    // always exactly reflect the current week's deals, so it stays a full
+    // truncate-and-reload.
+    console.log("Truncating store_product table...");
+    await client.query("TRUNCATE store_product");
 
     for (const { file, slug } of productFiles) {
       if (!fs.existsSync(file)) {
@@ -101,6 +108,14 @@ async function importProducts() {
            ON CONFLICT (chain_id, COALESCE(gtin, fingerprint)) DO UPDATE SET
              title = EXCLUDED.title,
              variant_group = EXCLUDED.variant_group,
+             image = EXCLUDED.image,
+             brand = EXCLUDED.brand,
+             size = EXCLUDED.size,
+             more_info = EXCLUDED.more_info,
+             badges = EXCLUDED.badges,
+             category_slug = EXCLUDED.category_slug,
+             category_name = EXCLUDED.category_name,
+             raw_category_name = EXCLUDED.raw_category_name,
              updated_at = now()
            RETURNING id`,
           [
