@@ -73,6 +73,8 @@ function normalizeProduct(rawProduct) {
 
     priceCents: rawProduct.priceCents,
     comparisonPrice: removeTrailingPeriod(rawProduct.comparisonPrice),
+    comparisonPriceCents: rawProduct.comparisonPriceCents ?? null,
+    comparisonUnit: rawProduct.comparisonUnit ?? null,
   };
 }
 

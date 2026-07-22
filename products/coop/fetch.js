@@ -23,6 +23,7 @@ import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { requireEnv, getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
+import { parseComparisonPrice } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -81,10 +82,40 @@ const FALLBACK_BUTTON_CATEGORY = "Hem & fritid";
 // Gives every offer without a gtin a stable identity to upsert/dedupe on
 // anyway. Excludes fields that can change without the underlying product
 // changing - store/categoryName (view-dependent, not product-dependent),
-// validUntil (rolls over every campaign week), image/badges (cosmetic) -
+// validUntil/max (roll over every campaign week), image/badges (cosmetic) -
 // so the same physical product still matches itself week over week.
+//
+// Also excludes every price/deal field (priceCents, unit, deal,
+// comparisonPrice*, isMember, savingsCents) for the same reason: a weekly
+// price or promo change is the normal case for a deals feed, not evidence
+// of a different product. Confirmed empirically (see Willys, which shares
+// this same rule) that leaving price fields in produces a *different*
+// fingerprint - and therefore a duplicate, unlinked product row - every
+// time a price changes, which defeats both dedup and any price-history
+// table keyed on product_id. What's left (title, brand, size) is
+// deliberately thin - it only needs to answer "is this the same physical
+// item", not describe it.
 function generateFingerprint(productData) {
-  const { badges, categoryName, store, fingerprint, image, gtin, validUntil, variantGroup, ...rest } = productData;
+  const {
+    badges,
+    categoryName,
+    store,
+    fingerprint,
+    image,
+    gtin,
+    validUntil,
+    variantGroup,
+    max,
+    priceCents,
+    unit,
+    deal,
+    comparisonPrice,
+    comparisonPriceCents,
+    comparisonUnit,
+    isMember,
+    savingsCents,
+    ...rest
+  } = productData;
   return buildFingerprint(rest);
 }
 
@@ -94,16 +125,26 @@ function generateFingerprint(productData) {
 function mapOfferFields(offer) {
   const priceInformation = offer.priceInformation ?? {};
   const content = offer.content ?? {};
+  const comparisonPriceText = content.comparativePriceText ?? null;
+  const comparison = parseComparisonPrice(comparisonPriceText);
 
   return {
     title: content.title ?? null,
     priceCents: priceInformation.discountValue != null ? Math.round(priceInformation.discountValue * 100) : null,
     unit: priceInformation.unit ?? null,
+    // Coop's dealType has been confirmed to only ever be "styckpris"/"pris"
+    // (both just mean "unit price") across the full current catalog, never
+    // an actual "N för"-style multi-buy the way ICA/Willys have - so unlike
+    // those two chains, there's no bundle quantity here to resolve
+    // discountValue against; it's already a single-item price as-is.
     deal: priceInformation.dealType ?? null,
+    dealQuantity: null,
     size: content.amountInformation ?? null,
     brand: content.brand ?? null,
     max: content.dealOfferLimitText ?? null,
-    comparisonPrice: content.comparativePriceText ?? null,
+    comparisonPrice: comparisonPriceText,
+    comparisonPriceCents: comparison?.amountCents ?? null,
+    comparisonUnit: comparison?.unit ?? null,
     image: content.imageUrl ? `https:${content.imageUrl}` : null,
     isMember: priceInformation.isMemberPrice ?? false,
     badges: [],

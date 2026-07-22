@@ -37,6 +37,7 @@ import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
+import { parseComparisonPrice } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -101,19 +102,39 @@ function resolveImageUrl(image) {
   return image.url.startsWith("http") ? image.url : `${SITE_ORIGIN}${image.url}`;
 }
 
-// rewardLabel already carries the headline price exactly as Willys's UI
-// displays it (e.g. "69,00" for a "2 för 69:-" card, not divided per unit) -
-// matches what the old DOM scraper read straight off the product card, so
-// `deal` (conditionLabel, e.g. "2 för") stays a separate field rather than
-// being folded into the price.
+// rewardLabel carries the headline price exactly as Willys's UI displays it
+// - for a "3 för 25:-" card that's "25,00", the total for 3, not one item's
+// price (confirmed empirically: dividing by qualifyingCount and converting
+// to a comparison price lines up exactly with promo.comparePrice, which
+// Willys computes server-side - e.g. a 500g pack at "3 för 25,00" resolves
+// to 8,33/pack, and 8,33/0,5kg = 16,66/kg, matching comparePrice "16:66
+// kr/kg" exactly). Un-resolved, a multi-buy's total-for-N looks like a
+// single item's price to anything comparing it against another store's
+// already-per-item price - the exact bug this fixes. qualifyingCount (the
+// "N" Willys itself resolved the deal to) is preferred over parsing the
+// number back out of conditionLabel's free text ("3 för") since it's
+// already a clean integer and confirmed to always agree with it anyway.
 function mapProduct(rawItem, categoryName) {
   const promo = rawItem.potentialPromotions?.[0] ?? {};
   const originalPriceCents = parsePriceToCents(rawItem.priceNoUnit);
-  const priceCents = parsePriceToCents(promo.rewardLabel) ?? originalPriceCents;
+  const bundleCents = parsePriceToCents(promo.rewardLabel);
+  const dealQuantity = Number.isInteger(promo.qualifyingCount) && promo.qualifyingCount > 1 ? promo.qualifyingCount : null;
+  const priceCents = bundleCents != null ? Math.round(bundleCents / (dealQuantity ?? 1)) : originalPriceCents;
   const savingsCents =
     originalPriceCents != null && priceCents != null && originalPriceCents > priceCents
       ? originalPriceCents - priceCents
       : null;
+
+  // comparePrice lives on the active promotion (Willys computes it against
+  // whichever price - promo or regular - is currently in effect); falls
+  // back to the product-level ordinary compare price when there's no promo,
+  // matching Coop/ICA's shape of "always describes the current price".
+  const comparisonPriceText = promo.comparePrice ?? rawItem.promotionProductOrdinaryComparePrice ?? null;
+  const comparison = parseComparisonPrice(comparisonPriceText);
+  // promo.validUntil is epoch milliseconds (e.g. 1785103199000), unlike
+  // Coop/ICA's own already-ISO validUntil/campaignEndDate - normalized here
+  // so nothing downstream needs to know which chain a date came from.
+  const validUntil = Number.isFinite(promo.validUntil) ? new Date(promo.validUntil).toISOString() : null;
 
   return {
     title: rawItem.name ?? null,
@@ -121,6 +142,11 @@ function mapProduct(rawItem, categoryName) {
     savingsCents,
     unit: unitFromPriceUnit(rawItem.priceUnit),
     deal: promo.conditionLabel ?? null,
+    dealQuantity,
+    comparisonPrice: comparisonPriceText,
+    comparisonPriceCents: comparison?.amountCents ?? null,
+    comparisonUnit: comparison?.unit ?? null,
+    validUntil,
     size: rawItem.displayVolume ?? null,
     brand: rawItem.manufacturer ?? null,
     moreInfo: promo.description ?? null,

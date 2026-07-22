@@ -6,14 +6,14 @@
 // within each), converts each product into the shared display shape, and
 // deduplicates by fingerprint (Willys's scraper doesn't extract a barcode,
 // so there's no gtin to prefer) into one product with a `storeOffers` array -
-// same shape Coop/ICA use, just with always-null gtin/variantGroup/
-// comparisonPrice/validUntil since the Willys scraper doesn't extract those.
+// same shape Coop/ICA use.
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
 import { WILLYS_BADGE_MAP, normalizeBadges } from "../categories/badges.js";
+import { buildFingerprint } from "../lib/fingerprint.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -55,11 +55,18 @@ function combineMoreInfo(rawProduct) {
   return [rawProduct.moreInfo, rawProduct.max].filter(Boolean).join(" · ") || null;
 }
 
-function generateFingerprint(productData) {
-  const { badges, categoryName, store, fingerprint, image, moreInfo, ...rest } = productData;
-  return Object.values(rest)
-    .map((v) => (v === null || v === undefined ? "NULL" : String(v).toUpperCase().replace(/\s/g, "")))
-    .join("");
+// Identity fields only - title/size/brand, the same subset Coop/ICA build
+// their fallback fingerprint from (see products/coop/fetch.js's
+// generateFingerprint for the full reasoning). Deliberately excludes every
+// price/deal field: confirmed empirically that 48 of 86 products priced
+// differently between the willys/willys-hemma assortments, so including
+// price here would fingerprint the same physical product differently
+// depending on which assortment it was read from, splitting what should be
+// one product + two storeOffers into two unlinked products instead - and
+// would keep re-splitting it every time either assortment's price changed
+// week over week.
+function generateFingerprint(title, size, brand) {
+  return buildFingerprint({ title, size, brand });
 }
 
 function normalizeProduct(rawProduct, store) {
@@ -70,16 +77,7 @@ function normalizeProduct(rawProduct, store) {
 
   const title = removeTrailingPeriod(rawProduct.title);
   const size = removeTrailingPeriod(rawProduct.size);
-
-  const fingerprint = generateFingerprint({
-    title,
-    priceCents: rawProduct.priceCents,
-    unit: rawProduct.unit,
-    deal: rawProduct.deal,
-    size,
-    brand: rawProduct.brand,
-    isMember: rawProduct.isMemeber,
-  });
+  const fingerprint = generateFingerprint(title, size, rawProduct.brand);
 
   return {
     gtin: null,
@@ -103,10 +101,13 @@ function normalizeProduct(rawProduct, store) {
       priceCents: rawProduct.priceCents,
       savingsCents: rawProduct.savingsCents,
       unit: rawProduct.unit,
-      comparisonPrice: null, // not extracted by the Willys scraper
+      comparisonPrice: rawProduct.comparisonPrice ?? null,
+      comparisonPriceCents: rawProduct.comparisonPriceCents ?? null,
+      comparisonUnit: rawProduct.comparisonUnit ?? null,
       deal: rawProduct.deal,
+      dealQuantity: rawProduct.dealQuantity ?? null,
       isMember: rawProduct.isMemeber,
-      validUntil: null, // not extracted by the Willys scraper
+      validUntil: rawProduct.validUntil ?? null,
     },
   };
 }

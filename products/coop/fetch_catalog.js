@@ -19,6 +19,8 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { buildFingerprint } from "../lib/fingerprint.js";
+import { parseComparisonPrice } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "catalog_data");
@@ -46,29 +48,37 @@ const HEADERS = {
   Referer: "https://www.coop.se/",
 };
 
-// Fallback identity for items without an ean. Excludes image/categoryName/
-// fingerprint itself - matches the pattern in products/coop/fetch.js.
-function generateFingerprint(productData) {
-  const { categoryName, fingerprint, image, gtin, ...rest } = productData;
-  return Object.values(rest)
-    .map((v) => (v === null || v === undefined ? "NULL" : String(v).toUpperCase().replace(/\s/g, "")))
-    .join("");
+// Fallback identity for items without an ean - title/size/brand only (see
+// products/coop/fetch.js's generateFingerprint for the full reasoning:
+// price/comparisonPrice are deliberately excluded since they change without
+// the underlying product changing, and product here is upserted, not
+// truncated, so a churning fingerprint would fragment the same physical
+// item into repeated duplicate rows every time its price changed).
+function generateFingerprint(title, size, brand) {
+  return buildFingerprint({ title, size, brand });
 }
 
 function mapProduct(rawItem, categoryName) {
-  const productData = {
-    title: rawItem.name ?? null,
+  const title = rawItem.name ?? null;
+  const size = rawItem.packageSizeInformation ?? null;
+  const brand = rawItem.manufacturerName ?? null;
+  const comparisonPriceText = rawItem.comparativePriceText ?? null;
+  const comparison = parseComparisonPrice(comparisonPriceText);
+
+  return {
+    title,
     priceCents:
       rawItem.salesPriceData?.b2cPrice != null ? Math.round(rawItem.salesPriceData.b2cPrice * 100) : null,
-    comparisonPrice: rawItem.comparativePriceText ?? null,
-    size: rawItem.packageSizeInformation ?? null,
-    brand: rawItem.manufacturerName ?? null,
+    comparisonPrice: comparisonPriceText,
+    comparisonPriceCents: comparison?.amountCents ?? null,
+    comparisonUnit: comparison?.unit ?? null,
+    size,
+    brand,
     image: rawItem.imageUrl ?? null,
     gtin: rawItem.ean ?? null,
     categoryName,
+    fingerprint: generateFingerprint(title, size, brand),
   };
-  productData.fingerprint = generateFingerprint(productData);
-  return productData;
 }
 
 async function fetchCategoryTree() {

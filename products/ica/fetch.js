@@ -23,6 +23,7 @@ import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
+import { parseComparisonPrice } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -69,9 +70,36 @@ function extractStorePathFromUrl(url) {
 // changing - store/categoryName (view-dependent), validUntil (rolls over
 // every campaign week), image/badges/traits (cosmetic) - so the same
 // physical product still matches itself week over week.
+//
+// Also excludes every price/deal field (priceCents, savingsCents, unit,
+// deal, comparisonPrice*, isMember) for the same reason: a weekly price or
+// promo change is the normal case for a deals feed, not evidence of a
+// different product - see products/coop/fetch.js's generateFingerprint for
+// the full reasoning (confirmed empirically on Willys: leaving price in
+// produced a different fingerprint, and therefore a duplicate product row,
+// on 56% of products that priced differently between its two assortments).
 function generateFingerprint(productData) {
-  const { moreInfo, badges, traits, categoryName, fingerprint, image, store, gtin, validUntil, variantGroup, ...rest } =
-    productData;
+  const {
+    moreInfo,
+    badges,
+    traits,
+    categoryName,
+    fingerprint,
+    image,
+    store,
+    gtin,
+    validUntil,
+    variantGroup,
+    priceCents,
+    savingsCents,
+    unit,
+    deal,
+    comparisonPrice,
+    comparisonPriceCents,
+    comparisonUnit,
+    isMember,
+    ...rest
+  } = productData;
   return buildFingerprint(rest);
 }
 
@@ -92,11 +120,16 @@ function withSavings(priceCents, regularPriceCents) {
   return { priceCents, savingsCents };
 }
 
+// dealQuantity is the resolved "N" behind a multi-buy mechanic (FIXED/
+// BENFIXED below) - kept alongside the already-divided priceCents purely as
+// an audit trail (so "why is this 8,33kr?" is answerable from the row
+// itself: "3 för 25,00" / 3), not because anything downstream needs to
+// redo the division.
 function resolvePriceAndDeal(offer) {
   const regularPriceCents = parsePriceToCents(offer.stores?.[0]?.regularPrice);
   const m = offer.parsedMechanics;
 
-  if (!m) return { ...withSavings(regularPriceCents, regularPriceCents), unit: null, deal: null };
+  if (!m) return { ...withSavings(regularPriceCents, regularPriceCents), unit: null, deal: null, dealQuantity: null };
 
   if (m.benefitType === "FIXED" && m.quantity >= 2) {
     // value2 is the total for `quantity` items (e.g. "2 för 75" -> value2
@@ -104,7 +137,7 @@ function resolvePriceAndDeal(offer) {
     // price like BENFIXED below, instead of storing the raw multi-buy total.
     const totalCents = parsePriceToCents(m.value2);
     const priceCents = totalCents != null ? Math.round(totalCents / m.quantity) : regularPriceCents;
-    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: m.value1 || null };
+    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: m.value1 || null, dealQuantity: m.quantity };
   }
 
   if (m.benefitType === "PERCOFF") {
@@ -113,7 +146,12 @@ function resolvePriceAndDeal(offer) {
       regularPriceCents != null && Number.isFinite(pct)
         ? Math.round(regularPriceCents * (1 - pct / 100))
         : regularPriceCents;
-    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: offer.details?.mechanicInfo ?? null };
+    return {
+      ...withSavings(priceCents, regularPriceCents),
+      unit: null,
+      deal: offer.details?.mechanicInfo ?? null,
+      dealQuantity: null,
+    };
   }
 
   if (m.benefitType === "BENFIXED" && m.quantity >= 1) {
@@ -129,11 +167,16 @@ function resolvePriceAndDeal(offer) {
       regularPriceCents != null && Number.isFinite(payForQuantity)
         ? Math.round((regularPriceCents * payForQuantity) / m.quantity)
         : regularPriceCents;
-    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: offer.details?.mechanicInfo ?? null };
+    return {
+      ...withSavings(priceCents, regularPriceCents),
+      unit: null,
+      deal: offer.details?.mechanicInfo ?? null,
+      dealQuantity: m.quantity > 1 ? m.quantity : null,
+    };
   }
 
   if (m.quantity <= 1 && m.benefitType === "FIXED") {
-    return { ...withSavings(regularPriceCents, regularPriceCents), unit: "/st", deal: null };
+    return { ...withSavings(regularPriceCents, regularPriceCents), unit: "/st", deal: null, dealQuantity: null };
   }
 
   // Any other/unknown mechanic.
@@ -141,6 +184,7 @@ function resolvePriceAndDeal(offer) {
     ...withSavings(regularPriceCents, regularPriceCents),
     unit: null,
     deal: offer.details?.mechanicInfo ?? null,
+    dealQuantity: null,
   };
 }
 
@@ -150,7 +194,7 @@ function resolvePriceAndDeal(offer) {
 // than nested inside one row's JSON.
 function mapOffer(offer, storePath) {
   const details = offer.details ?? {};
-  const { priceCents, savingsCents, unit, deal } = resolvePriceAndDeal(offer);
+  const { priceCents, savingsCents, unit, deal, dealQuantity } = resolvePriceAndDeal(offer);
   const categoryName = offer.category?.articleGroupName ?? "Ospecificerat";
 
   const moreInfoParts = [offer.restriction, details.customerInformation, details.disclaimer, offer.condition].filter(
@@ -161,6 +205,9 @@ function mapOffer(offer, storePath) {
   const eans = offer.eans && offer.eans.length > 0 ? offer.eans : [null];
   const variantGroup = eans.length > 1 ? offer.id : null;
 
+  const comparisonPriceText = offer.comparisonPrice ?? null;
+  const comparison = parseComparisonPrice(comparisonPriceText);
+
   return eans.map((ean) => {
     const productData = {
       title: ean?.articleDescription || details.name || null,
@@ -168,10 +215,13 @@ function mapOffer(offer, storePath) {
       savingsCents,
       unit,
       deal,
+      dealQuantity,
       size: details.packageInformation ?? null,
       brand: details.brand ?? null,
       moreInfo,
-      comparisonPrice: offer.comparisonPrice ?? null,
+      comparisonPrice: comparisonPriceText,
+      comparisonPriceCents: comparison?.amountCents ?? null,
+      comparisonUnit: comparison?.unit ?? null,
       image: ean?.image ?? null,
       isMember: offer.traits?.includes("Stammis") ?? false,
       traits: offer.traits ?? [],
