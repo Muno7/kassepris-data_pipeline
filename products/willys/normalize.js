@@ -4,9 +4,9 @@
 // - not one file per store, since Willys groups all stores into one of these
 // two shared newspaper assortments, confirmed identical across every store
 // within each), converts each product into the shared display shape, and
-// deduplicates by fingerprint (Willys's scraper doesn't extract a barcode,
-// so there's no gtin to prefer) into one product with a `storeOffers` array -
-// same shape Coop/ICA use.
+// deduplicates - by gtin when fetch.js recovered one (see its
+// extractGtinFromImageUrl), by fingerprint otherwise - into one product with
+// a `storeOffers` array, same shape Coop/ICA use.
 
 import fs from "fs";
 import path from "path";
@@ -80,7 +80,7 @@ function normalizeProduct(rawProduct, store) {
   const fingerprint = generateFingerprint(title, size, rawProduct.brand);
 
   return {
-    gtin: null,
+    gtin: rawProduct.gtin ?? null,
     fingerprint,
     variantGroup: null,
 

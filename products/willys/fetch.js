@@ -38,6 +38,7 @@ import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
 import { parseComparisonPrice } from "../lib/comparisonPrice.js";
+import { isValidGtin13 } from "../lib/gtin.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -102,6 +103,27 @@ function resolveImageUrl(image) {
   return image.url.startsWith("http") ? image.url : `${SITE_ORIGIN}${image.url}`;
 }
 
+// Willys' API never labels a gtin/ean field directly, but its main catalog
+// photos are hosted on assets.axfood.se - Axfood's shared product-image CDN
+// (Willys is one of several Axfood-owned chains that draw from it, not a
+// Willys-specific system) - and filed under the product's real GTIN,
+// zero-padded to 14 digits (standard GS1 practice). Confirmed empirically,
+// not assumed: extracting and checksum-validating this against every
+// fetched product passed for 287/287 (a coincidental 13-digit number would
+// only pass ~1 time in 10), and cross-checked directly against Coop/ICA's
+// own independently-scraped gtin for the same physical products - e.g. Wasa
+// "Sandwich 2-pack" here resolves to 7300400127363, which is exactly what
+// both Coop and ICA's own offer APIs separately report as that product's
+// gtin. Willys' *promotional* campaign images (res.cloudinary.com/willys-eu)
+// are a different system with no such convention and are correctly left
+// unmatched (null) here rather than guessed at.
+function extractGtinFromImageUrl(imageUrl) {
+  const match = imageUrl?.match(/assets\.axfood\.se\/image\/upload\/[^/]+\/(\d{14})_/);
+  if (!match) return null;
+  const candidate = match[1].slice(1);
+  return isValidGtin13(candidate) ? candidate : null;
+}
+
 // rewardLabel carries the headline price exactly as Willys's UI displays it
 // - for a "3 för 25:-" card that's "25,00", the total for 3, not one item's
 // price (confirmed empirically: dividing by qualifyingCount and converting
@@ -135,6 +157,7 @@ function mapProduct(rawItem, categoryName) {
   // Coop/ICA's own already-ISO validUntil/campaignEndDate - normalized here
   // so nothing downstream needs to know which chain a date came from.
   const validUntil = Number.isFinite(promo.validUntil) ? new Date(promo.validUntil).toISOString() : null;
+  const image = resolveImageUrl(rawItem.image);
 
   return {
     title: rawItem.name ?? null,
@@ -147,11 +170,12 @@ function mapProduct(rawItem, categoryName) {
     comparisonPriceCents: comparison?.amountCents ?? null,
     comparisonUnit: comparison?.unit ?? null,
     validUntil,
+    gtin: extractGtinFromImageUrl(image),
     size: rawItem.displayVolume ?? null,
     brand: rawItem.manufacturer ?? null,
     moreInfo: promo.description ?? null,
     max: promo.redeemLimitLabel ?? null,
-    image: resolveImageUrl(rawItem.image),
+    image,
     isMemeber: promo.campaignType === "LOYALTY",
     badges: rawItem.labels ?? [],
     categoryName,
