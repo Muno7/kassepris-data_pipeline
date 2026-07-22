@@ -82,13 +82,17 @@ async function importCoopCatalog() {
       upsertedProducts++;
 
       await client.query(
-        `INSERT INTO product_online_price (product_id, price_cents, comparison_price, fetched_at)
-         VALUES ($1, $2, $3, now())
+        `INSERT INTO product_online_price (
+           product_id, price_cents, comparison_price, comparison_price_cents, comparison_unit, fetched_at
+         )
+         VALUES ($1, $2, $3, $4, $5, now())
          ON CONFLICT (product_id) DO UPDATE SET
            price_cents = EXCLUDED.price_cents,
            comparison_price = EXCLUDED.comparison_price,
+           comparison_price_cents = EXCLUDED.comparison_price_cents,
+           comparison_unit = EXCLUDED.comparison_unit,
            fetched_at = now()`,
-        [productId, product.priceCents, product.comparisonPrice]
+        [productId, product.priceCents, product.comparisonPrice, product.comparisonPriceCents, product.comparisonUnit]
       );
       upsertedPrices++;
     }

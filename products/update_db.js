@@ -27,6 +27,26 @@ function extractIcaStorePathFromUrl(url) {
   return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, "") : url;
 }
 
+// Appends a price_history row only when price_cents actually differs from
+// the most recently recorded one for this (store, product) pair - keeps the
+// log's growth proportional to real price movement, not to how often this
+// script runs (store_product itself is fully truncated/reloaded every run
+// and has no memory of "before now" - see db/schema.sql's price_history
+// comment for why that's not enough for a trend/lowest-price view).
+async function recordPriceHistoryIfChanged(client, storeId, productId, priceCents, comparisonPriceCents, comparisonUnit) {
+  await client.query(
+    `WITH last AS (
+       SELECT price_cents FROM price_history
+       WHERE store_id = $1 AND product_id = $2
+       ORDER BY recorded_at DESC LIMIT 1
+     )
+     INSERT INTO price_history (store_id, product_id, price_cents, comparison_price_cents, comparison_unit)
+     SELECT $1, $2, $3, $4, $5
+     WHERE NOT EXISTS (SELECT 1 FROM last WHERE price_cents IS NOT DISTINCT FROM $3)`,
+    [storeId, productId, priceCents, comparisonPriceCents, comparisonUnit]
+  );
+}
+
 // Willys's storeOffers[].store is an assortment slug ("willys"/"willys-hemma"),
 // not a single store's external_id - every store in that assortment shares
 // the same catalog (confirmed empirically), so one storeOffer expands into a
@@ -146,15 +166,19 @@ async function importProducts() {
           for (const storeId of storeIds) {
             await client.query(
               `INSERT INTO store_product (
-                 store_id, product_id, price_cents, savings_cents, unit, comparison_price, deal, is_member, valid_until
+                 store_id, product_id, price_cents, savings_cents, unit, comparison_price,
+                 comparison_price_cents, comparison_unit, deal, deal_quantity, is_member, valid_until
                )
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                ON CONFLICT (store_id, product_id) DO UPDATE SET
                  price_cents = EXCLUDED.price_cents,
                  savings_cents = EXCLUDED.savings_cents,
                  unit = EXCLUDED.unit,
                  comparison_price = EXCLUDED.comparison_price,
+                 comparison_price_cents = EXCLUDED.comparison_price_cents,
+                 comparison_unit = EXCLUDED.comparison_unit,
                  deal = EXCLUDED.deal,
+                 deal_quantity = EXCLUDED.deal_quantity,
                  is_member = EXCLUDED.is_member,
                  valid_until = EXCLUDED.valid_until`,
               [
@@ -164,12 +188,17 @@ async function importProducts() {
                 offer.savingsCents,
                 offer.unit,
                 offer.comparisonPrice,
+                offer.comparisonPriceCents,
+                offer.comparisonUnit,
                 offer.deal,
+                offer.dealQuantity,
                 offer.isMember,
                 offer.validUntil,
               ]
             );
             insertedLinks++;
+
+            await recordPriceHistoryIfChanged(client, storeId, productId, offer.priceCents, offer.comparisonPriceCents, offer.comparisonUnit);
           }
         }
       }
