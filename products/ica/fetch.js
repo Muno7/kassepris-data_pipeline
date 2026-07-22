@@ -4,50 +4,75 @@
 // store offer page HTML and pulls the window.__INITIAL_DATA__ JSON blob out
 // of it - ICA server-renders every offer into that blob already, so there is
 // no API call to make and no browser involved, just one HTTP GET per store.
+//
+// Production-ingestion concerns (retries, backoff, rate limiting, caching,
+// checkpointing, schema drift detection, metrics) live in products/lib/ and
+// are shared infrastructure, not ICA-specific - this file only describes
+// what to fetch and how to map it.
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { pool } from "../../db/pool.js";
+import { createLogger } from "../lib/logger.js";
+import { createMetrics } from "../lib/metrics.js";
+import { createHttpClient } from "../lib/httpClient.js";
+import { createCheckpoint } from "../lib/checkpoint.js";
+import { createSchemaCheck } from "../lib/schemaCheck.js";
+import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
+import { runWithConcurrency } from "../lib/concurrency.js";
+import { buildFingerprint } from "../lib/fingerprint.js";
+import { parsePriceToCents } from "../lib/priceParsing.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
+const STATE_DIR = path.resolve(__dirname, ".state");
 
-// ICA's edge protection (Akamai) blocks bursts of concurrent requests, so
-// this chain needs to be fetched slowly.
-const CONCURRENCY = 3;
-const DELAY_MS = 250;
+// Left tunable per-environment: ICA's edge protection (Akamai) blocks bursts
+// of concurrent requests, so this chain needs a lower concurrency ceiling
+// than Coop/Willys tolerate - and unlike the old hardcoded delay, the actual
+// request pacing now comes from ICA's own published RateLimit-* headers
+// (see products/lib/httpClient.js's onRateLimitInfo), so there's no fixed
+// DELAY_MS to tune here anymore.
+const CONCURRENCY = getEnvInt("ICA_FETCH_CONCURRENCY", 3);
+const MAX_RETRIES = getEnvInt("ICA_FETCH_MAX_RETRIES", 4);
 
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
+// One set of shared collaborators for this whole run - a single client/
+// logger/metrics instance so retry counts, cache hits, etc. accumulate
+// across every store instead of resetting per request. cacheDir is omitted:
+// ICA's pages are served `Cache-Control: no-store` (confirmed empirically),
+// so a local response cache would never get a usable hit here - the offers
+// genuinely change from one fetch to the next, unlike Coop's 15-minute-fresh
+// campaign data.
+const logger = createLogger("ica:fetch");
+const metrics = createMetrics("ica-fetch");
+const httpClient = createHttpClient({
+  name: "ica-fetch",
+  logger,
+  metrics,
+  maxRetries: MAX_RETRIES,
+  minDelayMs: 100,
+});
+const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
+const offersSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-offers.json"));
 
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
+// Store pages are addressed by their URL slug elsewhere in the pipeline
+// (normalize.js, update_db.js), not ICA's internal store id - this recovers
+// that slug from the URL we already have on hand instead of a second lookup.
 function extractStorePathFromUrl(url) {
   const prefix = "https://www.ica.se/erbjudanden/";
   return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, "") : url;
 }
 
-// Fallback identity for offers without a gtin. Excludes gtin/validUntil/
-// variantGroup too - the barcode and grouping key are stored separately, and
-// validUntil changes every campaign week, which would otherwise break dedup
-// across weekly runs.
+// Gives every offer without a gtin a stable identity to upsert/dedupe on
+// anyway. Excludes fields that can change without the underlying product
+// changing - store/categoryName (view-dependent), validUntil (rolls over
+// every campaign week), image/badges/traits (cosmetic) - so the same
+// physical product still matches itself week over week.
 function generateFingerprint(productData) {
   const { moreInfo, badges, traits, categoryName, fingerprint, image, store, gtin, validUntil, variantGroup, ...rest } =
     productData;
-  return Object.values(rest)
-    .map((v) => (v === null || v === undefined ? "NULL" : String(v).toUpperCase().replace(/\s/g, "")))
-    .join("");
-}
-
-function parsePriceToCents(str) {
-  if (!str) return null;
-  const first = str.split(/[-–]/)[0].trim();
-  const normalized = first.replace(",", ".").replace(/[^\d.]/g, "");
-  const val = parseFloat(normalized);
-  return Number.isFinite(val) ? Math.round(val * 100) : null;
+  return buildFingerprint(rest);
 }
 
 // ICA's mechanic types vary (plain multi-buy, percentage off, "buy X pay for
@@ -92,8 +117,18 @@ function resolvePriceAndDeal(offer) {
   }
 
   if (m.benefitType === "BENFIXED" && m.quantity >= 1) {
-    const totalCents = parsePriceToCents(m.value2);
-    const priceCents = totalCents != null ? Math.round(totalCents / m.quantity) : regularPriceCents;
+    // value2 is literally the word "betala" ("pay") for this mechanic, not a
+    // price - confirmed empirically, so parsePriceToCents(m.value2) was
+    // always null and this branch was silently falling back to
+    // regularPriceCents, i.e. never actually applying the discount. The
+    // "pay for N" count lives in value3 instead (e.g. "Köp 3 betala för 2":
+    // quantity=3, value3="för 2") - per-item price is
+    // regularPrice * payForQuantity / quantity.
+    const payForQuantity = parseInt(m.value3?.match(/(\d+)/)?.[1], 10);
+    const priceCents =
+      regularPriceCents != null && Number.isFinite(payForQuantity)
+        ? Math.round((regularPriceCents * payForQuantity) / m.quantity)
+        : regularPriceCents;
     return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: offer.details?.mechanicInfo ?? null };
   }
 
@@ -151,6 +186,12 @@ function mapOffer(offer, storePath) {
   });
 }
 
+// Pulls the page's embedded state out of its `<script>` tag by brace-
+// matching rather than a regex, since the blob contains nested objects and
+// string values that could themselves contain "}" - a naive regex would
+// truncate early. Kept ICA-specific rather than moved to products/lib/,
+// since no other chain currently serves data this way; worth promoting to
+// shared code if a second chain ever does.
 function extractInitialData(html) {
   const marker = "window.__INITIAL_DATA__ = ";
   const start = html.indexOf(marker);
@@ -188,15 +229,44 @@ function extractInitialData(html) {
   return JSON.parse(jsonStr);
 }
 
+// Fails loudly if ICA ever stops embedding the state blob the way this
+// scraper expects (a redesign, an A/B test, a bot-detection page swapped in
+// for our request), instead of silently writing an empty offers file that
+// would just look like "this store has no deals this week" downstream.
+function validateExtractedData(data) {
+  if (!data || typeof data !== "object") throw new Error("window.__INITIAL_DATA__ not found or unparsable");
+  if (data.offers !== undefined && typeof data.offers !== "object") {
+    throw new Error("page data has unexpected `offers` shape");
+  }
+}
+
+// Accumulated across every store fetched this run rather than checked once -
+// see products/lib/schemaCheck.js for why sampling a single response can
+// produce false positives on sparse/optional fields. Scoped to just the
+// offers substructure, not ICA's whole page-state blob (navigation, footer,
+// unrelated widgets) - fingerprinting the entire blob would bury real drift
+// in noise from page chrome nobody here depends on.
+const offersSchemaAccumulator = offersSchemaCheck.createAccumulator();
+
+// Fetches, validates, and writes one store's offers - the single unit of
+// work that concurrency, retries, and checkpointing all operate on.
 async function fetchOneStore(store) {
-  await sleep(DELAY_MS);
+  if (checkpoint.isDone(store.url)) {
+    logger.debug("skipping, already completed (resumed run)", { store: store.url });
+    return;
+  }
 
-  const res = await fetch(store.url, { headers: { "User-Agent": USER_AGENT } });
-  if (!res.ok) throw new Error(`page returned ${res.status}`);
-  const html = await res.text();
-
+  const { text: html } = await httpClient.fetchText(store.url, { headers: { "User-Agent": DEFAULT_USER_AGENT } });
   const data = extractInitialData(html);
-  if (!data) throw new Error("window.__INITIAL_DATA__ not found");
+
+  try {
+    validateExtractedData(data);
+  } catch (err) {
+    metrics.recordValidationFailure();
+    throw err;
+  }
+
+  if (data.offers) offersSchemaAccumulator.accumulate(data.offers);
 
   const offerLists = [
     data.offers?.weeklyOffers,
@@ -217,30 +287,17 @@ async function fetchOneStore(store) {
   }
 
   fs.writeFileSync(path.join(DATA_DIR, `${storePath}.json`), JSON.stringify(products, null, 2));
+
+  // Only mark done once the file is actually written, so a crash between
+  // fetch and write doesn't skip re-fetching this store on resume.
+  checkpoint.markDone(store.url);
   return products.length;
 }
 
-async function runWithConcurrency(items, limit, worker) {
-  let cursor = 0;
-  let ok = 0;
-  let failed = 0;
-  async function next() {
-    while (cursor < items.length) {
-      const item = items[cursor++];
-      try {
-        await worker(item);
-        ok++;
-      } catch (err) {
-        failed++;
-        console.warn(`  Failed "${item.url}": ${err.message}`);
-      }
-      if ((ok + failed) % 100 === 0) console.log(`  Progress: ${ok + failed}/${items.length}`);
-    }
-  }
-  await Promise.all(Array.from({ length: limit }, next));
-  return { ok, failed };
-}
-
+// Entry point: fetches every ICA store's offers in one run and prints a
+// full ingestion report at the end regardless of partial failures, so a
+// scheduled run's health is visible from its own output, not just inferred
+// from silence.
 export async function fetchAllIcaStores() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -248,8 +305,35 @@ export async function fetchAllIcaStores() {
     `SELECT s.url, s.name FROM stores s JOIN chain c ON s.chain_id = c.id WHERE c.slug = 'ica' AND s.url IS NOT NULL`
   );
 
-  console.log(`[ICA] Fetching offers for ${stores.length} stores (concurrency ${CONCURRENCY}, ${DELAY_MS}ms delay)...`);
-  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore);
-  console.log(`[ICA] Done: ${ok} stores fetched, ${failed} failed. Raw output -> ${DATA_DIR}`);
+  if (checkpoint.resumedCount > 0) {
+    logger.info("resuming interrupted run", { alreadyDone: checkpoint.resumedCount, total: stores.length });
+  }
+
+  logger.info("fetching offers", { stores: stores.length, concurrency: CONCURRENCY });
+  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore, {
+    onFailure: (store, err) => logger.error("store fetch failed", { store: store.url, error: err.message }),
+    onProgress: (done, total) => logger.info("progress", { done, total }),
+  });
+  logger.info("done", { ok, failed, total: stores.length, dataDir: DATA_DIR });
+
+  const schemaResult = offersSchemaAccumulator.finish();
+  if (schemaResult.changed) {
+    metrics.recordSchemaChange(`offers: +[${schemaResult.added.join(",")}] -[${schemaResult.removed.join(",")}]`);
+    logger.warn("offers page schema changed since last run", schemaResult);
+  }
+
+  // A fully successful run means every store either fetched fresh or was
+  // already done from a prior resume - clear the checkpoint so the next
+  // scheduled run starts clean rather than skipping stores forever.
+  if (failed === 0) checkpoint.clear();
+
+  metrics.report();
   return { ok, failed, total: stores.length };
+}
+
+// Only runs automatically when invoked directly - products/run.js imports
+// fetchAllIcaStores() instead, to orchestrate Coop and ICA in one process.
+if (path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])) {
+  await fetchAllIcaStores();
+  await pool.end();
 }

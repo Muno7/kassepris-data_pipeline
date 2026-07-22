@@ -5,28 +5,61 @@
 // writes the raw response - reshaped into the shared product field names -
 // to data/{store}.json. No browser involved: this is a plain HTTP request
 // per store.
+//
+// Production-ingestion concerns (retries, backoff, rate limiting, caching,
+// checkpointing, schema drift detection, metrics) live in products/lib/ and
+// are shared infrastructure, not Coop-specific - this file only describes
+// what to fetch and how to map it.
 
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { pool } from "../../db/pool.js";
+import { createLogger } from "../lib/logger.js";
+import { createMetrics } from "../lib/metrics.js";
+import { createHttpClient } from "../lib/httpClient.js";
+import { createCheckpoint } from "../lib/checkpoint.js";
+import { createSchemaCheck } from "../lib/schemaCheck.js";
+import { requireEnv, getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
+import { runWithConcurrency } from "../lib/concurrency.js";
+import { buildFingerprint } from "../lib/fingerprint.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const DATA_DIR = path.resolve(__dirname, "data");
-const CONCURRENCY = 10;
-
-const USER_AGENT =
-  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36";
+const STATE_DIR = path.resolve(__dirname, ".state");
+// Left tunable per-environment rather than hardcoded, since the right value
+// depends on what Coop's infrastructure tolerates today, not on this code.
+const CONCURRENCY = getEnvInt("COOP_FETCH_CONCURRENCY", 10);
+const MAX_RETRIES = getEnvInt("COOP_FETCH_MAX_RETRIES", 4);
 
 // Public client keys shipped in Coop's own frontend bundle - every visitor's
-// browser sends these, they are not secret credentials.
-const PRODUCTS_SUBSCRIPTION_KEY = "32895bd5b86e4a5ab6e94fb0bc8ae234"; // external.api.coop.se (offers)
-const STORE_INFO_SUBSCRIPTION_KEY = "990520e65cc44eef89e9e9045b57f4e9"; // proxy.api.coop.se (store list)
+// browser sends these, they are not secret credentials. Externalized to .env
+// for config hygiene (easy to rotate/override without a code change), not
+// because they need to be hidden.
+const PRODUCTS_SUBSCRIPTION_KEY = requireEnv("COOP_PRODUCTS_SUBSCRIPTION_KEY"); // external.api.coop.se (offers)
+const STORE_INFO_SUBSCRIPTION_KEY = requireEnv("COOP_STORE_INFO_SUBSCRIPTION_KEY"); // proxy.api.coop.se (store list)
 
-// Coop's offers API groups products by an internal team taxonomy
-// (categoryTeam.name) that doesn't match the storefront's filter-button
-// category names the normalizer expects. This bridges the two.
+// One set of shared collaborators for this whole run - a single client/
+// logger/metrics instance so retry counts, cache hits, etc. accumulate
+// across every store instead of resetting per request.
+const logger = createLogger("coop:fetch");
+const metrics = createMetrics("coop-fetch");
+const httpClient = createHttpClient({
+  name: "coop-fetch",
+  logger,
+  metrics,
+  cacheDir: path.join(STATE_DIR, "cache"),
+  maxRetries: MAX_RETRIES,
+});
+const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
+const offersSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-offers.json"));
+const storeListSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-stores.json"));
+
+// Bridges Coop's internal team taxonomy (categoryTeam.name, meant for their
+// own warehouse/merchandising org) to the storefront's customer-facing
+// category names, which is what the normalizer expects to map onto our
+// shared display categories.
 const TEAM_TO_BUTTON_CATEGORY = {
   "Chark/Deli/Färdigmat": "Deli & chark",
   "Färskt Protein": "Fågel, fisk & kött",
@@ -45,17 +78,19 @@ const TEAM_TO_BUTTON_CATEGORY = {
 };
 const FALLBACK_BUTTON_CATEGORY = "Hem & fritid";
 
-// Fallback identity for offers without a gtin. Excludes gtin/validUntil/
-// variantGroup too - the barcode and grouping key are stored separately, and
-// validUntil changes every campaign week, which would otherwise break dedup
-// across weekly runs.
+// Gives every offer without a gtin a stable identity to upsert/dedupe on
+// anyway. Excludes fields that can change without the underlying product
+// changing - store/categoryName (view-dependent, not product-dependent),
+// validUntil (rolls over every campaign week), image/badges (cosmetic) -
+// so the same physical product still matches itself week over week.
 function generateFingerprint(productData) {
   const { badges, categoryName, store, fingerprint, image, gtin, validUntil, variantGroup, ...rest } = productData;
-  return Object.values(rest)
-    .map((v) => (v === null || v === undefined ? "NULL" : String(v).toUpperCase().replace(/\s/g, "")))
-    .join("");
+  return buildFingerprint(rest);
 }
 
+// Reshapes one raw Coop offer into the field names every chain's normalizer
+// expects, so nothing downstream ever needs to know which chain a product
+// came from.
 function mapOfferFields(offer) {
   const priceInformation = offer.priceInformation ?? {};
   const content = offer.content ?? {};
@@ -106,16 +141,42 @@ function mapOffer(offer, storePath) {
   });
 }
 
+// Fails loudly if Coop ever changes this endpoint's shape, instead of
+// silently building an empty/broken ledger map that every store lookup
+// downstream would then fail against one at a time.
+function validateStoreListResponse(data) {
+  if (!Array.isArray(data?.stores)) throw new Error("store list response missing/invalid `stores` array");
+}
+
+// Confirmed empirically: stores with nothing on offer this week return a
+// bare `{}` (200 OK, no sortingGroups key at all) rather than an empty
+// array - a legitimate "zero offers" state, not a broken response, and a
+// stable one for certain store formats (mini/café stores), so treating it
+// as a validation failure would flag the same stores as "failed" on every
+// single run forever. Only a `sortingGroups` that's present but not an
+// array is an actual schema violation worth failing on.
+function validateOffersResponse(data) {
+  if (data.sortingGroups !== undefined && !Array.isArray(data.sortingGroups)) {
+    throw new Error("offers response has non-array `sortingGroups`");
+  }
+}
+
 // One bulk request gives every store's ledgerAccountNumber (the id Coop's
 // offers API actually needs), keyed by store URL. Cached so all stores share
 // a single bulk fetch instead of redoing it each time.
 let ledgerByUrlPromise = null;
 
 async function loadLedgerMap() {
-  const res = await fetch("https://proxy.api.coop.se/external/store/stores?api-version=v5", {
+  const { data } = await httpClient.fetchJson("https://proxy.api.coop.se/external/store/stores?api-version=v5", {
     headers: { "Ocp-Apim-Subscription-Key": STORE_INFO_SUBSCRIPTION_KEY, Accept: "application/json" },
   });
-  const data = await res.json();
+  validateStoreListResponse(data);
+
+  const schemaResult = storeListSchemaCheck.check(data);
+  if (schemaResult.changed) {
+    metrics.recordSchemaChange(`store-list: +[${schemaResult.added.join(",")}] -[${schemaResult.removed.join(",")}]`);
+    logger.warn("store list API schema changed since last run", schemaResult);
+  }
 
   const map = new Map();
   for (const store of data.stores) {
@@ -126,59 +187,67 @@ async function loadLedgerMap() {
   return map;
 }
 
+// Looks up one store's ledger id against the shared bulk map, triggering
+// that bulk fetch at most once no matter how many stores ask concurrently.
 async function getLedgerAccountNumber(storeExternalId) {
   if (!ledgerByUrlPromise) ledgerByUrlPromise = loadLedgerMap();
   const map = await ledgerByUrlPromise;
   return map.get(storeExternalId) ?? null;
 }
 
+// Built up across every store fetched this run rather than checked once -
+// see products/lib/schemaCheck.js for why sampling just one store's
+// response produces false positives on Coop's sparse/optional fields.
+const offersSchemaAccumulator = offersSchemaCheck.createAccumulator();
+
+// Fetches, validates, and writes one store's offers - the single unit of
+// work that concurrency, retries, and checkpointing all operate on.
 async function fetchOneStore(store) {
+  if (checkpoint.isDone(store.external_id)) {
+    logger.debug("skipping, already completed (resumed run)", { store: store.external_id });
+    return;
+  }
+
   const ledgerId = await getLedgerAccountNumber(store.external_id);
   if (!ledgerId) throw new Error("no ledgerAccountNumber found");
 
-  const res = await fetch(
+  const { data } = await httpClient.fetchJson(
     `https://external.api.coop.se/dke/offers/sorting-groups/${ledgerId}?api-version=v2&clustered=true&grouped=true`,
     {
       headers: {
         "Ocp-Apim-Subscription-Key": PRODUCTS_SUBSCRIPTION_KEY,
         Accept: "application/json",
-        "User-Agent": USER_AGENT,
+        "User-Agent": DEFAULT_USER_AGENT,
       },
     }
   );
-  if (!res.ok) throw new Error(`API returned ${res.status}`);
 
-  const data = await res.json();
+  try {
+    validateOffersResponse(data);
+  } catch (err) {
+    metrics.recordValidationFailure();
+    throw err;
+  }
+
+  offersSchemaAccumulator.accumulate(data);
+
   const alla = data.sortingGroups?.find((g) => g.id === "alla");
   const offers = alla?.offers ?? [];
 
   const products = offers.flatMap((offer) => mapOffer(offer, store.external_id));
   const filename = store.external_id.replace(/\/$/, "").replace(/\//g, "-");
   fs.writeFileSync(path.join(DATA_DIR, `${filename}.json`), JSON.stringify(products, null, 2));
+
+  // Only mark done once the file is actually written, so a crash between
+  // fetch and write doesn't skip re-fetching this store on resume.
+  checkpoint.markDone(store.external_id);
   return products.length;
 }
 
-async function runWithConcurrency(items, limit, worker) {
-  let cursor = 0;
-  let ok = 0;
-  let failed = 0;
-  async function next() {
-    while (cursor < items.length) {
-      const item = items[cursor++];
-      try {
-        await worker(item);
-        ok++;
-      } catch (err) {
-        failed++;
-        console.warn(`  Failed "${item.external_id}": ${err.message}`);
-      }
-      if ((ok + failed) % 100 === 0) console.log(`  Progress: ${ok + failed}/${items.length}`);
-    }
-  }
-  await Promise.all(Array.from({ length: limit }, next));
-  return { ok, failed };
-}
-
+// Entry point: fetches every Coop store's offers in one run and prints a
+// full ingestion report at the end regardless of partial failures, so a
+// scheduled run's health is visible from its own output, not just inferred
+// from silence.
 export async function fetchAllCoopStores() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
@@ -186,8 +255,35 @@ export async function fetchAllCoopStores() {
     `SELECT s.external_id, s.name FROM stores s JOIN chain c ON s.chain_id = c.id WHERE c.slug = 'coop' AND s.external_id IS NOT NULL`
   );
 
-  console.log(`[Coop] Fetching offers for ${stores.length} stores (concurrency ${CONCURRENCY})...`);
-  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore);
-  console.log(`[Coop] Done: ${ok} stores fetched, ${failed} failed. Raw output -> ${DATA_DIR}`);
+  if (checkpoint.resumedCount > 0) {
+    logger.info("resuming interrupted run", { alreadyDone: checkpoint.resumedCount, total: stores.length });
+  }
+
+  logger.info("fetching offers", { stores: stores.length, concurrency: CONCURRENCY });
+  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore, {
+    onFailure: (store, err) => logger.error("store fetch failed", { store: store.external_id, error: err.message }),
+    onProgress: (done, total) => logger.info("progress", { done, total }),
+  });
+  logger.info("done", { ok, failed, total: stores.length, dataDir: DATA_DIR });
+
+  const schemaResult = offersSchemaAccumulator.finish();
+  if (schemaResult.changed) {
+    metrics.recordSchemaChange(`offers: +[${schemaResult.added.join(",")}] -[${schemaResult.removed.join(",")}]`);
+    logger.warn("offers API schema changed since last run", schemaResult);
+  }
+
+  // A fully successful run means every store either fetched fresh or was
+  // already done from a prior resume - clear the checkpoint so the next
+  // scheduled run starts clean rather than skipping stores forever.
+  if (failed === 0) checkpoint.clear();
+
+  metrics.report();
   return { ok, failed, total: stores.length };
+}
+
+// Only runs automatically when invoked directly - products/run.js imports
+// fetchAllCoopStores() instead, to orchestrate Coop and ICA in one process.
+if (path.resolve(fileURLToPath(import.meta.url)) === path.resolve(process.argv[1])) {
+  await fetchAllCoopStores();
+  await pool.end();
 }
