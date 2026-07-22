@@ -261,7 +261,7 @@ ALTER TABLE product_online_price ADD CONSTRAINT product_online_price_comparison_
 -- anything else references by id.
 CREATE TABLE IF NOT EXISTS price_history (
   id bigserial PRIMARY KEY,
-  store_id uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  store_id uuid REFERENCES stores(id) ON DELETE CASCADE,
   product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
   price_cents integer,
   comparison_price_cents integer,
@@ -271,6 +271,24 @@ CREATE TABLE IF NOT EXISTS price_history (
 
 CREATE INDEX IF NOT EXISTS idx_price_history_product_recorded ON price_history (product_id, recorded_at);
 CREATE INDEX IF NOT EXISTS idx_price_history_store_product_recorded ON price_history (store_id, product_id, recorded_at);
+
+-- Added after the table already existed, so it needs an explicit ALTER (see
+-- the `assortment_id` comment on `stores` above for why). One price_history
+-- row per real price-setting event, not one per store row: for Willys, a
+-- single storeOffer's price applies identically to every store in its
+-- assortment (up to 252 of them) - logging per store would repeat the same
+-- change that many times over, forever, on every future price change too.
+-- Confirmed empirically before this column existed: Willys already
+-- accounted for 12.9% of all price_history rows after one run despite being
+-- ~1.3% of the product catalog. Rows now carry exactly one of store_id
+-- (chains priced per physical store) or assortment_id (Willys) - store_id
+-- above is nullable specifically to make room for this.
+ALTER TABLE price_history ADD COLUMN IF NOT EXISTS assortment_id uuid REFERENCES assortment(id) ON DELETE CASCADE;
+ALTER TABLE price_history ALTER COLUMN store_id DROP NOT NULL;
+ALTER TABLE price_history DROP CONSTRAINT IF EXISTS price_history_scope_check;
+ALTER TABLE price_history ADD CONSTRAINT price_history_scope_check
+  CHECK ((store_id IS NOT NULL) <> (assortment_id IS NOT NULL));
+CREATE INDEX IF NOT EXISTS idx_price_history_assortment_product_recorded ON price_history (assortment_id, product_id, recorded_at);
 
 INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;
 INSERT INTO chain (name, slug) VALUES ('ICA', 'ica') ON CONFLICT (slug) DO NOTHING;

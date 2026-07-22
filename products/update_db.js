@@ -28,23 +28,45 @@ function extractIcaStorePathFromUrl(url) {
 }
 
 // Appends a price_history row only when price_cents actually differs from
-// the most recently recorded one for this (store, product) pair - keeps the
-// log's growth proportional to real price movement, not to how often this
-// script runs (store_product itself is fully truncated/reloaded every run
-// and has no memory of "before now" - see db/schema.sql's price_history
-// comment for why that's not enough for a trend/lowest-price view).
-async function recordPriceHistoryIfChanged(client, storeId, productId, priceCents, comparisonPriceCents, comparisonUnit) {
+// the most recently recorded one for this scope - keeps the log's growth
+// proportional to real price movement, not to how often this script runs
+// (store_product itself is fully truncated/reloaded every run and has no
+// memory of "before now" - see db/schema.sql's price_history comment for
+// why that's not enough for a trend/lowest-price view).
+//
+// scope is { storeId } for chains priced per physical store, or
+// { assortmentId } for chains (Willys) where every store in the group
+// shares one price - see recordPriceHistoryForOffer below for why that
+// distinction exists at all.
+async function recordPriceHistoryIfChanged(client, scope, productId, priceCents, comparisonPriceCents, comparisonUnit) {
+  const storeId = scope.storeId ?? null;
+  const assortmentId = scope.assortmentId ?? null;
   await client.query(
     `WITH last AS (
        SELECT price_cents FROM price_history
-       WHERE store_id = $1 AND product_id = $2
+       WHERE product_id = $3 AND store_id IS NOT DISTINCT FROM $1 AND assortment_id IS NOT DISTINCT FROM $2
        ORDER BY recorded_at DESC LIMIT 1
      )
-     INSERT INTO price_history (store_id, product_id, price_cents, comparison_price_cents, comparison_unit)
-     SELECT $1, $2, $3, $4, $5
-     WHERE NOT EXISTS (SELECT 1 FROM last WHERE price_cents IS NOT DISTINCT FROM $3)`,
-    [storeId, productId, priceCents, comparisonPriceCents, comparisonUnit]
+     INSERT INTO price_history (store_id, assortment_id, product_id, price_cents, comparison_price_cents, comparison_unit)
+     SELECT $1, $2, $3, $4, $5, $6
+     WHERE NOT EXISTS (SELECT 1 FROM last WHERE price_cents IS NOT DISTINCT FROM $4)`,
+    [storeId, assortmentId, productId, priceCents, comparisonPriceCents, comparisonUnit]
   );
+}
+
+// Writes exactly one price_history entry per real price-setting event, not
+// one per store row. For Willys, one storeOffer's price applies identically
+// to every store in its assortment (up to 252 of them) - logging per store
+// would write the same change that many times over for a single real event,
+// and keep doing that forever on every future price change too (confirmed
+// empirically: Willys already accounted for 12.9% of all price_history rows
+// after just one run, despite being ~1.3% of the product catalog). Logging
+// once per assortment instead fixes the growth rate at its source; reading
+// "price history at store X" for an assortment-grouped store means looking
+// it up by that store's assortment_id, not its own store_id.
+async function recordPriceHistoryForOffer(client, offer, productId) {
+  const scope = offer.assortmentId ? { assortmentId: offer.assortmentId } : { storeId: offer.storeIds[0] };
+  await recordPriceHistoryIfChanged(client, scope, productId, offer.priceCents, offer.comparisonPriceCents, offer.comparisonUnit);
 }
 
 // Willys's storeOffers[].store is an assortment slug ("willys"/"willys-hemma"),
@@ -52,22 +74,25 @@ async function recordPriceHistoryIfChanged(client, storeId, productId, priceCent
 // the same catalog (confirmed empirically), so one storeOffer expands into a
 // store_product row for every real store in the assortment, not just one.
 // This keeps "products at this store" a uniform store_product join for every
-// chain - no chain-specific branching needed outside this import step.
+// chain - no chain-specific branching needed outside this import step
+// (price_history is the one place that does still need to know, see above).
 async function buildStoreIdsLookup(client, slug, chainId) {
   if (slug === "willys") {
     const { rows } = await client.query(
-      `SELECT s.id, a.slug AS assortment_slug
+      `SELECT s.id, a.id AS assortment_id, a.slug AS assortment_slug
        FROM stores s
        JOIN assortment a ON a.id = s.assortment_id
        WHERE s.chain_id = $1`,
       [chainId]
     );
-    const storeIdsByAssortmentSlug = new Map();
+    const byAssortmentSlug = new Map();
     for (const row of rows) {
-      if (!storeIdsByAssortmentSlug.has(row.assortment_slug)) storeIdsByAssortmentSlug.set(row.assortment_slug, []);
-      storeIdsByAssortmentSlug.get(row.assortment_slug).push(row.id);
+      if (!byAssortmentSlug.has(row.assortment_slug)) {
+        byAssortmentSlug.set(row.assortment_slug, { storeIds: [], assortmentId: row.assortment_id });
+      }
+      byAssortmentSlug.get(row.assortment_slug).storeIds.push(row.id);
     }
-    return (offerStore) => storeIdsByAssortmentSlug.get(offerStore) ?? [];
+    return (offerStore) => byAssortmentSlug.get(offerStore) ?? { storeIds: [], assortmentId: null };
   }
 
   const { rows } = await client.query("SELECT id, external_id, url FROM stores WHERE chain_id = $1", [chainId]);
@@ -78,7 +103,7 @@ async function buildStoreIdsLookup(client, slug, chainId) {
   }
   return (offerStore) => {
     const storeId = storeIdByPath.get(offerStore.replace(/\/$/, ""));
-    return storeId ? [storeId] : [];
+    return { storeIds: storeId ? [storeId] : [], assortmentId: null };
   };
 }
 
@@ -158,7 +183,7 @@ async function importProducts() {
         insertedProducts++;
 
         for (const offer of product.storeOffers) {
-          const storeIds = getStoreIdsForOffer(offer.store);
+          const { storeIds, assortmentId } = getStoreIdsForOffer(offer.store);
           if (storeIds.length === 0) {
             unmatchedStores++;
             continue;
@@ -197,9 +222,9 @@ async function importProducts() {
               ]
             );
             insertedLinks++;
-
-            await recordPriceHistoryIfChanged(client, storeId, productId, offer.priceCents, offer.comparisonPriceCents, offer.comparisonUnit);
           }
+
+          await recordPriceHistoryForOffer(client, { storeIds, assortmentId, ...offer }, productId);
         }
       }
 
