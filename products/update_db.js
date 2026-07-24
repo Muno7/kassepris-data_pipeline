@@ -111,13 +111,11 @@ async function importProducts() {
   const client = await pool.connect();
 
   try {
-    // product is upserted, not truncated - it also holds catalog-sourced
-    // rows from products/coop/update_catalog_db.js (and eventually ICA/
-    // Willys equivalents) that this script never touches, so wiping the
-    // whole table here would delete them along with their
-    // product_online_price rows (ON DELETE CASCADE). store_product should
-    // always exactly reflect the current week's deals, so it stays a full
-    // truncate-and-reload.
+    // product is upserted, not truncated - canonical_product_id, price
+    // history, and cross-week identity continuity all depend on the same
+    // row persisting week to week rather than being dropped and recreated.
+    // store_product should always exactly reflect the current week's deals
+    // though, so it stays a full truncate-and-reload.
     console.log("Truncating store_product table...");
     await client.query("TRUNCATE store_product");
 

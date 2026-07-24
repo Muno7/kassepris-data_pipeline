@@ -23,7 +23,7 @@ import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
-import { parseComparisonPrice } from "../lib/comparisonPrice.js";
+import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.resolve(__dirname, "data");
@@ -31,12 +31,24 @@ const STATE_DIR = path.resolve(__dirname, ".state");
 
 // Left tunable per-environment: ICA's edge protection (Akamai) blocks bursts
 // of concurrent requests, so this chain needs a lower concurrency ceiling
-// than Coop/Willys tolerate - and unlike the old hardcoded delay, the actual
-// request pacing now comes from ICA's own published RateLimit-* headers
-// (see products/lib/httpClient.js's onRateLimitInfo), so there's no fixed
-// DELAY_MS to tune here anymore.
+// than Coop/Willys tolerate.
 const CONCURRENCY = getEnvInt("ICA_FETCH_CONCURRENCY", 3);
 const MAX_RETRIES = getEnvInt("ICA_FETCH_MAX_RETRIES", 4);
+
+// ICA publishes its real budget on every response: `ratelimit-policy:
+// 72;w=60` - 72 requests per 60-second window, confirmed directly against
+// live responses, not a guess. 60000/72 ≈ 833ms is the fastest sustainable
+// pace within that budget; minDelayMs (below, on the httpClient) starts a
+// few ms above it (rounded up, plus a small margin for clock/timing jitter
+// across concurrent workers) so the run paces itself correctly from request
+// one instead of starting too fast, getting throttled, and crawling back
+// via onSuccess's slow (stepDownMs) recovery - confirmed empirically that
+// starting from a too-fast default (100ms) cost about 8 of the run's ~26
+// minutes to that discover-then-recover cycle, well above the ~18-minute
+// floor 72;w=60 actually implies for 1287 stores. onRateLimitInfo (see
+// products/lib/httpClient.js) still adapts live off the real headers on top
+// of this, so a future change to ICA's published policy is still handled
+// automatically - this just corrects the starting assumption.
 
 // One set of shared collaborators for this whole run - a single client/
 // logger/metrics instance so retry counts, cache hits, etc. accumulate
@@ -52,7 +64,7 @@ const httpClient = createHttpClient({
   logger,
   metrics,
   maxRetries: MAX_RETRIES,
-  minDelayMs: 100,
+  minDelayMs: 850,
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
 const offersSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-offers.json"));
@@ -104,27 +116,27 @@ function generateFingerprint(productData) {
 }
 
 // ICA's mechanic types vary (plain multi-buy, percentage off, "buy X pay for
-// Y"). FIXED and PERCOFF resolve to an exact discounted price. BENFIXED
-// ("Köp X betala för Y") is now also resolved exactly: quantity items cost
-// value2 total, so the effective per-unit price is value2/quantity - rather
-// than falling back to the undiscounted regular price.
-// savingsCents is regularPriceCents - priceCents, computed the same way for
-// every mechanic below - null whenever there's nothing to compare against
-// (no regularPrice) or the "deal" isn't actually cheaper (e.g. rounding, or
-// a mismatched range - see parsePriceToCents' first-of-range behavior).
-function withSavings(priceCents, regularPriceCents) {
+// Y"). priceCents is always the actual price of the deal as ICA states it -
+// for a multi-buy that's the *bundle* total ("2 för 75" -> 75, not 37,50),
+// never divided down on our own (see mapOffer's comparison-price fallback
+// for where the per-item figure belongs instead - you can't actually buy
+// one item for half the deal, so priceCents shouldn't claim you can).
+//
+// savingsCents compares that bundle total against what dealQuantity items
+// would have cost at the regular per-item price - not just regularPriceCents
+// itself - since the two need to describe the same basket to be comparable.
+// null whenever there's nothing to compare against (no regularPrice) or the
+// "deal" isn't actually cheaper (e.g. rounding, or a mismatched range - see
+// parsePriceToCents' first-of-range behavior).
+function withSavings(priceCents, regularPriceCents, dealQuantity = 1) {
+  const regularTotalCents = regularPriceCents != null ? regularPriceCents * dealQuantity : null;
   const savingsCents =
-    regularPriceCents != null && priceCents != null && regularPriceCents > priceCents
-      ? regularPriceCents - priceCents
+    regularTotalCents != null && priceCents != null && regularTotalCents > priceCents
+      ? regularTotalCents - priceCents
       : null;
   return { priceCents, savingsCents };
 }
 
-// dealQuantity is the resolved "N" behind a multi-buy mechanic (FIXED/
-// BENFIXED below) - kept alongside the already-divided priceCents purely as
-// an audit trail (so "why is this 8,33kr?" is answerable from the row
-// itself: "3 för 25,00" / 3), not because anything downstream needs to
-// redo the division.
 function resolvePriceAndDeal(offer) {
   const regularPriceCents = parsePriceToCents(offer.stores?.[0]?.regularPrice);
   const m = offer.parsedMechanics;
@@ -133,11 +145,14 @@ function resolvePriceAndDeal(offer) {
 
   if (m.benefitType === "FIXED" && m.quantity >= 2) {
     // value2 is the total for `quantity` items (e.g. "2 för 75" -> value2
-    // "75" means 75kr for 2, not 75kr each) - divide down to a per-item
-    // price like BENFIXED below, instead of storing the raw multi-buy total.
-    const totalCents = parsePriceToCents(m.value2);
-    const priceCents = totalCents != null ? Math.round(totalCents / m.quantity) : regularPriceCents;
-    return { ...withSavings(priceCents, regularPriceCents), unit: null, deal: m.value1 || null, dealQuantity: m.quantity };
+    // "75" means 75kr for 2, not 75kr each) - kept as that raw bundle total.
+    const priceCents = parsePriceToCents(m.value2) ?? regularPriceCents;
+    return {
+      ...withSavings(priceCents, regularPriceCents, m.quantity),
+      unit: null,
+      deal: m.value1 || null,
+      dealQuantity: m.quantity,
+    };
   }
 
   if (m.benefitType === "PERCOFF") {
@@ -160,15 +175,18 @@ function resolvePriceAndDeal(offer) {
     // always null and this branch was silently falling back to
     // regularPriceCents, i.e. never actually applying the discount. The
     // "pay for N" count lives in value3 instead (e.g. "Köp 3 betala för 2":
-    // quantity=3, value3="för 2") - per-item price is
-    // regularPrice * payForQuantity / quantity.
+    // quantity=3, value3="för 2") - the actual total for all m.quantity
+    // items is regularPrice * payForQuantity (pay full price for
+    // payForQuantity of them, the rest are free); there's no raw bundle
+    // price text to read here the way FIXED has, so this multiplication
+    // *is* the real transaction total, not a per-item approximation of it.
     const payForQuantity = parseInt(m.value3?.match(/(\d+)/)?.[1], 10);
     const priceCents =
       regularPriceCents != null && Number.isFinite(payForQuantity)
-        ? Math.round((regularPriceCents * payForQuantity) / m.quantity)
+        ? regularPriceCents * payForQuantity
         : regularPriceCents;
     return {
-      ...withSavings(priceCents, regularPriceCents),
+      ...withSavings(priceCents, regularPriceCents, m.quantity),
       unit: null,
       deal: offer.details?.mechanicInfo ?? null,
       dealQuantity: m.quantity > 1 ? m.quantity : null,
@@ -207,6 +225,12 @@ function mapOffer(offer, storePath) {
 
   const comparisonPriceText = offer.comparisonPrice ?? null;
   const comparison = parseComparisonPrice(comparisonPriceText);
+  // Falls back to priceCents / dealQuantity only when ICA's own
+  // comparisonPrice didn't parse - see deriveComparisonFromDealQuantity for
+  // why this is a weaker (per-st, not per-kg/per-l) but still real,
+  // directly-comparable number, never a substitute for ICA's own figure
+  // when that's available.
+  const fallbackComparison = !comparison ? deriveComparisonFromDealQuantity(priceCents, dealQuantity) : null;
 
   return eans.map((ean) => {
     const productData = {
@@ -220,8 +244,8 @@ function mapOffer(offer, storePath) {
       brand: details.brand ?? null,
       moreInfo,
       comparisonPrice: comparisonPriceText,
-      comparisonPriceCents: comparison?.amountCents ?? null,
-      comparisonUnit: comparison?.unit ?? null,
+      comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+      comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
       image: ean?.image ?? null,
       isMember: offer.traits?.includes("Stammis") ?? false,
       traits: offer.traits ?? [],

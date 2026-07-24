@@ -179,6 +179,13 @@ CREATE TRIGGER product_link_canonical
 -- price across different stores in the same chain (Coop barely varies, ~0.3%,
 -- since its prices are centrally set, but storing it here costs nothing extra
 -- either way - same number of rows as before, just wider).
+--
+-- price_cents is always the real, transactable price of what `deal`
+-- describes - for a multi-buy ("3 för 25:-") that's the bundle total (25),
+-- never divided down to a synthetic per-item number on our own (you can't
+-- actually walk in and buy one item for a third of the deal). See
+-- comparison_price_cents below for the normalized per-unit figure instead -
+-- that column, not this one, is what "cheapest" should rank by.
 CREATE TABLE IF NOT EXISTS store_product (
   store_id uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
   product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
@@ -198,55 +205,42 @@ CREATE TABLE IF NOT EXISTS store_product (
 -- Willys do).
 ALTER TABLE store_product ADD COLUMN IF NOT EXISTS savings_cents integer;
 
--- price_cents is already the true single-sellable-unit price - multi-buy
--- deals ("3 för 25:-") are divided down to a per-item price at fetch time
--- (see products/willys/fetch.js and products/ica/fetch.js's
--- resolvePriceAndDeal) - but two single-item prices still aren't comparable
--- if the items are different sizes (1L milk vs 1,5L milk). These are the
--- actual per-kg/per-l/per-st price and its unit, parsed from each chain's
--- own "jämförpris" comparison-price text by products/lib/comparisonPrice.js.
--- This is the pair to compare when ranking "cheapest", not price_cents -
--- and only ever populated together: a numeric value paired with an
--- unrecognized/non-comparable unit (see that parser for the long tail of
--- ones it deliberately rejects, e.g. "kr/kg utan spad" for drained weight)
--- would be worse than no value at all, since it invites exactly the
--- apples-to-oranges comparison this column exists to prevent.
+-- price_cents (the deal's real total, see above) still isn't safe to
+-- compare across two offers on its own - a "3 för 25:-" bundle and a
+-- single-item price aren't the same basket, and even two single-item prices
+-- aren't comparable if the items are different sizes (1L milk vs 1,5L
+-- milk). comparison_price_cents/comparison_unit are the actual per-kg/
+-- per-l/per-st price - preferably parsed straight from each chain's own
+-- "jämförpris" text by products/lib/comparisonPrice.js, since that's a real
+-- per-kg/per-l figure; when a chain doesn't supply one (or it didn't parse -
+-- see that module for the long tail of non-comparable units it deliberately
+-- rejects, e.g. "kr/kg utan spad" for drained weight), it's derived instead
+-- as price_cents / deal_quantity - a weaker per-st fallback, only computed
+-- for an actual multi-buy, never a guess at weight/volume we don't have.
+-- This pair, not price_cents, is what "cheapest" should rank by - and only
+-- ever populated together, since a number without a trustworthy unit
+-- invites exactly the apples-to-oranges comparison this column exists to
+-- prevent.
 ALTER TABLE store_product ADD COLUMN IF NOT EXISTS comparison_price_cents integer;
 ALTER TABLE store_product ADD COLUMN IF NOT EXISTS comparison_unit text;
 ALTER TABLE store_product DROP CONSTRAINT IF EXISTS store_product_comparison_unit_check;
 ALTER TABLE store_product ADD CONSTRAINT store_product_comparison_unit_check
   CHECK (comparison_unit IS NULL OR comparison_unit IN ('kg', 'hg', 'g', 'l', 'st', 'm'));
 
--- The resolved "N" behind a multi-buy deal (e.g. 3 for "3 för 25:-") -
--- price_cents above is already divided by this, so it's stored purely as an
--- audit trail for why a given price_cents is what it is ("why 8,33kr? -
--- 25,00/3"), not because anything downstream needs to redo the division.
+-- The resolved "N" behind a multi-buy deal (e.g. 3 for "3 för 25:-") - what
+-- price_cents is the total price *for*, and what comparison_price_cents
+-- falls back to dividing by when the provider doesn't supply its own
+-- per-unit figure (see above).
 ALTER TABLE store_product ADD COLUMN IF NOT EXISTS deal_quantity smallint;
 
 CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (product_id);
 
--- Regular/reference price from each chain's general online catalog - not
--- tied to a specific real store (unlike store_product), since these chains'
--- online catalogs serve one shared assortment/price list rather than a
--- per-store one. This is what lets us show savings on chains whose deal feed
--- never carries an original price (Coop), and gives every product a
--- ballpark price even when it isn't currently on deal anywhere - understood
--- to be an approximation that may differ slightly from any single physical
--- store's actual price.
-CREATE TABLE IF NOT EXISTS product_online_price (
-  product_id uuid PRIMARY KEY REFERENCES product(id) ON DELETE CASCADE,
-  price_cents integer,
-  comparison_price text,
-  fetched_at timestamptz NOT NULL DEFAULT now()
-);
-
--- Same normalized comparison price as store_product - see that table's
--- comment for why price_cents alone isn't safe to compare across products.
-ALTER TABLE product_online_price ADD COLUMN IF NOT EXISTS comparison_price_cents integer;
-ALTER TABLE product_online_price ADD COLUMN IF NOT EXISTS comparison_unit text;
-ALTER TABLE product_online_price DROP CONSTRAINT IF EXISTS product_online_price_comparison_unit_check;
-ALTER TABLE product_online_price ADD CONSTRAINT product_online_price_comparison_unit_check
-  CHECK (comparison_unit IS NULL OR comparison_unit IN ('kg', 'hg', 'g', 'l', 'st', 'm'));
+-- product_online_price (Coop's general-catalog reference price, not tied to
+-- a specific store) has been removed - the catalog pipeline that populated
+-- it (products/coop/fetch_catalog.js and friends) is gone. Explicit DROP
+-- since the table already exists in already-initialized databases and
+-- CREATE TABLE IF NOT EXISTS obviously won't remove it on its own.
+DROP TABLE IF EXISTS product_online_price;
 
 -- Append-only price log, one row per (store, product) whenever price_cents
 -- actually changes (see products/update_db.js's price-history insert - it

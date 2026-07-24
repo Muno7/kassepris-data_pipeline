@@ -23,7 +23,7 @@ import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { requireEnv, getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
-import { parseComparisonPrice } from "../lib/comparisonPrice.js";
+import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -109,6 +109,7 @@ function generateFingerprint(productData) {
     priceCents,
     unit,
     deal,
+    dealQuantity,
     comparisonPrice,
     comparisonPriceCents,
     comparisonUnit,
@@ -125,26 +126,42 @@ function generateFingerprint(productData) {
 function mapOfferFields(offer) {
   const priceInformation = offer.priceInformation ?? {};
   const content = offer.content ?? {};
+  const splash = offer.unifiedSplash ?? {};
   const comparisonPriceText = content.comparativePriceText ?? null;
   const comparison = parseComparisonPrice(comparisonPriceText);
+  const priceCents = priceInformation.discountValue != null ? Math.round(priceInformation.discountValue * 100) : null;
+  const dealQuantity = priceInformation.minimumAmount ?? null;
+  // Falls back to price_cents / dealQuantity only when Coop's own
+  // comparativePriceText didn't parse - see
+  // deriveComparisonFromDealQuantity for why this is a weaker (per-st, not
+  // per-kg/per-l) but still real, directly-comparable number, never a
+  // substitute for the provider's own figure when that's available.
+  const fallbackComparison = !comparison ? deriveComparisonFromDealQuantity(priceCents, dealQuantity) : null;
 
   return {
     title: content.title ?? null,
-    priceCents: priceInformation.discountValue != null ? Math.round(priceInformation.discountValue * 100) : null,
+    // For a real multi-buy ("3 för 25:-"), discountValue is the *bundle*
+    // total (25), not a per-item price - confirmed against Coop's own raw
+    // API response (priceInformation.minimumAmount + unifiedSplash both
+    // agree on the same N, e.g. "3 för"/minimumAmount:3 together on one
+    // offer). dealType stays "pris"/"styckpris" regardless (it only ever
+    // means "unit price", not "this is a single item"), so it's not a
+    // usable signal here - unifiedSplash.prefix is the real one, and it's
+    // formatted exactly like ICA's deal text ("2 för", "3 för", ...).
+    // Deliberately left un-divided: price_cents is meant to be exactly the
+    // price of the deal as Coop states it (you can't actually buy one item
+    // for a third of it), not a synthetic per-item number - see
+    // comparisonPriceCents below for the normalized figure instead.
+    priceCents,
     unit: priceInformation.unit ?? null,
-    // Coop's dealType has been confirmed to only ever be "styckpris"/"pris"
-    // (both just mean "unit price") across the full current catalog, never
-    // an actual "N för"-style multi-buy the way ICA/Willys have - so unlike
-    // those two chains, there's no bundle quantity here to resolve
-    // discountValue against; it's already a single-item price as-is.
-    deal: priceInformation.dealType ?? null,
-    dealQuantity: null,
+    deal: splash.prefix ?? priceInformation.dealType ?? null,
+    dealQuantity,
     size: content.amountInformation ?? null,
     brand: content.brand ?? null,
     max: content.dealOfferLimitText ?? null,
     comparisonPrice: comparisonPriceText,
-    comparisonPriceCents: comparison?.amountCents ?? null,
-    comparisonUnit: comparison?.unit ?? null,
+    comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+    comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
     image: content.imageUrl ? `https:${content.imageUrl}` : null,
     isMember: priceInformation.isMemberPrice ?? false,
     badges: [],

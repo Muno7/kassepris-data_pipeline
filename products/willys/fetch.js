@@ -37,7 +37,7 @@ import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
-import { parseComparisonPrice } from "../lib/comparisonPrice.js";
+import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
 import { isValidGtin13 } from "../lib/gtin.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -126,25 +126,28 @@ function extractGtinFromImageUrl(imageUrl) {
 
 // rewardLabel carries the headline price exactly as Willys's UI displays it
 // - for a "3 för 25:-" card that's "25,00", the total for 3, not one item's
-// price (confirmed empirically: dividing by qualifyingCount and converting
-// to a comparison price lines up exactly with promo.comparePrice, which
-// Willys computes server-side - e.g. a 500g pack at "3 för 25,00" resolves
-// to 8,33/pack, and 8,33/0,5kg = 16,66/kg, matching comparePrice "16:66
-// kr/kg" exactly). Un-resolved, a multi-buy's total-for-N looks like a
-// single item's price to anything comparing it against another store's
-// already-per-item price - the exact bug this fixes. qualifyingCount (the
-// "N" Willys itself resolved the deal to) is preferred over parsing the
-// number back out of conditionLabel's free text ("3 för") since it's
-// already a clean integer and confirmed to always agree with it anyway.
+// price. Kept exactly as scraped: priceCents is meant to be the real price
+// of the deal (you can't actually buy one item for a third of it), not a
+// synthetic per-item number - see the comparisonPriceCents fallback below
+// for where the normalized per-item figure belongs instead. qualifyingCount
+// (the "N" Willys itself resolved the deal to, confirmed to always agree
+// with conditionLabel's free text "3 för") is still what dealQuantity comes
+// from - just no longer used to divide priceCents down.
 function mapProduct(rawItem, categoryName) {
   const promo = rawItem.potentialPromotions?.[0] ?? {};
   const originalPriceCents = parsePriceToCents(rawItem.priceNoUnit);
   const bundleCents = parsePriceToCents(promo.rewardLabel);
   const dealQuantity = Number.isInteger(promo.qualifyingCount) && promo.qualifyingCount > 1 ? promo.qualifyingCount : null;
-  const priceCents = bundleCents != null ? Math.round(bundleCents / (dealQuantity ?? 1)) : originalPriceCents;
+  const priceCents = bundleCents ?? originalPriceCents;
+  // Savings compares the deal's real total against what dealQuantity items
+  // would have cost at the regular per-item price - not just
+  // originalPriceCents itself - since the two need to describe the same
+  // basket to be comparable (a bundle-of-3 total isn't comparable against a
+  // single item's regular price).
+  const regularTotalCents = originalPriceCents != null ? originalPriceCents * (dealQuantity ?? 1) : null;
   const savingsCents =
-    originalPriceCents != null && priceCents != null && originalPriceCents > priceCents
-      ? originalPriceCents - priceCents
+    regularTotalCents != null && priceCents != null && regularTotalCents > priceCents
+      ? regularTotalCents - priceCents
       : null;
 
   // comparePrice lives on the active promotion (Willys computes it against
@@ -153,6 +156,10 @@ function mapProduct(rawItem, categoryName) {
   // matching Coop/ICA's shape of "always describes the current price".
   const comparisonPriceText = promo.comparePrice ?? rawItem.promotionProductOrdinaryComparePrice ?? null;
   const comparison = parseComparisonPrice(comparisonPriceText);
+  // Falls back to priceCents / dealQuantity only when Willys didn't supply
+  // its own comparePrice (~5% of cases - see products/lib/comparisonPrice.js
+  // for why this per-st figure is weaker than a real per-kg/per-l price).
+  const fallbackComparison = !comparison ? deriveComparisonFromDealQuantity(priceCents, dealQuantity) : null;
   // promo.validUntil is epoch milliseconds (e.g. 1785103199000), unlike
   // Coop/ICA's own already-ISO validUntil/campaignEndDate - normalized here
   // so nothing downstream needs to know which chain a date came from.
@@ -167,8 +174,8 @@ function mapProduct(rawItem, categoryName) {
     deal: promo.conditionLabel ?? null,
     dealQuantity,
     comparisonPrice: comparisonPriceText,
-    comparisonPriceCents: comparison?.amountCents ?? null,
-    comparisonUnit: comparison?.unit ?? null,
+    comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+    comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
     validUntil,
     gtin: extractGtinFromImageUrl(image),
     size: rawItem.displayVolume ?? null,

@@ -67,3 +67,21 @@ export function parseComparisonPrice(str) {
 
   return { amountCents: Math.round(amount * 100), unit };
 }
+
+// Fallback for when the provider doesn't supply a comparison-price text at
+// all (or it didn't parse - see the long tail of rejected units above): for
+// a multi-buy deal, price_cents is the raw total for dealQuantity items
+// (see e.g. products/willys/fetch.js's mapProduct for why it's never
+// divided down on our own), so dividing here recovers a per-single-item
+// price ("3 för 25,00" -> 8,33 kr/st) - a weaker normalization than a true
+// per-kg/per-l price (it doesn't know the package's own weight or volume,
+// just its count), but still a fair, directly-comparable number against
+// another store's own per-st price, and better than leaving the deal
+// entirely uncomparable. Only meaningful for an actual multi-buy - a
+// single-item offer with no comparison price has nothing here to derive,
+// so this deliberately returns null rather than echo price_cents back as
+// if it were a real per-unit figure.
+export function deriveComparisonFromDealQuantity(priceCents, dealQuantity) {
+  if (priceCents == null || !Number.isInteger(dealQuantity) || dealQuantity < 2) return null;
+  return { amountCents: Math.round(priceCents / dealQuantity), unit: "st" };
+}
