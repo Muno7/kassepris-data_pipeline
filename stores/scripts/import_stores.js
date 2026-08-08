@@ -1,8 +1,11 @@
-// Imports stores/willys/willys_stores.json (Coop/ICA have their own
-// stores/update_db.js now - this script is Willys-only, kept for its
-// assortment-assignment logic). Unlike Coop/ICA's upsert-based update_db.js,
-// this still deletes-and-reloads, since Willys store data rarely changes and
-// this predates the upsert approach - fine to leave as-is.
+// Imports stores/willys/willys_stores.json into the stores table (Willys-only;
+// Coop/ICA have their own stores/update_db.js). Willys store data rarely
+// changes, so this is a plain upsert keyed on (chain_id, external_id).
+//
+// There is no assortment table anymore: which shared newspaper assortment a
+// Willys store follows ("willys" vs "willys-hemma") is derived from its name
+// at product-ingestion time (see products/update_db.js's buildStoreIdsLookup),
+// so nothing about that grouping needs to be persisted here.
 
 import fs from "fs";
 import path from "path";
@@ -22,48 +25,35 @@ async function importWillysStores() {
       return;
     }
 
-    const { rows: chainRows } = await client.query("SELECT id FROM chain WHERE slug = 'willys'");
+    const { rows: chainRows } = await client.query("SELECT id FROM chains WHERE slug = 'willys'");
     if (chainRows.length === 0) {
-      console.warn(`Chain "willys" not found in chain table - run db/schema.sql first.`);
+      console.warn(`Chain "willys" not found in chains table - run db/schema.sql first.`);
       return;
     }
     const chainId = chainRows[0].id;
 
-    const { rows: assortmentRows } = await client.query("SELECT id, slug FROM assortment WHERE chain_id = $1", [
-      chainId,
-    ]);
-    const assortmentIdBySlug = new Map(assortmentRows.map((r) => [r.slug, r.id]));
-    if (!assortmentIdBySlug.has("willys") || !assortmentIdBySlug.has("willys-hemma")) {
-      console.warn(`Missing "willys"/"willys-hemma" assortment rows - run db/schema.sql first.`);
-      return;
-    }
-
-    console.log("Deleting existing Willys stores...");
-    await client.query("DELETE FROM stores WHERE chain_id = $1", [chainId]);
-
     const stores = JSON.parse(fs.readFileSync(STORES_FILE, "utf-8"));
     console.log(`Loaded ${stores.length} Willys stores`);
 
-    let insertedCount = 0;
+    let upserted = 0;
     for (const store of stores) {
-      const assortmentId = store.name.toLowerCase().includes("hemma")
-        ? assortmentIdBySlug.get("willys-hemma")
-        : assortmentIdBySlug.get("willys");
-
       try {
         await client.query(
-          `INSERT INTO stores (chain_id, assortment_id, external_id, name, url)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (external_id) DO NOTHING`,
-          [chainId, assortmentId, store.code, store.name, store.url]
+          `INSERT INTO stores (chain_id, external_id, name, url)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (chain_id, external_id) DO UPDATE SET
+             name = EXCLUDED.name,
+             url = EXCLUDED.url,
+             updated_at = now()`,
+          [chainId, store.code, store.name, store.url]
         );
-        insertedCount++;
+        upserted++;
       } catch (err) {
         console.warn(`Failed to insert store "${store.name}" (code: ${store.code}):`, err.message);
       }
     }
 
-    console.log(`Inserted ${insertedCount}/${stores.length} Willys stores.`);
+    console.log(`Upserted ${upserted}/${stores.length} Willys stores.`);
   } finally {
     client.release();
     await pool.end();

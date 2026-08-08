@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Recurring job: fetches current product offers for Coop, ICA, and Willys,
-# normalizes them, and reloads the product/store_product tables. Assumes
-# scripts/init-db.sh has already been run at least once (schema + stores in
-# place) - this script never touches the stores table.
+# normalizes them, and reloads the current-offer side of the schema (products,
+# product_groups, store_products, offers, offer_products) - archiving the
+# previous cycle's offers into the historical_* tables per chain. Assumes
+# scripts/init-db.sh (or db:migrate) has already been run at least once (schema
+# + stores in place) - this script never touches the stores table.
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 

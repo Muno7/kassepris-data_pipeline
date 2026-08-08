@@ -62,7 +62,7 @@ async function runWithConcurrency(items, limit, worker) {
 
 async function enrichWillysLocations() {
   try {
-    const { rows: chainRows } = await pool.query("SELECT id FROM chain WHERE slug = 'willys'");
+    const { rows: chainRows } = await pool.query("SELECT id FROM chains WHERE slug = 'willys'");
     if (chainRows.length === 0) {
       console.warn(`Chain "willys" not found - run db/schema.sql first.`);
       return;

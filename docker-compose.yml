@@ -1,0 +1,33 @@
+# Disposable Postgres for local development and the `test` environment.
+#
+# The Kassepris schema is Postgres-specific (uuid / gen_random_uuid / pg_trgm /
+# xpath), so tests can't run on SQLite or an in-memory shim - they run against
+# a real, throwaway Postgres, and this is it. Exposed on 5433 so it never
+# clashes with a Postgres already running locally on 5432.
+#
+#   docker compose up -d db
+#   APP_ENV=test npm run db:init        # or db:migrate against a legacy dump
+#   APP_ENV=test npm run products:update-all
+#
+# Point .env.test at it:
+#   DB_URL=postgresql://kassepris:kassepris@localhost:5433/kassepris_test
+
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: kassepris
+      POSTGRES_PASSWORD: kassepris
+      POSTGRES_DB: kassepris_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - kassepris_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kassepris -d kassepris_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  kassepris_pgdata:

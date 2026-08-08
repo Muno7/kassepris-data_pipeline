@@ -1,299 +1,249 @@
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
+-- Kassepris domain schema.
+--
+-- Kassepris is a weekly supermarket-deal aggregator: it does NOT hold a full
+-- supermarket assortment, only the products that appear in weekly offers, at
+-- the specific physical stores a user has selected. Every retailer (Coop, ICA,
+-- Willys) is normalized into this one shared model - there are deliberately no
+-- retailer-specific tables (no ica_products/coop_offers/...). Which chain a row
+-- came from is expressed only through stores.chain_id.
+--
+-- Core identity rules:
+--   * A GTIN (real barcode) is the global identity of a physical product.
+--     ONE gtin  = ONE products row, shared across every chain that sells it.
+--   * A product belongs to exactly one product_group (the user-facing "one
+--     search result" entity, e.g. "Kryddiga korvar"), which carries the
+--     category. A group holds one or many gtin products (mix-and-match
+--     campaigns expose several variant SKUs under one group).
+--   * offers holds ONLY the current active weekly dataset (what the app
+--     queries). historical_offers holds past cycles and is not on the MVP
+--     read path. products / product_groups are persistent and never archived.
+--
+-- This file is idempotent (CREATE ... IF NOT EXISTS) and is the canonical
+-- schema. To migrate an already-populated legacy database (chain/product/
+-- store_product/...) into this shape, run db/migration.sql instead - it
+-- preserves stores + chains and rebuilds the rest.
 
-CREATE TABLE IF NOT EXISTS chain (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  name character varying NOT NULL,
-  slug character varying NOT NULL UNIQUE
-);
+CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pg_trgm;     -- trigram search on product titles
 
--- `assortment` and `stores.assortment_id` exist only for Willys, which (unlike
--- Coop/ICA) groups stores into shared "standard"/"hemma" newspaper
--- assortments rather than scraping each store individually. Still used by
--- the old Puppeteer-based stores/scripts/import_stores.js.
-CREATE TABLE IF NOT EXISTS assortment (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  chain_id uuid NOT NULL REFERENCES chain(id) ON DELETE CASCADE,
-  slug text NOT NULL,
-  name text NOT NULL,
-  created_at timestamp NOT NULL DEFAULT now(),
-  updated_at timestamp NOT NULL DEFAULT now(),
-  CONSTRAINT unique_assortment_per_chain UNIQUE (chain_id, slug)
-);
-
-CREATE TABLE IF NOT EXISTS stores (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  chain_id uuid NOT NULL REFERENCES chain(id),
-  external_id text NOT NULL UNIQUE,
-  name text NOT NULL,
-  url text NOT NULL,
+-- ---------------------------------------------------------------------------
+-- chains: supermarket chains/retailers (ICA, Coop, Willys).
+-- ---------------------------------------------------------------------------
+-- `slug` is not in the abstract target model but is kept because the entire
+-- ingestion pipeline identifies a chain by a stable lowercase slug ('coop',
+-- 'ica', 'willys') rather than its display name - it's a required operational
+-- key, not stored API data.
+CREATE TABLE IF NOT EXISTS chains (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       text NOT NULL UNIQUE,
+  slug       text NOT NULL UNIQUE,
   created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now(),
-  address text,
-  city text,
-  latitude double precision,
-  longitude double precision
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- Added after the table already existed in earlier runs of this schema, so
--- it needs an explicit ALTER (CREATE TABLE IF NOT EXISTS above is a no-op
--- once the table exists, it won't add new columns on its own).
-ALTER TABLE stores ADD COLUMN IF NOT EXISTS assortment_id uuid REFERENCES assortment(id) ON DELETE CASCADE;
-
+-- ---------------------------------------------------------------------------
+-- stores: one specific physical supermarket location - the canonical source
+-- of truth for physical-store metadata (address, geo, retailer page URL),
+-- kept rich to support store selection / filtering / nearby / distance sort.
+-- ---------------------------------------------------------------------------
+-- external_id is the retailer's own id for the physical store (ICA BMSStoreId,
+-- Coop storeLedgerAccountNumber, Willys store code). It's only unique WITHIN a
+-- chain, hence UNIQUE(chain_id, external_id) rather than a global unique - and
+-- never used as the primary key.
+CREATE TABLE IF NOT EXISTS stores (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  chain_id    uuid NOT NULL REFERENCES chains(id) ON DELETE CASCADE,
+  external_id text NOT NULL,
+  name        text NOT NULL,
+  address     text,
+  city        text,
+  latitude    double precision,
+  longitude   double precision,
+  url         text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT stores_chain_external_key UNIQUE (chain_id, external_id)
+);
 CREATE INDEX IF NOT EXISTS idx_stores_chain_id ON stores (chain_id);
 CREATE INDEX IF NOT EXISTS idx_stores_city ON stores (city);
 
--- Cross-chain product identity, keyed by the real barcode. A gtin identifies
--- one specific manufacturer packaging regardless of which chain sells it -
--- "Arla Ko Mellanmjölk 1,5L" carries the same gtin whether it's scraped from
--- Coop, ICA, or Willys - so this is what lets "cheapest price for this
--- product across my stores" be a plain indexed join instead of fuzzy
--- title/brand matching at read time. product rows stay chain-scoped (each
--- chain keeps its own title/image/copy - see product.canonical_product_id
--- below); this table is purely the identity anchor they link through.
---
--- Populated automatically by the link_canonical_product trigger defined
--- after the product table below, whenever a product row is written with a
--- gtin - never written directly by application code, so every current and
--- future importer (deals, Coop's catalog pipeline, an eventual ICA/Willys
--- catalog pipeline) gets this for free instead of duplicating the
--- upsert-and-link logic per importer.
---
--- Products without a gtin (all of Willys today; some Coop/ICA offers) have
--- no canonical_product and stay chain-siloed - matching those across chains
--- would need fuzzy text matching with no reliable ground truth, which is a
--- real limitation, not something this table tries to paper over.
-CREATE TABLE IF NOT EXISTS canonical_product (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  gtin text NOT NULL UNIQUE,
-  -- Best-known display fields for this physical product, filled in by
-  -- whichever chain's importer reaches it first and left alone after (see
-  -- link_canonical_product's COALESCE) - good enough for a search result or
-  -- a generic product card; each chain's own product row is still the
-  -- source of truth for how that chain individually presents it.
-  title text,
-  image text,
-  brand text,
-  size text,
-  category_slug text,
-  category_name text,
+-- ---------------------------------------------------------------------------
+-- categories: Kassepris's own normalized category taxonomy. Every retailer
+-- maps its raw category names into one of these (see products/categories/
+-- displayCategories.js) - the app never sees a raw retailer category.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS categories (
+  id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name       text NOT NULL UNIQUE,
+  slug       text NOT NULL UNIQUE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
--- `gtin` is the product's real barcode (Coop: offer.externalId or
--- clusterInteriorOffers[].externalId, ICA: offer.eans[].id) - a far more
--- reliable identity than the text fingerprint, since it doesn't break on
--- formatting differences. Not every offer carries one, so `fingerprint` (the
--- old text-based identity) stays as a fallback. Identity for dedup/upsert
--- purposes is COALESCE(gtin, fingerprint), enforced below as an
--- expression-based unique index rather than a plain column constraint.
---
--- `variant_group` links sibling SKUs that were sold under one shared offer
--- (e.g. Coop's "Bryggkaffe" campaign covers several actual roasts/flavors,
--- each with its own gtin and its own product row here; ICA's eans[] work the
--- same way). Each variant is a real, independently queryable/comparable
--- product - not JSON nested inside a "parent" row - they just share this key
--- so the UI can still display them as one group. Null when an offer wasn't
--- part of any cluster.
-CREATE TABLE IF NOT EXISTS product (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  chain_id uuid NOT NULL REFERENCES chain(id) ON DELETE CASCADE,
-  gtin text,
-  fingerprint text NOT NULL,
-  variant_group text,
-  title text,
-  image text,
-  brand text,
-  size text,
-  more_info text,
-  -- Normalized {slug, label, type} objects (see products/categories/badges.js)
-  -- - not each chain's raw codes verbatim, so the app never needs per-chain
-  -- switch statements to render them. Coop has no source data for these yet,
-  -- so its products always have an empty array here - that's a real "no
-  -- data" state, not a bug.
-  badges jsonb,
-  category_slug text,
-  category_name text,
-  raw_category_name text,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  updated_at timestamptz NOT NULL DEFAULT now()
+-- ---------------------------------------------------------------------------
+-- product_groups: the user-facing conceptual product/deal - the unit of "one
+-- search result". NOT a GTIN. Holds one or many gtin products; a mix-and-match
+-- campaign ("3 för 59 kr" over chorizo/grillkorv/bratwurst) is one group with
+-- several products. The category lives here, not on products.
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS product_groups (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name        text NOT NULL,
+  category_id uuid NOT NULL REFERENCES categories(id),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_product_groups_category_id ON product_groups (category_id);
 
--- Dead column from when Willys nested sibling SKUs as JSON here - Willys now
--- uses variant_group + its own product rows like Coop/ICA, and never wrote
--- real data into this column even before that. Explicit DROP since the
--- table already existed without this happening via CREATE TABLE IF NOT EXISTS.
-ALTER TABLE product DROP COLUMN IF EXISTS variants;
+-- ---------------------------------------------------------------------------
+-- products: one exact physical product/SKU, identified globally by its GTIN.
+-- Persistent and canonical - never archived, never duplicated per chain. When
+-- several chains describe the same gtin differently, the display fields hold
+-- one normalized version (first non-null wins at ingest time; each chain's raw
+-- naming is not preserved separately).
+-- ---------------------------------------------------------------------------
+-- gtin is TEXT, never an integer (leading zeros / length matter). A product
+-- with no reliable gtin is not stored here - the ingestion pipeline recovers
+-- gtins aggressively (incl. Willys' image/catalog fallback) and skips the rare
+-- residual offer that still lacks one, rather than minting a non-gtin identity.
+CREATE TABLE IF NOT EXISTS products (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_group_id uuid NOT NULL REFERENCES product_groups(id),
+  gtin             text NOT NULL UNIQUE,
+  title            text NOT NULL,
+  brand            text,
+  size             text,
+  image_url        text,
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_products_product_group_id ON products (product_group_id);
+CREATE INDEX IF NOT EXISTS idx_products_title_lower_trgm ON products USING gin (lower(title) gin_trgm_ops);
 
-CREATE UNIQUE INDEX IF NOT EXISTS product_chain_identity_idx
-  ON product (chain_id, COALESCE(gtin, fingerprint));
-CREATE INDEX IF NOT EXISTS idx_product_chain_id ON product (chain_id);
-CREATE INDEX IF NOT EXISTS idx_product_category_slug ON product (category_slug);
-CREATE INDEX IF NOT EXISTS idx_product_gtin ON product (gtin);
-CREATE INDEX IF NOT EXISTS idx_product_variant_group ON product (variant_group);
-
--- Added after the table already existed, so it needs an explicit ALTER (see
--- the `assortment_id` comment above for why). The cross-chain identity link
--- - see canonical_product above for what this is for.
-ALTER TABLE product ADD COLUMN IF NOT EXISTS canonical_product_id uuid REFERENCES canonical_product(id) ON DELETE SET NULL;
-CREATE INDEX IF NOT EXISTS idx_product_canonical_product_id ON product (canonical_product_id);
-
--- Keeps canonical_product_id in sync on every insert/update to product, so
--- no importer script (there are three today, and likely more later - see
--- canonical_product's comment) needs to remember to maintain this link
--- itself. Upserts canonical_product by gtin - COALESCE keeps whichever
--- display fields were filled in first rather than letting a later,
--- possibly sparser import overwrite them - then points NEW's
--- canonical_product_id at the result, or clears it back to null if this
--- row has no gtin (or had one and lost it).
-CREATE OR REPLACE FUNCTION link_canonical_product() RETURNS trigger AS $$
-BEGIN
-  IF NEW.gtin IS NULL THEN
-    NEW.canonical_product_id := NULL;
-    RETURN NEW;
-  END IF;
-
-  INSERT INTO canonical_product (gtin, title, image, brand, size, category_slug, category_name)
-  VALUES (NEW.gtin, NEW.title, NEW.image, NEW.brand, NEW.size, NEW.category_slug, NEW.category_name)
-  ON CONFLICT (gtin) DO UPDATE SET
-    title = COALESCE(canonical_product.title, EXCLUDED.title),
-    image = COALESCE(canonical_product.image, EXCLUDED.image),
-    brand = COALESCE(canonical_product.brand, EXCLUDED.brand),
-    size = COALESCE(canonical_product.size, EXCLUDED.size),
-    category_slug = COALESCE(canonical_product.category_slug, EXCLUDED.category_slug),
-    category_name = COALESCE(canonical_product.category_name, EXCLUDED.category_name),
-    updated_at = now()
-  RETURNING id INTO NEW.canonical_product_id;
-
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS product_link_canonical ON product;
-CREATE TRIGGER product_link_canonical
-  BEFORE INSERT OR UPDATE ON product
-  FOR EACH ROW EXECUTE FUNCTION link_canonical_product();
-
--- Price, deal, and expiry are per-(store, product) facts, not per-product:
--- confirmed empirically that ~37% of ICA products carry a genuinely different
--- price across different stores in the same chain (Coop barely varies, ~0.3%,
--- since its prices are centrally set, but storing it here costs nothing extra
--- either way - same number of rows as before, just wider).
---
--- price_cents is always the real, transactable price of what `deal`
--- describes - for a multi-buy ("3 för 25:-") that's the bundle total (25),
--- never divided down to a synthetic per-item number on our own (you can't
--- actually walk in and buy one item for a third of the deal). See
--- comparison_price_cents below for the normalized per-unit figure instead -
--- that column, not this one, is what "cheapest" should rank by.
-CREATE TABLE IF NOT EXISTS store_product (
-  store_id uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
-  product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
-  price_cents integer,
-  unit text,
-  comparison_price text,
-  deal text,
-  is_member boolean,
-  valid_until timestamptz,
+-- ---------------------------------------------------------------------------
+-- store_products: persistent many-to-many between physical stores and gtin
+-- products. Records that Kassepris has *observed* this product at this store
+-- through its data sources - NOT a claim of full assortment, and NOT deleted
+-- just because the product isn't on deal this week (first_seen/last_seen track
+-- the observation window instead).
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS store_products (
+  store_id      uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  product_id    uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  first_seen_at timestamptz NOT NULL DEFAULT now(),
+  last_seen_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (store_id, product_id)
 );
+CREATE INDEX IF NOT EXISTS idx_store_products_product_store ON store_products (product_id, store_id);
 
--- Added after the table already existed, so it needs an explicit ALTER (see
--- the `assortment_id` comment above for why). Amount saved vs. the regular
--- price, computed at fetch time from each chain's raw API data - null when
--- the chain's API doesn't expose a regular price (Coop never does; ICA and
--- Willys do).
-ALTER TABLE store_product ADD COLUMN IF NOT EXISTS savings_cents integer;
-
--- price_cents (the deal's real total, see above) still isn't safe to
--- compare across two offers on its own - a "3 för 25:-" bundle and a
--- single-item price aren't the same basket, and even two single-item prices
--- aren't comparable if the items are different sizes (1L milk vs 1,5L
--- milk). comparison_price_cents/comparison_unit are the actual per-kg/
--- per-l/per-st price - preferably parsed straight from each chain's own
--- "jämförpris" text by products/lib/comparisonPrice.js, since that's a real
--- per-kg/per-l figure; when a chain doesn't supply one (or it didn't parse -
--- see that module for the long tail of non-comparable units it deliberately
--- rejects, e.g. "kr/kg utan spad" for drained weight), it's derived instead
--- as price_cents / deal_quantity - a weaker per-st fallback, only computed
--- for an actual multi-buy, never a guess at weight/volume we don't have.
--- This pair, not price_cents, is what "cheapest" should rank by - and only
--- ever populated together, since a number without a trustworthy unit
--- invites exactly the apples-to-oranges comparison this column exists to
--- prevent.
-ALTER TABLE store_product ADD COLUMN IF NOT EXISTS comparison_price_cents integer;
-ALTER TABLE store_product ADD COLUMN IF NOT EXISTS comparison_unit text;
-ALTER TABLE store_product DROP CONSTRAINT IF EXISTS store_product_comparison_unit_check;
-ALTER TABLE store_product ADD CONSTRAINT store_product_comparison_unit_check
-  CHECK (comparison_unit IS NULL OR comparison_unit IN ('kg', 'hg', 'g', 'l', 'st', 'm'));
-
--- The resolved "N" behind a multi-buy deal (e.g. 3 for "3 för 25:-") - what
--- price_cents is the total price *for*, and what comparison_price_cents
--- falls back to dividing by when the provider doesn't supply its own
--- per-unit figure (see above).
-ALTER TABLE store_product ADD COLUMN IF NOT EXISTS deal_quantity smallint;
-
-CREATE INDEX IF NOT EXISTS idx_store_product_product_id ON store_product (product_id);
-
--- product_online_price (Coop's general-catalog reference price, not tied to
--- a specific store) has been removed - the catalog pipeline that populated
--- it (products/coop/fetch_catalog.js and friends) is gone. Explicit DROP
--- since the table already exists in already-initialized databases and
--- CREATE TABLE IF NOT EXISTS obviously won't remove it on its own.
-DROP TABLE IF EXISTS product_online_price;
-
--- Append-only price log, one row per (store, product) whenever price_cents
--- actually changes (see products/update_db.js's price-history insert - it
--- checks the latest existing row first) - not written unconditionally on
--- every ingestion run, so this table's size tracks real price movement
--- instead of run frequency. This is what a real "lowest price in 6 months"
--- or trend view has to be built from: store_product only ever holds
--- current state (it's fully truncated and reloaded every run) and has no
--- memory of anything before "now". bigserial rather than uuid, unlike every
--- other table here, since this is a high-volume operational log with no
--- need for a globally-unique or client-generatable id, not a real entity
--- anything else references by id.
-CREATE TABLE IF NOT EXISTS price_history (
-  id bigserial PRIMARY KEY,
-  store_id uuid REFERENCES stores(id) ON DELETE CASCADE,
-  product_id uuid NOT NULL REFERENCES product(id) ON DELETE CASCADE,
-  price_cents integer,
-  comparison_price_cents integer,
-  comparison_unit text,
-  recorded_at timestamptz NOT NULL DEFAULT now()
+-- ---------------------------------------------------------------------------
+-- offers: CURRENT weekly offers only - the operational dataset the app reads.
+-- One offer belongs to one physical store and applies to one OR many products
+-- (mix-and-match), so eligible products live in offer_products, never as a
+-- product_id column here. Money is integer öre, never floating point.
+-- ---------------------------------------------------------------------------
+-- Business rule enforced by the ingestion layer (not a DB constraint, since a
+-- product is related through offer_products, not directly): the same product
+-- must not appear in two simultaneously-active current offers at one store.
+-- comparison_price_min_cents / max_cents are the per-unit ("jämförpris") price
+-- range for the offer: equal for a fixed-size product, a real min<max range
+-- when the offer covers variable-weight/size items (a "2 för 30 kr" deal on
+-- 150-300 g chips bags spans a price-per-kg range) - so ranking by "cheapest
+-- per unit" can use min, and the worst case is still visible via max.
+-- valid_from is the offer's real start when the retailer provides one, else
+-- ingestion time, always clamped to <= now() so a live offer is never hidden
+-- behind a future start date (see products/update_db.js).
+CREATE TABLE IF NOT EXISTS offers (
+  id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  store_id                   uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  price_cents                integer NOT NULL,
+  original_price_cents       integer,
+  is_member                  boolean NOT NULL DEFAULT false,
+  deal_quantity              integer,
+  unit                       text,
+  comparison_price_min_cents integer,
+  comparison_price_max_cents integer,
+  comparison_unit            text,
+  deal_text                  text,
+  more_info                  text,
+  valid_from                 timestamptz NOT NULL,
+  valid_until                timestamptz NOT NULL,
+  created_at                 timestamptz NOT NULL DEFAULT now(),
+  updated_at                 timestamptz NOT NULL DEFAULT now()
 );
+CREATE INDEX IF NOT EXISTS idx_offers_store_id ON offers (store_id);
+CREATE INDEX IF NOT EXISTS idx_offers_valid ON offers (valid_from, valid_until);
 
-CREATE INDEX IF NOT EXISTS idx_price_history_product_recorded ON price_history (product_id, recorded_at);
-CREATE INDEX IF NOT EXISTS idx_price_history_store_product_recorded ON price_history (store_id, product_id, recorded_at);
+-- offer_products: eligible products for a current offer (mix-and-match).
+CREATE TABLE IF NOT EXISTS offer_products (
+  offer_id   uuid NOT NULL REFERENCES offers(id) ON DELETE CASCADE,
+  product_id uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  PRIMARY KEY (offer_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS idx_offer_products_product_offer ON offer_products (product_id, offer_id);
 
--- Added after the table already existed, so it needs an explicit ALTER (see
--- the `assortment_id` comment on `stores` above for why). One price_history
--- row per real price-setting event, not one per store row: for Willys, a
--- single storeOffer's price applies identically to every store in its
--- assortment (up to 252 of them) - logging per store would repeat the same
--- change that many times over, forever, on every future price change too.
--- Confirmed empirically before this column existed: Willys already
--- accounted for 12.9% of all price_history rows after one run despite being
--- ~1.3% of the product catalog. Rows now carry exactly one of store_id
--- (chains priced per physical store) or assortment_id (Willys) - store_id
--- above is nullable specifically to make room for this.
-ALTER TABLE price_history ADD COLUMN IF NOT EXISTS assortment_id uuid REFERENCES assortment(id) ON DELETE CASCADE;
-ALTER TABLE price_history ALTER COLUMN store_id DROP NOT NULL;
-ALTER TABLE price_history DROP CONSTRAINT IF EXISTS price_history_scope_check;
-ALTER TABLE price_history ADD CONSTRAINT price_history_scope_check
-  CHECK ((store_id IS NOT NULL) <> (assortment_id IS NOT NULL));
-CREATE INDEX IF NOT EXISTS idx_price_history_assortment_product_recorded ON price_history (assortment_id, product_id, recorded_at);
+-- ---------------------------------------------------------------------------
+-- historical_offers: offers from previous weekly cycles, archived verbatim
+-- from `offers` when a store's/chain's current offers are replaced. Completely
+-- separate from the current dataset and not on the MVP read path (kept for
+-- future price history / analytics). Preserves the offer's exact state at the
+-- time it was active.
+-- ---------------------------------------------------------------------------
+-- original_offer_id is the id the row had in `offers`, kept for traceability
+-- only - deliberately NOT a foreign key, so archiving must never be blocked by
+-- (or cascade from) the current offer being deleted right after.
+CREATE TABLE IF NOT EXISTS historical_offers (
+  id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  original_offer_id          uuid,
+  store_id                   uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
+  price_cents                integer NOT NULL,
+  original_price_cents       integer,
+  is_member                  boolean NOT NULL DEFAULT false,
+  deal_quantity              integer,
+  unit                       text,
+  comparison_price_min_cents integer,
+  comparison_price_max_cents integer,
+  comparison_unit            text,
+  deal_text                  text,
+  more_info                  text,
+  valid_from                 timestamptz NOT NULL,
+  valid_until                timestamptz NOT NULL,
+  archived_at                timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_historical_offers_store_id ON historical_offers (store_id);
+CREATE INDEX IF NOT EXISTS idx_historical_offers_valid ON historical_offers (valid_from, valid_until);
 
-INSERT INTO chain (name, slug) VALUES ('Coop', 'coop') ON CONFLICT (slug) DO NOTHING;
-INSERT INTO chain (name, slug) VALUES ('ICA', 'ica') ON CONFLICT (slug) DO NOTHING;
-INSERT INTO chain (name, slug) VALUES ('Willys', 'willys') ON CONFLICT (slug) DO NOTHING;
+-- historical_offer_products: frozen product eligibility of each past offer -
+-- which exact gtins were part of that historical mix-and-match, even if the
+-- product's group later changes (products persist; this stays as it was).
+CREATE TABLE IF NOT EXISTS historical_offer_products (
+  historical_offer_id uuid NOT NULL REFERENCES historical_offers(id) ON DELETE CASCADE,
+  product_id          uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+  PRIMARY KEY (historical_offer_id, product_id)
+);
+CREATE INDEX IF NOT EXISTS idx_historical_offer_products_product ON historical_offer_products (product_id, historical_offer_id);
 
--- Every real Willys store belongs to one of these two shared newspaper
--- assortments (confirmed: every store within each shares the exact same
--- product catalog) - slugs match products/willys/fetch.js's ASSORTMENTS.
-INSERT INTO assortment (chain_id, slug, name)
-  SELECT id, 'willys', 'Willys' FROM chain WHERE slug = 'willys'
-  ON CONFLICT (chain_id, slug) DO NOTHING;
-INSERT INTO assortment (chain_id, slug, name)
-  SELECT id, 'willys-hemma', 'Willys Hemma' FROM chain WHERE slug = 'willys'
-  ON CONFLICT (chain_id, slug) DO NOTHING;
+-- ---------------------------------------------------------------------------
+-- Seed data.
+-- ---------------------------------------------------------------------------
+INSERT INTO chains (name, slug) VALUES
+  ('Coop',   'coop'),
+  ('ICA',    'ica'),
+  ('Willys', 'willys')
+ON CONFLICT (slug) DO NOTHING;
+
+-- Kassepris's normalized categories - kept in sync with the keys/names in
+-- products/categories/displayCategories.js. Slugs are the frontend-safe id.
+INSERT INTO categories (slug, name) VALUES
+  ('fresh_food',           'Färskvaror'),
+  ('fruit_and_vegetables', 'Frukt & grönt'),
+  ('dairy_and_eggs',       'Mejeri & ägg'),
+  ('bread_and_bakery',     'Bröd & bageri'),
+  ('frozen_food',          'Fryst'),
+  ('pantry',               'Skafferi'),
+  ('snacks_and_sweets',    'Godis & snacks'),
+  ('drinks',               'Dryck'),
+  ('home_and_leisure',     'Hem & fritid'),
+  ('health_and_beauty',    'Hälsa & skönhet'),
+  ('other',                'Övrigt')
+ON CONFLICT (slug) DO NOTHING;

@@ -1,5 +1,9 @@
 node_modules
+.vscode/
+# All env files are local/secret; the committed template is the exception.
 .env
+.env.*
+!.env.example
 stores/data/*
 products/coop/data/*
 products/ica/data/*

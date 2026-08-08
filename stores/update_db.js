@@ -1,10 +1,10 @@
 // Step 2: UPDATE DB
 //
 // Upserts stores/data/{chain}_stores.json into the stores table, keyed on
-// external_id. This is a plain upsert (insert new stores, refresh existing
-// ones) - not a truncate-and-reload - because stores are referenced by
-// product/store_product via foreign keys, and store identity should stay
-// stable across runs.
+// (chain_id, external_id). This is a plain upsert (insert new stores, refresh
+// existing ones) - not a truncate-and-reload - because stores are referenced
+// by store_products / offers / historical_offers via foreign keys, and store
+// identity should stay stable across runs.
 
 import fs from "fs";
 import path from "path";
@@ -28,9 +28,9 @@ async function upsertStores() {
         continue;
       }
 
-      const { rows: chainRows } = await client.query("SELECT id FROM chain WHERE slug = $1", [slug]);
+      const { rows: chainRows } = await client.query("SELECT id FROM chains WHERE slug = $1", [slug]);
       if (chainRows.length === 0) {
-        console.warn(`Chain "${slug}" not found in chain table, skipping.`);
+        console.warn(`Chain "${slug}" not found in chains table, skipping.`);
         continue;
       }
       const chainId = chainRows[0].id;
@@ -42,7 +42,7 @@ async function upsertStores() {
         await client.query(
           `INSERT INTO stores (chain_id, external_id, name, url, address, city, latitude, longitude)
            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-           ON CONFLICT (external_id) DO UPDATE SET
+           ON CONFLICT (chain_id, external_id) DO UPDATE SET
              name = EXCLUDED.name,
              url = EXCLUDED.url,
              address = EXCLUDED.address,

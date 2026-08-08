@@ -4,12 +4,10 @@
 // code - and so a missing/malformed value fails loudly at startup with a
 // clear cause, instead of surfacing later as a confusing runtime error.
 
-import path from "path";
-import { fileURLToPath } from "url";
-import dotenv from "dotenv";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../../.env") });
+// Environment (.env file selection per APP_ENV) is resolved centrally in
+// config/env.js, imported here for its load side-effect so process.env is
+// populated before any getEnvInt/requireEnv call below runs.
+export { APP_ENV, IS_PRODUCTION, IS_TEST } from "../../config/env.js";
 
 // For values a script genuinely cannot run without (API keys) - stops
 // startup immediately with a clear cause, rather than letting a blank key

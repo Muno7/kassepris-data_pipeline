@@ -21,7 +21,7 @@ import { createHttpClient } from "../lib/httpClient.js";
 import { createCheckpoint } from "../lib/checkpoint.js";
 import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { requireEnv, getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
-import { runWithConcurrency } from "../lib/concurrency.js";
+import { runWithRetries } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
 import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
 
@@ -33,6 +33,9 @@ const STATE_DIR = path.resolve(__dirname, ".state");
 // depends on what Coop's infrastructure tolerates today, not on this code.
 const CONCURRENCY = getEnvInt("COOP_FETCH_CONCURRENCY", 10);
 const MAX_RETRIES = getEnvInt("COOP_FETCH_MAX_RETRIES", 4);
+// Extra whole-store retry passes after the first, for stores that still failed
+// once httpClient's per-request retries were exhausted (see runWithRetries).
+const STORE_RETRY_PASSES = getEnvInt("COOP_FETCH_STORE_RETRY_PASSES", 2);
 
 // Public client keys shipped in Coop's own frontend bundle - every visitor's
 // browser sends these, they are not secret credentials. Externalized to .env
@@ -52,6 +55,9 @@ const httpClient = createHttpClient({
   metrics,
   cacheDir: path.join(STATE_DIR, "cache"),
   maxRetries: MAX_RETRIES,
+  // Minimum spacing between request starts - 0 (fast) for dev/test, raised via
+  // env for production politeness. See config/env.js and .env.example.
+  minDelayMs: getEnvInt("COOP_FETCH_MIN_DELAY_MS", 0),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
 const offersSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-offers.json"));
@@ -103,6 +109,7 @@ function generateFingerprint(productData) {
     fingerprint,
     image,
     gtin,
+    validFrom,
     validUntil,
     variantGroup,
     max,
@@ -111,7 +118,8 @@ function generateFingerprint(productData) {
     deal,
     dealQuantity,
     comparisonPrice,
-    comparisonPriceCents,
+    comparisonPriceMinCents,
+    comparisonPriceMaxCents,
     comparisonUnit,
     isMember,
     savingsCents,
@@ -160,12 +168,14 @@ function mapOfferFields(offer) {
     brand: content.brand ?? null,
     max: content.dealOfferLimitText ?? null,
     comparisonPrice: comparisonPriceText,
-    comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+    comparisonPriceMinCents: comparison?.minCents ?? fallbackComparison?.minCents ?? null,
+    comparisonPriceMaxCents: comparison?.maxCents ?? fallbackComparison?.maxCents ?? null,
     comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
     image: content.imageUrl ? `https:${content.imageUrl}` : null,
     isMember: priceInformation.isMemberPrice ?? false,
     badges: [],
     gtin: offer.externalId ?? null,
+    validFrom: offer.campaignStartDate ?? null,
     validUntil: offer.campaignEndDate ?? null,
     // Coop's API never exposes a regular/original price - priceInformation
     // only ever carries the already-discounted value.
@@ -310,7 +320,7 @@ export async function fetchAllCoopStores() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
   const { rows: stores } = await pool.query(
-    `SELECT s.external_id, s.name FROM stores s JOIN chain c ON s.chain_id = c.id WHERE c.slug = 'coop' AND s.external_id IS NOT NULL`
+    `SELECT s.external_id, s.name FROM stores s JOIN chains c ON s.chain_id = c.id WHERE c.slug = 'coop' AND s.external_id IS NOT NULL`
   );
 
   if (checkpoint.resumedCount > 0) {
@@ -318,10 +328,19 @@ export async function fetchAllCoopStores() {
   }
 
   logger.info("fetching offers", { stores: stores.length, concurrency: CONCURRENCY });
-  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore, {
-    onFailure: (store, err) => logger.error("store fetch failed", { store: store.external_id, error: err.message }),
+  const { ok, failed, failedItems } = await runWithRetries(stores, CONCURRENCY, fetchOneStore, {
+    maxRetryPasses: STORE_RETRY_PASSES,
+    onFailure: (store, err, pass) =>
+      logger.error("store fetch failed", { store: store.external_id, pass, error: err.message }),
     onProgress: (done, total) => logger.info("progress", { done, total }),
+    onRetryPass: (pass, retrying) => logger.warn("retrying failed stores", { pass, retrying }),
   });
+  if (failed > 0) {
+    logger.error("stores still failing after all retry passes", {
+      failed,
+      stores: failedItems.map((s) => s.external_id),
+    });
+  }
   logger.info("done", { ok, failed, total: stores.length, dataDir: DATA_DIR });
 
   const schemaResult = offersSchemaAccumulator.finish();
@@ -330,10 +349,15 @@ export async function fetchAllCoopStores() {
     logger.warn("offers API schema changed since last run", schemaResult);
   }
 
-  // A fully successful run means every store either fetched fresh or was
-  // already done from a prior resume - clear the checkpoint so the next
-  // scheduled run starts clean rather than skipping stores forever.
-  if (failed === 0) checkpoint.clear();
+  // Reaching here means the run completed (didn't crash): every store was
+  // attempted and any failures already exhausted their retry passes and are
+  // logged above. Clear the checkpoint unconditionally so the next scheduled
+  // run starts fresh. The checkpoint exists only to resume a *crashed* run
+  // mid-way - NOT to permanently skip stores that merely failed. (Keeping it
+  // on failure meant one dead 404 store pinned the checkpoint forever, so
+  // every later run "resumed" and skipped re-fetching all the good stores,
+  // staling out the whole chain.)
+  checkpoint.clear();
 
   metrics.report();
   return { ok, failed, total: stores.length };

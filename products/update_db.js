@@ -1,13 +1,25 @@
-// Step 3: UPDATE DB
+// Step 3: UPDATE DB (Kassepris domain model)
 //
-// Imports normalized/*.json (produced by run.js) into the product and
-// store_product tables. This TRUNCATES both tables first - it's a full
-// refresh, not an incremental update - so it should be run deliberately,
-// not as part of an automatic pipeline, until you're confident in the data.
+// Imports normalized/*.json (produced by the fetch+normalize steps) into the
+// current-offer side of the schema:
 //
-// Product identity is COALESCE(gtin, fingerprint) per chain (see
-// db/schema.sql's product_chain_identity_idx) - matches on the real barcode
-// when the offer has one, falls back to the text fingerprint otherwise.
+//   products         - one canonical row per GTIN, cross-chain, persistent
+//   product_groups   - user-facing "one search result" grouping, persistent
+//   store_products   - persistent (store, product) observation, upserted
+//   offers           - CURRENT weekly offers only, one per (store, deal)
+//   offer_products   - eligible GTIN products per current offer (mix-and-match)
+//
+// and archives the previous cycle's current offers into historical_offers /
+// historical_offer_products before replacing them.
+//
+// Identity: a product is keyed by its GTIN. A normalized product with no GTIN
+// cannot be represented canonically and is skipped (counted) - the fetch layer
+// recovers GTINs aggressively (see products/willys/fetch.js) so this is rare.
+//
+// Everything runs in ONE transaction. Offer archival + replacement is scoped
+// per chain (offers of stores belonging to that chain), so refreshing e.g. ICA
+// never touches Coop's or Willys' current offers, and a chain whose normalized
+// file is missing this run is left completely untouched.
 
 import fs from "fs";
 import path from "path";
@@ -24,215 +36,314 @@ const productFiles = [
 
 function extractIcaStorePathFromUrl(url) {
   const prefix = "https://www.ica.se/erbjudanden/";
-  return url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, "") : url;
+  return url && url.startsWith(prefix) ? url.slice(prefix.length).replace(/\/$/, "") : url;
 }
 
-// Appends a price_history row only when price_cents actually differs from
-// the most recently recorded one for this scope - keeps the log's growth
-// proportional to real price movement, not to how often this script runs
-// (store_product itself is fully truncated/reloaded every run and has no
-// memory of "before now" - see db/schema.sql's price_history comment for
-// why that's not enough for a trend/lowest-price view).
-//
-// scope is { storeId } for chains priced per physical store, or
-// { assortmentId } for chains (Willys) where every store in the group
-// shares one price - see recordPriceHistoryForOffer below for why that
-// distinction exists at all.
-async function recordPriceHistoryIfChanged(client, scope, productId, priceCents, comparisonPriceCents, comparisonUnit) {
-  const storeId = scope.storeId ?? null;
-  const assortmentId = scope.assortmentId ?? null;
-  await client.query(
-    `WITH last AS (
-       SELECT price_cents FROM price_history
-       WHERE product_id = $3 AND store_id IS NOT DISTINCT FROM $1 AND assortment_id IS NOT DISTINCT FROM $2
-       ORDER BY recorded_at DESC LIMIT 1
-     )
-     INSERT INTO price_history (store_id, assortment_id, product_id, price_cents, comparison_price_cents, comparison_unit)
-     SELECT $1, $2, $3, $4, $5, $6
-     WHERE NOT EXISTS (SELECT 1 FROM last WHERE price_cents IS NOT DISTINCT FROM $4)`,
-    [storeId, assortmentId, productId, priceCents, comparisonPriceCents, comparisonUnit]
-  );
+// The retailer's regular (non-discounted) price isn't stored directly by the
+// normalizer - it keeps savingsCents (amount saved vs. regular), which is null
+// for chains that don't expose a regular price (Coop). original_price_cents is
+// therefore price + savings when we have the saving, else null. For a multi-buy
+// this is the regular price of the whole deal bundle, consistent with
+// price_cents being the bundle total (see the schema's price_cents note).
+function computeOriginalPriceCents(priceCents, savingsCents) {
+  if (priceCents == null || savingsCents == null) return null;
+  return priceCents + savingsCents;
 }
 
-// Writes exactly one price_history entry per real price-setting event, not
-// one per store row. For Willys, one storeOffer's price applies identically
-// to every store in its assortment (up to 252 of them) - logging per store
-// would write the same change that many times over for a single real event,
-// and keep doing that forever on every future price change too (confirmed
-// empirically: Willys already accounted for 12.9% of all price_history rows
-// after just one run, despite being ~1.3% of the product catalog). Logging
-// once per assortment instead fixes the growth rate at its source; reading
-// "price history at store X" for an assortment-grouped store means looking
-// it up by that store's assortment_id, not its own store_id.
-async function recordPriceHistoryForOffer(client, offer, productId) {
-  const scope = offer.assortmentId ? { assortmentId: offer.assortmentId } : { storeId: offer.storeIds[0] };
-  await recordPriceHistoryIfChanged(client, scope, productId, offer.priceCents, offer.comparisonPriceCents, offer.comparisonUnit);
-}
-
-// Willys's storeOffers[].store is an assortment slug ("willys"/"willys-hemma"),
-// not a single store's external_id - every store in that assortment shares
-// the same catalog (confirmed empirically), so one storeOffer expands into a
-// store_product row for every real store in the assortment, not just one.
-// This keeps "products at this store" a uniform store_product join for every
-// chain - no chain-specific branching needed outside this import step
-// (price_history is the one place that does still need to know, see above).
+// Resolves a normalized offer's `store` value to the internal store id(s) it
+// applies to. Per-chain because each chain keys its offers differently:
+//   coop   - by external_id (the store's "coop/<slug>/" path)
+//   ica    - by the store-page url path (external_id is a bare numeric id)
+//   willys - by shared newspaper assortment ("willys" / "willys-hemma"), which
+//            fans out to every physical Willys store in that assortment. The
+//            assortment a store belongs to is derived from its name ("Hemma"),
+//            not a separate table - Willys is the one chain whose one offer
+//            applies identically to many physical stores.
 async function buildStoreIdsLookup(client, slug, chainId) {
   if (slug === "willys") {
-    const { rows } = await client.query(
-      `SELECT s.id, a.id AS assortment_id, a.slug AS assortment_slug
-       FROM stores s
-       JOIN assortment a ON a.id = s.assortment_id
-       WHERE s.chain_id = $1`,
-      [chainId]
-    );
-    const byAssortmentSlug = new Map();
-    for (const row of rows) {
-      if (!byAssortmentSlug.has(row.assortment_slug)) {
-        byAssortmentSlug.set(row.assortment_slug, { storeIds: [], assortmentId: row.assortment_id });
-      }
-      byAssortmentSlug.get(row.assortment_slug).storeIds.push(row.id);
+    const { rows } = await client.query("SELECT id, name FROM stores WHERE chain_id = $1", [chainId]);
+    const byAssortment = { willys: [], "willys-hemma": [] };
+    for (const s of rows) {
+      const assortment = /hemma/i.test(s.name) ? "willys-hemma" : "willys";
+      byAssortment[assortment].push(s.id);
     }
-    return (offerStore) => byAssortmentSlug.get(offerStore) ?? { storeIds: [], assortmentId: null };
+    return (offerStore) => byAssortment[offerStore] ?? [];
   }
 
   const { rows } = await client.query("SELECT id, external_id, url FROM stores WHERE chain_id = $1", [chainId]);
-  const storeIdByPath = new Map();
-  for (const store of rows) {
-    const storePath = slug === "ica" ? extractIcaStorePathFromUrl(store.url) : store.external_id.replace(/\/$/, "");
-    storeIdByPath.set(storePath, store.id);
+  const storeIdByKey = new Map();
+  for (const s of rows) {
+    const key = slug === "ica" ? extractIcaStorePathFromUrl(s.url) : s.external_id.replace(/\/$/, "");
+    storeIdByKey.set(key, s.id);
   }
   return (offerStore) => {
-    const storeId = storeIdByPath.get(offerStore.replace(/\/$/, ""));
-    return { storeIds: storeId ? [storeId] : [], assortmentId: null };
+    const id = storeIdByKey.get((offerStore ?? "").replace(/\/$/, ""));
+    return id ? [id] : [];
   };
+}
+
+// Archives this chain's current offers into the historical tables (preserving
+// exact state + product eligibility), then removes them, so the caller can
+// insert this cycle's fresh offers. Scoped strictly to stores of `chainId`.
+// offer_products rows are removed by ON DELETE CASCADE when their offer goes.
+async function archiveAndClearChainOffers(client, chainId) {
+  await client.query(
+    `WITH archived AS (
+       INSERT INTO historical_offers (
+         original_offer_id, store_id, price_cents, original_price_cents, is_member,
+         deal_quantity, unit, comparison_price_min_cents, comparison_price_max_cents,
+         comparison_unit, deal_text, more_info, valid_from, valid_until
+       )
+       SELECT o.id, o.store_id, o.price_cents, o.original_price_cents, o.is_member,
+              o.deal_quantity, o.unit, o.comparison_price_min_cents, o.comparison_price_max_cents,
+              o.comparison_unit, o.deal_text, o.more_info, o.valid_from, o.valid_until
+       FROM offers o
+       JOIN stores s ON s.id = o.store_id
+       WHERE s.chain_id = $1
+       RETURNING id AS historical_id, original_offer_id
+     )
+     INSERT INTO historical_offer_products (historical_offer_id, product_id)
+     SELECT a.historical_id, op.product_id
+     FROM archived a
+     JOIN offer_products op ON op.offer_id = a.original_offer_id`,
+    [chainId]
+  );
+
+  const { rowCount } = await client.query(
+    `DELETE FROM offers o USING stores s WHERE s.id = o.store_id AND s.chain_id = $1`,
+    [chainId]
+  );
+  return rowCount;
 }
 
 async function importProducts() {
   const client = await pool.connect();
+  const ingestedAt = new Date();
+
+  // GTIN -> products.id, kept for the whole run so a GTIN shared across chains
+  // resolves to the same canonical product row (and keeps its original group)
+  // instead of being re-created per chain.
+  const productIdByGtin = new Map();
 
   try {
-    // product is upserted, not truncated - canonical_product_id, price
-    // history, and cross-week identity continuity all depend on the same
-    // row persisting week to week rather than being dropped and recreated.
-    // store_product should always exactly reflect the current week's deals
-    // though, so it stays a full truncate-and-reload.
-    console.log("Truncating store_product table...");
-    await client.query("TRUNCATE store_product");
+    await client.query("BEGIN");
+
+    const { rows: catRows } = await client.query("SELECT id, slug FROM categories");
+    const categoryIdBySlug = new Map(catRows.map((c) => [c.slug, c.id]));
 
     for (const { file, slug } of productFiles) {
       if (!fs.existsSync(file)) {
-        console.warn(`File not found: ${file}, skipping chain ${slug}`);
+        console.warn(`File not found: ${file}, skipping chain ${slug} (its current offers are left untouched)`);
         continue;
       }
 
-      const { rows: chainRows } = await client.query("SELECT id FROM chain WHERE slug = $1", [slug]);
+      const { rows: chainRows } = await client.query("SELECT id FROM chains WHERE slug = $1", [slug]);
       if (chainRows.length === 0) {
-        console.warn(`Chain "${slug}" not found in chain table, skipping.`);
+        console.warn(`Chain "${slug}" not found in chains table, skipping.`);
         continue;
       }
       const chainId = chainRows[0].id;
 
-      const getStoreIdsForOffer = await buildStoreIdsLookup(client, slug, chainId);
-
+      const getStoreIds = await buildStoreIdsLookup(client, slug, chainId);
       const products = JSON.parse(fs.readFileSync(file, "utf-8"));
       console.log(`Loaded ${products.length} normalized products for chain "${slug}"`);
 
+      const archivedCount = await archiveAndClearChainOffers(client, chainId);
+
+      // Campaign (variant group) -> product_group id, for THIS run. A campaign
+      // id is chain-scoped and rotates weekly, so it's only used to keep this
+      // run's sibling variants in one group; it is never a cross-run key.
+      const groupIdByCampaign = new Map();
+      // offerKey -> { fields, productIds:Set }, built per chain then flushed.
+      const offersByKey = new Map();
+
+      let skippedNoGtin = 0;
       let insertedProducts = 0;
-      let insertedLinks = 0;
+      let storeLinks = 0;
       let unmatchedStores = 0;
 
       for (const product of products) {
-        const { rows } = await client.query(
-          `INSERT INTO product (
-             chain_id, gtin, fingerprint, variant_group, title, image, brand, size,
-             more_info, badges, category_slug, category_name, raw_category_name
-           )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-           ON CONFLICT (chain_id, COALESCE(gtin, fingerprint)) DO UPDATE SET
-             title = EXCLUDED.title,
-             variant_group = EXCLUDED.variant_group,
-             image = EXCLUDED.image,
-             brand = EXCLUDED.brand,
-             size = EXCLUDED.size,
-             more_info = EXCLUDED.more_info,
-             badges = EXCLUDED.badges,
-             category_slug = EXCLUDED.category_slug,
-             category_name = EXCLUDED.category_name,
-             raw_category_name = EXCLUDED.raw_category_name,
-             updated_at = now()
-           RETURNING id`,
-          [
-            chainId,
-            product.gtin,
-            product.fingerprint,
-            product.variantGroup,
-            product.title,
-            product.image,
-            product.brand,
-            product.size,
-            product.moreInfo,
-            JSON.stringify(product.badges ?? []),
-            product.categorySlug,
-            product.categoryName,
-            product.rawCategoryName,
-          ]
-        );
-        const productId = rows[0].id;
-        insertedProducts++;
+        if (!product.gtin) {
+          skippedNoGtin++;
+          continue;
+        }
 
+        const categoryId = categoryIdBySlug.get(product.categorySlug);
+        if (!categoryId) {
+          console.warn(`Unknown category slug "${product.categorySlug}" for gtin ${product.gtin}, skipping product.`);
+          continue;
+        }
+
+        const campaignKey = product.variantGroup ? `${slug}:${product.variantGroup}` : null;
+
+        // Resolve the canonical product row, creating its product_group only
+        // when the product is genuinely new (an existing product keeps the
+        // group it was first filed under - products are persistent).
+        let productId = productIdByGtin.get(product.gtin);
+        if (!productId) {
+          const existing = await client.query(
+            "SELECT id, product_group_id FROM products WHERE gtin = $1",
+            [product.gtin]
+          );
+          if (existing.rows.length > 0) {
+            productId = existing.rows[0].id;
+            if (campaignKey && !groupIdByCampaign.has(campaignKey)) {
+              groupIdByCampaign.set(campaignKey, existing.rows[0].product_group_id);
+            }
+            // Fill in any display fields this chain has that were missing.
+            await client.query(
+              `UPDATE products SET
+                 brand = COALESCE(brand, $2),
+                 size = COALESCE(size, $3),
+                 image_url = COALESCE(image_url, $4),
+                 updated_at = now()
+               WHERE id = $1`,
+              [productId, product.brand, product.size, product.image]
+            );
+          } else {
+            let groupId = campaignKey ? groupIdByCampaign.get(campaignKey) : undefined;
+            if (!groupId) {
+              const g = await client.query(
+                "INSERT INTO product_groups (name, category_id) VALUES ($1, $2) RETURNING id",
+                [product.title, categoryId]
+              );
+              groupId = g.rows[0].id;
+              if (campaignKey) groupIdByCampaign.set(campaignKey, groupId);
+            }
+            const p = await client.query(
+              `INSERT INTO products (product_group_id, gtin, title, brand, size, image_url)
+               VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+              [groupId, product.gtin, product.title, product.brand, product.size, product.image]
+            );
+            productId = p.rows[0].id;
+            insertedProducts++;
+          }
+          productIdByGtin.set(product.gtin, productId);
+        }
+
+        // store_products (persistent membership) + accumulate current offers.
         for (const offer of product.storeOffers) {
-          const { storeIds, assortmentId } = getStoreIdsForOffer(offer.store);
+          if (offer.priceCents == null || !offer.validUntil) continue; // offer needs a price + end date
+          const storeIds = getStoreIds(offer.store);
           if (storeIds.length === 0) {
             unmatchedStores++;
             continue;
           }
+
           for (const storeId of storeIds) {
             await client.query(
-              `INSERT INTO store_product (
-                 store_id, product_id, price_cents, savings_cents, unit, comparison_price,
-                 comparison_price_cents, comparison_unit, deal, deal_quantity, is_member, valid_until
-               )
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-               ON CONFLICT (store_id, product_id) DO UPDATE SET
-                 price_cents = EXCLUDED.price_cents,
-                 savings_cents = EXCLUDED.savings_cents,
-                 unit = EXCLUDED.unit,
-                 comparison_price = EXCLUDED.comparison_price,
-                 comparison_price_cents = EXCLUDED.comparison_price_cents,
-                 comparison_unit = EXCLUDED.comparison_unit,
-                 deal = EXCLUDED.deal,
-                 deal_quantity = EXCLUDED.deal_quantity,
-                 is_member = EXCLUDED.is_member,
-                 valid_until = EXCLUDED.valid_until`,
-              [
-                storeId,
-                productId,
-                offer.priceCents,
-                offer.savingsCents,
-                offer.unit,
-                offer.comparisonPrice,
-                offer.comparisonPriceCents,
-                offer.comparisonUnit,
-                offer.deal,
-                offer.dealQuantity,
-                offer.isMember,
-                offer.validUntil,
-              ]
+              `INSERT INTO store_products (store_id, product_id, first_seen_at, last_seen_at)
+               VALUES ($1, $2, $3, $3)
+               ON CONFLICT (store_id, product_id) DO UPDATE SET last_seen_at = $3`,
+              [storeId, productId, ingestedAt]
             );
-            insertedLinks++;
-          }
+            storeLinks++;
 
-          await recordPriceHistoryForOffer(client, { storeIds, assortmentId, ...offer }, productId);
+            // One offer per (store, campaign+deal) for mix-and-match, or per
+            // (store, product) for a standalone offer. The key is the DEAL
+            // identity (price/quantity/text/validity/membership) - deliberately
+            // NOT the per-unit comparison price, which legitimately varies
+            // across the variable-weight products of one campaign and is
+            // aggregated into the offer's comparison min/max below instead.
+            const offerKey = campaignKey
+              ? [storeId, campaignKey, offer.priceCents, offer.deal, offer.validUntil, offer.isMember,
+                 offer.dealQuantity, offer.unit].join("|")
+              : `${storeId}|solo|${productId}`;
+
+            let entry = offersByKey.get(offerKey);
+            if (!entry) {
+              entry = {
+                storeId,
+                priceCents: offer.priceCents,
+                originalPriceCents: computeOriginalPriceCents(offer.priceCents, offer.savingsCents),
+                isMember: offer.isMember ?? false,
+                dealQuantity: offer.dealQuantity ?? null,
+                unit: offer.unit ?? null,
+                comparisonMinCents: offer.comparisonPriceMinCents ?? null,
+                comparisonMaxCents: offer.comparisonPriceMaxCents ?? null,
+                comparisonUnit: offer.comparisonUnit ?? null,
+                dealText: offer.deal ?? null,
+                moreInfo: product.moreInfo ?? null,
+                validFrom: offer.validFrom ?? null, // earliest fetched start; clamped at insert
+                validUntil: offer.validUntil,
+                productIds: new Set(),
+              };
+              offersByKey.set(offerKey, entry);
+            } else {
+              // Widen the offer's per-unit comparison range to span every
+              // product in the mix-and-match, and keep the earliest start.
+              if (offer.comparisonPriceMinCents != null) {
+                entry.comparisonMinCents =
+                  entry.comparisonMinCents == null
+                    ? offer.comparisonPriceMinCents
+                    : Math.min(entry.comparisonMinCents, offer.comparisonPriceMinCents);
+              }
+              if (offer.comparisonPriceMaxCents != null) {
+                entry.comparisonMaxCents =
+                  entry.comparisonMaxCents == null
+                    ? offer.comparisonPriceMaxCents
+                    : Math.max(entry.comparisonMaxCents, offer.comparisonPriceMaxCents);
+              }
+              if (offer.validFrom && (!entry.validFrom || offer.validFrom < entry.validFrom)) {
+                entry.validFrom = offer.validFrom;
+              }
+            }
+            entry.productIds.add(productId);
+          }
+        }
+      }
+
+      // Flush this chain's current offers + their product eligibility.
+      let insertedOffers = 0;
+      let insertedOfferProducts = 0;
+      for (const entry of offersByKey.values()) {
+        // valid_from = the retailer's real start when it's in the past, else
+        // ingestion time; never in the future, so a live offer (present in the
+        // active feed we just scraped) is never hidden behind a future start.
+        // Finally clamped to valid_until so the invariant valid_from <=
+        // valid_until always holds even for an offer expiring the same day.
+        const start = entry.validFrom ? new Date(entry.validFrom) : null;
+        let validFrom = start && start < ingestedAt ? start : ingestedAt;
+        const until = new Date(entry.validUntil);
+        if (validFrom > until) validFrom = until;
+        const { rows } = await client.query(
+          `INSERT INTO offers (
+             store_id, price_cents, original_price_cents, is_member, deal_quantity, unit,
+             comparison_price_min_cents, comparison_price_max_cents, comparison_unit,
+             deal_text, more_info, valid_from, valid_until
+           )
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING id`,
+          [
+            entry.storeId, entry.priceCents, entry.originalPriceCents, entry.isMember, entry.dealQuantity,
+            entry.unit, entry.comparisonMinCents, entry.comparisonMaxCents, entry.comparisonUnit,
+            entry.dealText, entry.moreInfo, validFrom, entry.validUntil,
+          ]
+        );
+        const offerId = rows[0].id;
+        insertedOffers++;
+        for (const productId of entry.productIds) {
+          await client.query(
+            "INSERT INTO offer_products (offer_id, product_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+            [offerId, productId]
+          );
+          insertedOfferProducts++;
         }
       }
 
       console.log(
-        `Chain "${slug}": ${insertedProducts} products, ${insertedLinks} store links` +
-          (unmatchedStores > 0 ? `, ${unmatchedStores} unmatched store paths` : "")
+        `Chain "${slug}": archived ${archivedCount} old offers, +${insertedProducts} new products, ` +
+          `${storeLinks} store links, ${insertedOffers} offers, ${insertedOfferProducts} offer-products` +
+          (skippedNoGtin > 0 ? `, ${skippedNoGtin} skipped (no gtin)` : "") +
+          (unmatchedStores > 0 ? `, ${unmatchedStores} unmatched store keys` : "")
       );
     }
 
+    await client.query("COMMIT");
     console.log("Product import completed successfully.");
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    console.error("Product import FAILED and was rolled back. Database unchanged.\n", err);
+    process.exitCode = 1;
   } finally {
     client.release();
     await pool.end();

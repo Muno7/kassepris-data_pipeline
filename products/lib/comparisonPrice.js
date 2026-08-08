@@ -29,9 +29,16 @@ const UNIT_ALIASES = {
   meter: "m",
 };
 
-// Parses one comparison-price string into { amountCents, unit } (unit is one
-// of UNIT_ALIASES' values), or null if the string doesn't carry a numeric
-// value with an unambiguous, directly-comparable unit.
+// Parses one comparison-price string into { minCents, maxCents, unit } (unit
+// is one of UNIT_ALIASES' values), or null if the string doesn't carry a
+// numeric value with an unambiguous, directly-comparable unit.
+//
+// A comparison price is frequently a *range* rather than a single value
+// ("61:11-73:33/kg" - confirmed ~45-59% of all Coop/ICA comparison strings):
+// this happens when one offer covers variable-weight/variable-size items (a
+// "2 för 30 kr" deal on chips bags of 150-300 g gives a price-per-kg that
+// genuinely spans a range). Both bounds are captured - min for ranking a
+// deal's best case, max for its worst - and a single value yields min === max.
 export function parseComparisonPrice(str) {
   if (!str) return null;
 
@@ -46,26 +53,23 @@ export function parseComparisonPrice(str) {
   // way rather than treated as two different, unrecognized units.
   s = s.replace(/\s*\+\s*pant$/i, "").replace(/\s*exkl\.?\s*pant$/i, "");
 
-  // The unit always trails the *last* number in the string, including in a
-  // range ("61:11-73:33/kg") - pull it from the full string first, since
-  // splitting on "-" for the lower bound (below) would otherwise strip it
-  // whenever the unit only appears after the upper bound.
+  // The unit always trails the last number in the string, including in a
+  // range ("61:11-73:33/kg").
   const unitMatch = s.match(/\/\s*([a-zA-ZåäöÅÄÖ]+)\s*$/);
   const rawUnit = unitMatch?.[1]?.toLowerCase();
   const unit = rawUnit ? UNIT_ALIASES[rawUnit] : undefined;
   if (!unit) return null;
 
-  // A range ("61:11-73:33/kg") reports its lower bound - the same documented
-  // approximation parsePriceToCents uses for the main price, kept consistent
-  // here rather than inventing a second convention.
-  const firstOfRange = s.split(/[-–]/)[0];
-  const match = firstOfRange.match(/(\d+(?:[.,:]\d+)?)/);
-  if (!match) return null;
+  // Every numeric token in the string - one for a single value, two for a
+  // range. Swedish decimals use "," (Coop) or ":" (ICA/Willys).
+  const tokens = s.match(/\d+(?:[.,:]\d+)?/g);
+  if (!tokens) return null;
+  const values = tokens
+    .map((t) => Math.round(parseFloat(t.replace(":", ".").replace(",", ".")) * 100))
+    .filter((n) => Number.isFinite(n));
+  if (values.length === 0) return null;
 
-  const amount = parseFloat(match[1].replace(":", ".").replace(",", "."));
-  if (!Number.isFinite(amount)) return null;
-
-  return { amountCents: Math.round(amount * 100), unit };
+  return { minCents: Math.min(...values), maxCents: Math.max(...values), unit };
 }
 
 // Fallback for when the provider doesn't supply a comparison-price text at
@@ -83,5 +87,6 @@ export function parseComparisonPrice(str) {
 // if it were a real per-unit figure.
 export function deriveComparisonFromDealQuantity(priceCents, dealQuantity) {
   if (priceCents == null || !Number.isInteger(dealQuantity) || dealQuantity < 2) return null;
-  return { amountCents: Math.round(priceCents / dealQuantity), unit: "st" };
+  const cents = Math.round(priceCents / dealQuantity);
+  return { minCents: cents, maxCents: cents, unit: "st" };
 }

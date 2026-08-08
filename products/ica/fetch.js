@@ -20,7 +20,7 @@ import { createHttpClient } from "../lib/httpClient.js";
 import { createCheckpoint } from "../lib/checkpoint.js";
 import { createSchemaCheck } from "../lib/schemaCheck.js";
 import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
-import { runWithConcurrency } from "../lib/concurrency.js";
+import { runWithRetries } from "../lib/concurrency.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
 import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
@@ -34,6 +34,9 @@ const STATE_DIR = path.resolve(__dirname, ".state");
 // than Coop/Willys tolerate.
 const CONCURRENCY = getEnvInt("ICA_FETCH_CONCURRENCY", 3);
 const MAX_RETRIES = getEnvInt("ICA_FETCH_MAX_RETRIES", 4);
+// Extra whole-store retry passes after the first, for stores that still failed
+// once httpClient's per-request retries were exhausted (see runWithRetries).
+const STORE_RETRY_PASSES = getEnvInt("ICA_FETCH_STORE_RETRY_PASSES", 2);
 
 // ICA publishes its real budget on every response: `ratelimit-policy:
 // 72;w=60` - 72 requests per 60-second window, confirmed directly against
@@ -64,7 +67,10 @@ const httpClient = createHttpClient({
   logger,
   metrics,
   maxRetries: MAX_RETRIES,
-  minDelayMs: 850,
+  // ICA's edge protection wants requests well-spaced; 850ms proven reliable at
+  // concurrency 3. Env-overridable (lower for a fast dev/test run, at the risk
+  // of throttling). See config/env.js and .env.example.
+  minDelayMs: getEnvInt("ICA_FETCH_MIN_DELAY_MS", 850),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
 const offersSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-offers.json"));
@@ -100,6 +106,7 @@ function generateFingerprint(productData) {
     image,
     store,
     gtin,
+    validFrom,
     validUntil,
     variantGroup,
     priceCents,
@@ -107,7 +114,8 @@ function generateFingerprint(productData) {
     unit,
     deal,
     comparisonPrice,
-    comparisonPriceCents,
+    comparisonPriceMinCents,
+    comparisonPriceMaxCents,
     comparisonUnit,
     isMember,
     ...rest
@@ -244,12 +252,14 @@ function mapOffer(offer, storePath) {
       brand: details.brand ?? null,
       moreInfo,
       comparisonPrice: comparisonPriceText,
-      comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+      comparisonPriceMinCents: comparison?.minCents ?? fallbackComparison?.minCents ?? null,
+      comparisonPriceMaxCents: comparison?.maxCents ?? fallbackComparison?.maxCents ?? null,
       comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
       image: ean?.image ?? null,
       isMember: offer.traits?.includes("Stammis") ?? false,
       traits: offer.traits ?? [],
       gtin: ean?.id ?? null,
+      validFrom: offer.validFrom ?? null,
       validUntil: offer.validTo ?? null,
       categoryName,
       store: storePath,
@@ -376,7 +386,7 @@ export async function fetchAllIcaStores() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
 
   const { rows: stores } = await pool.query(
-    `SELECT s.url, s.name FROM stores s JOIN chain c ON s.chain_id = c.id WHERE c.slug = 'ica' AND s.url IS NOT NULL`
+    `SELECT s.url, s.name FROM stores s JOIN chains c ON s.chain_id = c.id WHERE c.slug = 'ica' AND s.url IS NOT NULL`
   );
 
   if (checkpoint.resumedCount > 0) {
@@ -384,10 +394,18 @@ export async function fetchAllIcaStores() {
   }
 
   logger.info("fetching offers", { stores: stores.length, concurrency: CONCURRENCY });
-  const { ok, failed } = await runWithConcurrency(stores, CONCURRENCY, fetchOneStore, {
-    onFailure: (store, err) => logger.error("store fetch failed", { store: store.url, error: err.message }),
+  const { ok, failed, failedItems } = await runWithRetries(stores, CONCURRENCY, fetchOneStore, {
+    maxRetryPasses: STORE_RETRY_PASSES,
+    onFailure: (store, err, pass) => logger.error("store fetch failed", { store: store.url, pass, error: err.message }),
     onProgress: (done, total) => logger.info("progress", { done, total }),
+    onRetryPass: (pass, retrying) => logger.warn("retrying failed stores", { pass, retrying }),
   });
+  if (failed > 0) {
+    logger.error("stores still failing after all retry passes", {
+      failed,
+      stores: failedItems.map((s) => s.url),
+    });
+  }
   logger.info("done", { ok, failed, total: stores.length, dataDir: DATA_DIR });
 
   const schemaResult = offersSchemaAccumulator.finish();
@@ -396,10 +414,15 @@ export async function fetchAllIcaStores() {
     logger.warn("offers page schema changed since last run", schemaResult);
   }
 
-  // A fully successful run means every store either fetched fresh or was
-  // already done from a prior resume - clear the checkpoint so the next
-  // scheduled run starts clean rather than skipping stores forever.
-  if (failed === 0) checkpoint.clear();
+  // Reaching here means the run completed (didn't crash): every store was
+  // attempted and any failures already exhausted their retry passes and are
+  // logged above. Clear the checkpoint unconditionally so the next scheduled
+  // run starts fresh. The checkpoint exists only to resume a *crashed* run
+  // mid-way - NOT to permanently skip stores that merely failed. (ICA has a
+  // handful of dead 404 stores; keeping the checkpoint on failure pinned it
+  // forever, so every later run "resumed" and skipped re-fetching all the
+  // good stores, staling out the whole chain.)
+  checkpoint.clear();
 
   metrics.report();
   return { ok, failed, total: stores.length };

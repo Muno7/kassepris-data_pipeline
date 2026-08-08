@@ -49,6 +49,19 @@ const BASE_URL = "https://www.willys.se/axfood/rest/v1/search/campaigns/offline"
 const SITE_ORIGIN = "https://www.willys.se";
 const PAGE_SIZE = 100;
 
+// The plain full-catalog search endpoint (the one that powers willys.se/sok),
+// separate from the campaigns/offline endpoint above. Used only as a GTIN
+// fallback: a handful of campaign products per run carry a promo-only image
+// with no GTIN in it, but the same product exists in the regular catalog under
+// the same internal `code` (== the campaign's mainProductCode) with a
+// GTIN-bearing catalog photo. See products/willys/GTIN_FALLBACK_PLAN.md.
+const SEARCH_URL = "https://www.willys.se/axfood/rest/v1/search";
+// Kept below CONCURRENCY: this backs /sok, which robots.txt marks
+// crawl-sensitive, and it's only ever a small per-run cleanup (~15-25 items).
+const GTIN_FALLBACK_CONCURRENCY = getEnvInt("WILLYS_GTIN_FALLBACK_CONCURRENCY", 3);
+const GTIN_FALLBACK_MAX_PAGES = 4;
+const GTIN_FALLBACK_PAGE_SIZE = 50;
+
 // Categories within one assortment were fetched strictly one at a time
 // before - there was no concurrency knob at all here, unlike Coop/ICA. Left
 // tunable per-environment like the others, rather than hardcoded.
@@ -73,6 +86,9 @@ const httpClient = createHttpClient({
   logger,
   metrics,
   maxRetries: MAX_RETRIES,
+  // 0 (fast) for dev/test; raised via env for production politeness (this
+  // endpoint backs /sok, which robots.txt marks crawl-sensitive).
+  minDelayMs: getEnvInt("WILLYS_FETCH_MIN_DELAY_MS", 0),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
 const campaignsSchemaCheck = createSchemaCheck(path.join(STATE_DIR, "schema-baseline-campaigns.json"));
@@ -164,6 +180,7 @@ function mapProduct(rawItem, categoryName) {
   // Coop/ICA's own already-ISO validUntil/campaignEndDate - normalized here
   // so nothing downstream needs to know which chain a date came from.
   const validUntil = Number.isFinite(promo.validUntil) ? new Date(promo.validUntil).toISOString() : null;
+  const validFrom = Number.isFinite(promo.startDate) ? new Date(promo.startDate).toISOString() : null;
   const image = resolveImageUrl(rawItem.image);
 
   return {
@@ -174,8 +191,10 @@ function mapProduct(rawItem, categoryName) {
     deal: promo.conditionLabel ?? null,
     dealQuantity,
     comparisonPrice: comparisonPriceText,
-    comparisonPriceCents: comparison?.amountCents ?? fallbackComparison?.amountCents ?? null,
+    comparisonPriceMinCents: comparison?.minCents ?? fallbackComparison?.minCents ?? null,
+    comparisonPriceMaxCents: comparison?.maxCents ?? fallbackComparison?.maxCents ?? null,
     comparisonUnit: comparison?.unit ?? fallbackComparison?.unit ?? null,
+    validFrom,
     validUntil,
     gtin: extractGtinFromImageUrl(image),
     size: rawItem.displayVolume ?? null,
@@ -237,9 +256,13 @@ const campaignsSchemaAccumulator = campaignsSchemaCheck.createAccumulator();
 // total says there's nothing left - the endpoint caps each response to
 // PAGE_SIZE items, so a category with more products than that requires
 // multiple requests to read in full.
+// Returns { product, mainProductCode } pairs, not bare products: mainProductCode
+// (Willys' internal SKU, e.g. "101776270_ST") is kept alongside each product
+// in memory to drive the GTIN fallback (recoverMissingGtins), then dropped
+// before the file is written - the on-disk JSON schema is unchanged.
 async function fetchCategoryProducts(storeCode, categoryCode, categoryName) {
   const query = `${storeCode}:categoryLevel1_string_mv:${categoryCode}`;
-  const products = [];
+  const entries = [];
   let page = 0;
   while (true) {
     const data = await fetchCampaignsPage(storeCode, query, page);
@@ -252,22 +275,85 @@ async function fetchCategoryProducts(storeCode, categoryCode, categoryName) {
     }
     campaignsSchemaAccumulator.accumulate(data);
 
-    products.push(...(data.results ?? []).map((item) => mapProduct(item, categoryName)));
-    const total = data.pagination?.totalNumberOfResults ?? products.length;
-    if (products.length >= total || !data.results?.length) break;
+    entries.push(
+      ...(data.results ?? []).map((item) => ({
+        product: mapProduct(item, categoryName),
+        mainProductCode: item.potentialPromotions?.[0]?.mainProductCode ?? null,
+      }))
+    );
+    const total = data.pagination?.totalNumberOfResults ?? entries.length;
+    if (entries.length >= total || !data.results?.length) break;
     page++;
   }
-  return products;
+  return entries;
 }
 
-// Fetches, validates, and collects one category's products - the unit of
-// work concurrency and error reporting operate on within an assortment.
-// Checkpointing itself stays at the assortment level (see fetchAssortment)
-// since that's the natural unit this scraper writes one output file per.
-async function fetchOneCategory(storeCode, category, results) {
-  const categoryProducts = await fetchCategoryProducts(storeCode, category.code, category.name);
-  logger.info("category done", { category: category.name, products: categoryProducts.length });
-  results.push(...categoryProducts);
+// Fetches, validates, and collects one category's { product, mainProductCode }
+// entries - the unit of work concurrency and error reporting operate on within
+// an assortment. Checkpointing itself stays at the assortment level (see
+// fetchAssortment) since that's the natural unit this scraper writes one
+// output file per.
+async function fetchOneCategory(storeCode, category, entries) {
+  const categoryEntries = await fetchCategoryProducts(storeCode, category.code, category.name);
+  logger.info("category done", { category: category.name, products: categoryEntries.length });
+  entries.push(...categoryEntries);
+}
+
+// --- GTIN fallback (see products/willys/GTIN_FALLBACK_PLAN.md) -------------
+
+async function searchCatalogPage(query, page) {
+  const qs = new URLSearchParams({
+    q: query,
+    type: "GENERAL",
+    page: String(page),
+    size: String(GTIN_FALLBACK_PAGE_SIZE),
+  });
+  const { data } = await httpClient.fetchJson(`${SEARCH_URL}?${qs}`, {
+    headers: { "User-Agent": DEFAULT_USER_AGENT, Accept: "application/json" },
+  });
+  return data;
+}
+
+// Re-finds a campaign product in Willys' regular online catalog by exact
+// internal-code match (not fuzzy name matching) and reads its GTIN the same
+// way as the campaign path - the catalog photo is GTIN-bearing even when the
+// campaign photo isn't. Empirically resolves on page 0; paginates a few pages
+// defensively since the endpoint's behavior isn't a documented contract.
+async function findCatalogProductByCode(query, targetCode) {
+  for (let page = 0; page < GTIN_FALLBACK_MAX_PAGES; page++) {
+    const data = await searchCatalogPage(query, page);
+    const hit = (data.results ?? []).find((r) => r.code === targetCode);
+    if (hit) return hit;
+    const totalPages = data.pagination?.numberOfPages ?? 1;
+    if (page + 1 >= totalPages) return null;
+  }
+  return null;
+}
+
+// For each entry whose campaign image didn't yield a GTIN, look it up in the
+// catalog by mainProductCode and backfill entry.product.gtin in place. A
+// single failed lookup can't fail the run (runWithConcurrency isolates each).
+async function recoverMissingGtins(entries) {
+  const candidates = entries.filter((e) => !e.product.gtin && e.mainProductCode);
+  let recovered = 0;
+
+  await runWithConcurrency(
+    candidates,
+    GTIN_FALLBACK_CONCURRENCY,
+    async (entry) => {
+      const query = [entry.product.brand, entry.product.title].filter(Boolean).join(" ");
+      if (!query) return;
+      const hit = await findCatalogProductByCode(query, entry.mainProductCode);
+      const gtin = hit ? extractGtinFromImageUrl(resolveImageUrl(hit.image)) : null;
+      if (gtin) {
+        entry.product.gtin = gtin;
+        recovered++;
+      }
+    },
+    { onFailure: (entry, err) => logger.warn("gtin fallback lookup failed", { code: entry.mainProductCode, error: err.message }) }
+  );
+
+  return { attempted: candidates.length, recovered };
 }
 
 async function fetchAssortment({ slug, isHemma }) {
@@ -282,15 +368,21 @@ async function fetchAssortment({ slug, isHemma }) {
   const categories = await fetchCategoryFacets(storeCode);
   logger.info("found categories", { assortment: slug, count: categories.length });
 
-  const products = [];
+  const entries = [];
   const { failed } = await runWithConcurrency(
     categories,
     CONCURRENCY,
-    (category) => fetchOneCategory(storeCode, category, products),
+    (category) => fetchOneCategory(storeCode, category, entries),
     { onFailure: (category, err) => logger.error("category fetch failed", { category: category.name, error: err.message }) }
   );
   if (failed > 0) throw new Error(`${failed}/${categories.length} categories failed for assortment "${slug}"`);
 
+  const { attempted, recovered } = await recoverMissingGtins(entries);
+  logger.info("gtin fallback done", { assortment: slug, attempted, recovered, stillMissing: attempted - recovered });
+
+  // Drop mainProductCode - the written file's shape is exactly what it was,
+  // just with fewer gtin:null entries.
+  const products = entries.map((e) => e.product);
   fs.writeFileSync(path.join(DATA_DIR, `${slug}.json`), JSON.stringify(products, null, 2));
   logger.info("assortment done", { assortment: slug, products: products.length });
 
@@ -312,12 +404,10 @@ export async function fetchAllWillysStores() {
   }
 
   let total = 0;
-  let anyFailed = false;
   for (const assortment of ASSORTMENTS) {
     try {
       total += await fetchAssortment(assortment);
     } catch (err) {
-      anyFailed = true;
       logger.error("assortment fetch failed", { assortment: assortment.slug, error: err.message });
     }
   }
@@ -329,10 +419,12 @@ export async function fetchAllWillysStores() {
     logger.warn("campaigns API schema changed since last run", schemaResult);
   }
 
-  // A fully successful run means every assortment either fetched fresh or
-  // was already done from a prior resume - clear the checkpoint so the next
-  // scheduled run starts clean rather than skipping assortments forever.
-  if (!anyFailed) checkpoint.clear();
+  // Reaching here means the run completed (didn't crash): both assortments
+  // were attempted. Clear the checkpoint unconditionally so the next scheduled
+  // run starts fresh - it exists only to resume a *crashed* run mid-way, not
+  // to permanently skip an assortment that merely failed (see the fuller
+  // reasoning in products/coop/fetch.js).
+  checkpoint.clear();
 
   metrics.report();
   return { total };

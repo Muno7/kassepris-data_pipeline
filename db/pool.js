@@ -1,9 +1,13 @@
-import path from "path";
-import { fileURLToPath } from "url";
 import { Pool } from "pg";
-import dotenv from "dotenv";
+import { DB_SSL } from "../config/env.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, "../.env") });
+// Importing config/env.js has already loaded the right .env file for APP_ENV,
+// so DB_URL and DB_SSL are populated before this runs. SSL is on for AWS RDS
+// in production; rejectUnauthorized is relaxed since RDS uses its own CA chain
+// (set DB_SSL_REJECT_UNAUTHORIZED=true once the RDS CA bundle is wired in).
+const rejectUnauthorized = (process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "false").toLowerCase() === "true";
 
-export const pool = new Pool({ connectionString: process.env.DB_URL });
+export const pool = new Pool({
+  connectionString: process.env.DB_URL,
+  ssl: DB_SSL ? { rejectUnauthorized } : false,
+});
