@@ -67,9 +67,10 @@ const httpClient = createHttpClient({
   logger,
   metrics,
   maxRetries: MAX_RETRIES,
-  // ICA's edge protection wants requests well-spaced; 850ms proven reliable at
-  // concurrency 3. Env-overridable (lower for a fast dev/test run, at the risk
-  // of throttling). See config/env.js and .env.example.
+  // ICA declares 72 req/60s via its RateLimit-* response headers, which the
+  // httpClient gate paces to dynamically. 850ms (= 60000/72) is the static
+  // floor at exactly that declared rate - and a hard one: faster gets the IP
+  // 403-blocked, so it holds in test too. See config/env.js and .env.example.
   minDelayMs: getEnvInt("ICA_FETCH_MIN_DELAY_MS", 850),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));

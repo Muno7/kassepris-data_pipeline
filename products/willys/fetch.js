@@ -86,8 +86,10 @@ const httpClient = createHttpClient({
   logger,
   metrics,
   maxRetries: MAX_RETRIES,
-  // 0 (fast) for dev/test; raised via env for production politeness (this
-  // endpoint backs /sok, which robots.txt marks crawl-sensitive).
+  // Willys' robots.txt declares "Crawl-delay: 10" (10s between requests). It's
+  // a politeness request, not block-enforced, so dev/test stay 0 for speed;
+  // production honors it via env (WILLYS_FETCH_MIN_DELAY_MS=10000). See
+  // .env.example.
   minDelayMs: getEnvInt("WILLYS_FETCH_MIN_DELAY_MS", 0),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));

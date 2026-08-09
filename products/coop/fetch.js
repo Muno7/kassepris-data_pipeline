@@ -55,8 +55,8 @@ const httpClient = createHttpClient({
   metrics,
   cacheDir: path.join(STATE_DIR, "cache"),
   maxRetries: MAX_RETRIES,
-  // Minimum spacing between request starts - 0 (fast) for dev/test, raised via
-  // env for production politeness. See config/env.js and .env.example.
+  // Coop declares no rate limit (no robots Crawl-delay, no RateLimit headers),
+  // so this stays 0 in every environment. Env-overridable only if that changes.
   minDelayMs: getEnvInt("COOP_FETCH_MIN_DELAY_MS", 0),
 });
 const checkpoint = createCheckpoint(path.join(STATE_DIR, "checkpoint.json"));
