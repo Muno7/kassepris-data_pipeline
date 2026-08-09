@@ -1,0 +1,20 @@
+# Keep the build context (and image) small and secret-free. Env vars are
+# injected at runtime (compose env_file / -e), never baked into the image.
+node_modules
+.git
+.gitignore
+.env
+.env.development
+.env.test
+.env.production
+.vscode
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# Scraped / generated data - re-fetched at runtime, not needed in the image.
+products/*/data
+products/*/normalized
+products/*/.state
+stores/data
+*.log

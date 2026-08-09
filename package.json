@@ -13,6 +13,7 @@
     "products:update-db": "node products/update_db.js",
     "products:willys:fetch": "node products/willys/fetch.js",
     "products:willys:normalize": "node products/willys/normalize.js",
+    "db:schema": "node db/apply-schema.js",
     "db:init": "bash scripts/init-db.sh",
     "db:migrate": "node db/migrate.js",
     "products:update-all": "bash scripts/update-products.sh"

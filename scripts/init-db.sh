@@ -6,12 +6,17 @@
 set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/.."
 
-set -a
-source .env
-set +a
+# Load .env when present (local host). In containers there's no .env file - the
+# environment is injected at runtime (compose env_file / -e) - so this is
+# optional, not required.
+if [ -f .env ]; then
+  set -a
+  source .env
+  set +a
+fi
 
 echo "=== 1/5: Applying schema ==="
-psql "$DB_URL" -f db/schema.sql
+npm run db:schema   # node-native (no psql needed), so this runs in-container too
 
 echo "=== 2/5: Fetching Coop + ICA stores ==="
 npm run stores:fetch

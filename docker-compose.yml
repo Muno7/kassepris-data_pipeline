@@ -29,5 +29,24 @@ services:
       timeout: 5s
       retries: 10
 
+  # The scraper pipeline. Runs one-off commands against the db service; not a
+  # long-running server. Examples:
+  #   docker compose run --rm app npm run db:init            # schema + stores
+  #   docker compose run --rm app npm run products:update-all # offers
+  #   docker compose run --rm app npm run db:schema          # schema only
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    # Coop API keys (COOP_*_SUBSCRIPTION_KEY) come from the host .env at runtime,
+    # not from the image. DB_URL/APP_ENV/DB_SSL below override anything in .env.
+    env_file:
+      - .env
+    environment:
+      APP_ENV: development
+      DB_SSL: "false"
+      DB_URL: postgresql://kassepris:kassepris@db:5432/kassepris_test
+
 volumes:
   kassepris_pgdata:
