@@ -1,0 +1,43 @@
+{
+  "family": "kassepris-scraper",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "1024",
+  "memory": "2048",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/kassepris-ecs-execution-role",
+  "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/kassepris-task-role",
+  "containerDefinitions": [
+    {
+      "name": "scraper",
+      "image": "<ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/kassepris-scraper:latest",
+      "essential": true,
+      "linuxParameters": { "initProcessEnabled": true },
+      "command": ["npm", "run", "products:update-all"],
+      "environment": [
+        { "name": "APP_ENV", "value": "production" },
+        { "name": "DB_SSL", "value": "true" },
+        { "name": "COOP_FETCH_MIN_DELAY_MS", "value": "0" },
+        { "name": "ICA_FETCH_MIN_DELAY_MS", "value": "850" },
+        { "name": "WILLYS_FETCH_MIN_DELAY_MS", "value": "10000" },
+        { "name": "WILLYS_FETCH_CONCURRENCY", "value": "1" }
+      ],
+      "secrets": [
+        { "name": "DB_URL", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:kassepris/DB_URL" },
+        { "name": "COOP_PRODUCTS_SUBSCRIPTION_KEY", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:kassepris/COOP_PRODUCTS_SUBSCRIPTION_KEY" },
+        { "name": "COOP_STORE_INFO_SUBSCRIPTION_KEY", "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:kassepris/COOP_STORE_INFO_SUBSCRIPTION_KEY" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/kassepris-scraper",
+          "awslogs-region": "<REGION>",
+          "awslogs-stream-prefix": "scraper"
+        }
+      }
+    }
+  ]
+}

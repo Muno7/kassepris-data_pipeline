@@ -36,6 +36,7 @@ services:
   #   docker compose run --rm app npm run db:schema          # schema only
   app:
     build: .
+    image: kassepris-scraper:latest   # same tag `make build`/`make push` use
     depends_on:
       db:
         condition: service_healthy
