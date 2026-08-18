@@ -121,6 +121,38 @@ CREATE INDEX IF NOT EXISTS idx_products_product_group_id ON products (product_gr
 CREATE INDEX IF NOT EXISTS idx_products_title_lower_trgm ON products USING gin (lower(title) gin_trgm_ops);
 
 -- ---------------------------------------------------------------------------
+-- Image licensing (Initiative: licensed product images). Populated by the
+-- separate image pipeline (products/lib/imageSources/), NOT by the weekly
+-- offer ingest. image_url is overwritten in place with a resolved,
+-- openly-licensed source URL; image_url_legacy preserves whatever was there
+-- before (a retailer hotlink - a copyright liability) purely as a rollback
+-- path. image_source is which open dataset it came from (Open Food/Products/
+-- Beauty Facts) or a placeholder; image_license records the license.
+-- ---------------------------------------------------------------------------
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_url_legacy text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_source text
+  CHECK (image_source IN ('off', 'opf', 'obf', 'placeholder'));
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_license text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_resolved_at timestamptz;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_width integer;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS image_height integer;
+
+-- missing_images: products no licensed image source could resolve - the
+-- priority queue for manual sourcing, one row per product. lookup_count grows
+-- each resolution run that still can't place it (a proxy for how persistent
+-- the gap is); ranked against store_products/offer_products by shopper traffic
+-- at report time (products/lib/imageSources/priorityReport.js).
+CREATE TABLE IF NOT EXISTS missing_images (
+  product_id     uuid PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+  gtin           text NOT NULL,
+  product_name   text NOT NULL,
+  category       text,
+  first_seen_at  timestamptz NOT NULL DEFAULT now(),
+  last_seen_at   timestamptz NOT NULL DEFAULT now(),
+  lookup_count   integer NOT NULL DEFAULT 1
+);
+
+-- ---------------------------------------------------------------------------
 -- store_products: persistent many-to-many between physical stores and gtin
 -- products. Records that Kassepris has *observed* this product at this store
 -- through its data sources - NOT a claim of full assortment, and NOT deleted
