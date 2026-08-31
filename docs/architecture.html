@@ -1,0 +1,1324 @@
+<title>Inside the Kassepris Scraper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap">
+
+<style>
+  :root {
+    --ground:      #F2F5F5;
+    --surface:     #FFFFFF;
+    --surface-2:   #E7ECEC;
+    --ink:         #101718;
+    --ink-2:       #52605F;
+    --ink-3:       #7C8988;
+    --line:        #D6DEDE;
+    --line-soft:   #E5EBEB;
+    --accent:      #0E5E6B;
+    --accent-soft: #DCEBED;
+    --caution:     #8A5A0F;
+    --caution-soft:#F7EEDC;
+    --coop:        #1E7A48;
+    --ica:         #B8402C;
+    --willys:      #8A6510;
+
+    --f-display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --f-body:    "Source Serif 4", Georgia, "Times New Roman", serif;
+    --f-mono:    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+    --measure: 68ch;
+    --radius: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0E1213;
+      --surface:     #161C1D;
+      --surface-2:   #1D2526;
+      --ink:         #E4EAEA;
+      --ink-2:       #9FADAD;
+      --ink-3:       #778584;
+      --line:        #28312F;
+      --line-soft:   #1F2726;
+      --accent:      #4FB6C4;
+      --accent-soft: #12292D;
+      --caution:     #D9A65A;
+      --caution-soft:#241E12;
+      --coop:        #4FB37D;
+      --ica:         #E0836E;
+      --willys:      #D5A93F;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0E1213;
+    --surface:     #161C1D;
+    --surface-2:   #1D2526;
+    --ink:         #E4EAEA;
+    --ink-2:       #9FADAD;
+    --ink-3:       #778584;
+    --line:        #28312F;
+    --line-soft:   #1F2726;
+    --accent:      #4FB6C4;
+    --accent-soft: #12292D;
+    --caution:     #D9A65A;
+    --caution-soft:#241E12;
+    --coop:        #4FB37D;
+    --ica:         #E0836E;
+    --willys:      #D5A93F;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 16.5px;
+    line-height: 1.62;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- shell ---------- */
+  .shell {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr);
+    gap: 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px 120px;
+  }
+
+  /* ---------- masthead ---------- */
+  .masthead {
+    grid-column: 1 / -1;
+    padding: 72px 0 40px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 48px;
+  }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 18px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(2.6rem, 6vw, 4rem);
+    font-weight: 700;
+    letter-spacing: -0.028em;
+    line-height: 1.02;
+    text-wrap: balance;
+    margin: 0 0 20px;
+  }
+  .standfirst {
+    font-size: 1.2rem;
+    line-height: 1.55;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0 0 30px;
+  }
+  .barcode { display: block; height: 26px; width: 100%; max-width: 420px; }
+  .masthead-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 26px;
+    margin-top: 26px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--ink-3);
+  }
+  .masthead-meta b { color: var(--ink-2); font-weight: 500; }
+
+  /* ---------- contents rail ---------- */
+  .rail { position: relative; }
+  .rail-inner {
+    position: sticky;
+    top: 28px;
+    padding-bottom: 24px;
+  }
+  .rail h2 {
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 14px;
+  }
+  .rail ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .rail a {
+    display: block;
+    font-family: var(--f-display);
+    font-size: 13.5px;
+    line-height: 1.35;
+    color: var(--ink-2);
+    text-decoration: none;
+    padding: 6px 0 6px 13px;
+    border-left: 2px solid var(--line);
+    transition: color .15s, border-color .15s;
+  }
+  .rail a:hover { color: var(--ink); border-left-color: var(--ink-3); }
+  .rail a.is-active { color: var(--accent); border-left-color: var(--accent); font-weight: 600; }
+  .rail a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ---------- main column ---------- */
+  main { min-width: 0; }
+  section { margin-bottom: 76px; scroll-margin-top: 24px; }
+
+  h2.sec {
+    font-family: var(--f-display);
+    font-size: clamp(1.6rem, 3vw, 2.05rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    text-wrap: balance;
+    margin: 0 0 6px;
+  }
+  .sec-note {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 0 0 26px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  h3 {
+    font-family: var(--f-display);
+    font-size: 1.16rem;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    margin: 42px 0 12px;
+    text-wrap: balance;
+  }
+  h4 {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin: 34px 0 10px;
+  }
+  p { max-width: var(--measure); margin: 0 0 16px; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+
+  code, .mono {
+    font-family: var(--f-mono);
+    font-size: 0.855em;
+    font-variant-ligatures: none;
+  }
+  p code, li code, td code, th code {
+    background: var(--surface-2);
+    border-radius: var(--radius);
+    padding: 1px 5px;
+    color: var(--ink);
+  }
+
+  ul.plain { max-width: var(--measure); margin: 0 0 18px; padding-left: 20px; }
+  ul.plain li { margin-bottom: 9px; }
+
+  /* ---------- key-points list ---------- */
+  .keys { list-style: none; margin: 0 0 20px; padding: 0; max-width: var(--measure); display: flex; flex-direction: column; gap: 14px; }
+  .keys li { padding-left: 18px; border-left: 2px solid var(--accent-soft); }
+  .keys b { font-family: var(--f-display); font-weight: 600; }
+
+  /* ---------- figures ---------- */
+  figure {
+    margin: 30px 0 34px;
+    padding: 0;
+  }
+  .fig-scroll {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 18px;
+  }
+  figure svg { display: block; width: 100%; min-width: 700px; max-width: 950px; height: auto; margin: 0 auto; color: var(--ink-2); }
+  figcaption {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    line-height: 1.55;
+    color: var(--ink-3);
+    margin-top: 12px;
+    max-width: 76ch;
+  }
+  figcaption b { color: var(--ink-2); font-weight: 500; }
+
+  .svg-box { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+  .svg-box-2 { fill: var(--surface-2); stroke: var(--line); stroke-width: 1; }
+  .svg-band { fill: var(--surface-2); stroke: none; }
+  .svg-t { font-family: var(--f-display); font-size: 12.5px; font-weight: 600; fill: var(--ink); }
+  .svg-s { font-family: var(--f-mono); font-size: 10.5px; fill: var(--ink-3); }
+  .svg-lbl { font-family: var(--f-mono); font-size: 10px; fill: var(--ink-3); }
+  .svg-hdr { font-family: var(--f-mono); font-size: 10px; font-weight: 600; letter-spacing: 0.11em; fill: var(--ink-3); }
+  .svg-line { stroke: var(--ink-3); stroke-width: 1.2; fill: none; }
+  .svg-line-dash { stroke: var(--ink-3); stroke-width: 1.2; fill: none; stroke-dasharray: 4 3; }
+  .c-coop { color: var(--coop); }
+  .c-ica  { color: var(--ica); }
+  .c-will { color: var(--willys); }
+  .c-acc  { color: var(--accent); }
+  .tint   { fill: currentColor; }
+  .stroke-cur { stroke: currentColor; stroke-width: 1.4; fill: none; }
+  .box-cur { fill: var(--surface); stroke: currentColor; stroke-width: 1.4; }
+  .t-cur { font-family: var(--f-display); font-size: 12.5px; font-weight: 600; fill: currentColor; }
+
+  /* ---------- tables ---------- */
+  .t-wrap { overflow-x: auto; margin: 18px 0 26px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-family: var(--f-display); font-size: 14px; }
+  th {
+    text-align: left;
+    font-family: var(--f-mono);
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  td { padding: 11px 16px; border-bottom: 1px solid var(--line-soft); vertical-align: top; line-height: 1.5; color: var(--ink-2); }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--ink); }
+  td.path { font-family: var(--f-mono); font-size: 12px; white-space: nowrap; color: var(--ink); }
+  td.num { font-family: var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 7px;
+    border-radius: 2px;
+    border: 1px solid currentColor;
+    white-space: nowrap;
+  }
+  .pill-persist { color: var(--accent); }
+  .pill-week    { color: var(--ica); }
+  .pill-arch    { color: var(--ink-3); }
+
+  /* ---------- code block ---------- */
+  pre {
+    font-family: var(--f-mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 16px 0 24px;
+    color: var(--ink);
+  }
+  pre .cm { color: var(--ink-3); }
+
+  /* ---------- callout ---------- */
+  .callout {
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--caution);
+    background: var(--caution-soft);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 26px 0;
+    max-width: var(--measure);
+  }
+  .callout h4 { margin-top: 0; color: var(--caution); }
+  .callout p:last-child { margin-bottom: 0; }
+
+  .note {
+    border: 1px solid var(--line);
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    margin: 22px 0;
+    max-width: var(--measure);
+    font-size: 15px;
+  }
+  .note p:last-child { margin-bottom: 0; }
+
+  /* ---------- chain cards ---------- */
+  .chains { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin: 24px 0 30px; }
+  .chain-card { background: var(--surface); border: 1px solid var(--line); border-top: 3px solid currentColor; border-radius: var(--radius); padding: 16px 18px 18px; }
+  .chain-card h5 { font-family: var(--f-display); font-size: 1rem; font-weight: 700; margin: 0 0 3px; color: currentColor; letter-spacing: -0.01em; }
+  .chain-card .stat { font-family: var(--f-mono); font-size: 11px; color: var(--ink-3); margin: 0 0 10px; font-variant-numeric: tabular-nums; }
+  .chain-card p { font-size: 13.5px; line-height: 1.5; color: var(--ink-2); margin: 0; font-family: var(--f-display); max-width: none; }
+
+  /* ---------- footer ---------- */
+  footer {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    color: var(--ink-3);
+    line-height: 1.7;
+  }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 22px 80px; }
+    .rail { display: none; }
+    .masthead { padding-top: 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="shell">
+
+  <header class="masthead">
+    <p class="eyebrow">Codebase reference · Kassepris scraper</p>
+    <h1>Inside the<br>Kassepris Scraper</h1>
+    <p class="standfirst">
+      A weekly batch job that collects supermarket offers from Coop, ICA and Willys,
+      normalizes three very different data sources into one shared model, and loads
+      them into Postgres — so an app can answer <em>where is this cheapest near me?</em>
+    </p>
+
+    <svg class="barcode" viewBox="0 0 420 26" role="img" aria-label="Decorative barcode rule">
+      <g fill="currentColor" opacity="0.65">
+        <rect x="0"   y="0" width="3" height="26"/><rect x="6"   y="0" width="1" height="26"/>
+        <rect x="10"  y="0" width="2" height="26"/><rect x="16"  y="0" width="4" height="26"/>
+        <rect x="23"  y="0" width="1" height="26"/><rect x="27"  y="0" width="2" height="26"/>
+        <rect x="33"  y="0" width="3" height="26"/><rect x="40"  y="0" width="1" height="26"/>
+        <rect x="45"  y="0" width="5" height="26"/><rect x="54"  y="0" width="2" height="26"/>
+        <rect x="60"  y="0" width="1" height="26"/><rect x="65"  y="0" width="3" height="26"/>
+        <rect x="72"  y="0" width="2" height="26"/><rect x="78"  y="0" width="4" height="26"/>
+        <rect x="86"  y="0" width="1" height="26"/><rect x="91"  y="0" width="2" height="26"/>
+        <rect x="97"  y="0" width="3" height="26"/><rect x="105" y="0" width="1" height="26"/>
+        <rect x="110" y="0" width="2" height="26"/><rect x="116" y="0" width="5" height="26"/>
+        <rect x="125" y="0" width="1" height="26"/><rect x="130" y="0" width="3" height="26"/>
+        <rect x="137" y="0" width="2" height="26"/><rect x="143" y="0" width="1" height="26"/>
+        <rect x="148" y="0" width="4" height="26"/><rect x="156" y="0" width="2" height="26"/>
+        <rect x="162" y="0" width="3" height="26"/><rect x="169" y="0" width="1" height="26"/>
+        <rect x="174" y="0" width="2" height="26"/><rect x="180" y="0" width="3" height="26"/>
+      </g>
+      <g fill="currentColor" opacity="0.22">
+        <rect x="188" y="0" width="2" height="26"/><rect x="194" y="0" width="4" height="26"/>
+        <rect x="202" y="0" width="1" height="26"/><rect x="207" y="0" width="3" height="26"/>
+        <rect x="214" y="0" width="2" height="26"/><rect x="220" y="0" width="1" height="26"/>
+        <rect x="225" y="0" width="5" height="26"/><rect x="234" y="0" width="2" height="26"/>
+        <rect x="240" y="0" width="3" height="26"/><rect x="247" y="0" width="1" height="26"/>
+        <rect x="252" y="0" width="2" height="26"/><rect x="258" y="0" width="4" height="26"/>
+        <rect x="266" y="0" width="1" height="26"/><rect x="271" y="0" width="3" height="26"/>
+        <rect x="278" y="0" width="2" height="26"/><rect x="284" y="0" width="1" height="26"/>
+        <rect x="289" y="0" width="3" height="26"/><rect x="296" y="0" width="2" height="26"/>
+      </g>
+    </svg>
+
+    <div class="masthead-meta">
+      <span><b>3</b> chains</span>
+      <span><b>~2,260</b> stores</span>
+      <span><b>33</b> source files</span>
+      <span><b>~3,500</b> lines of JS</span>
+      <span><b>~15 min</b> per weekly run</span>
+      <span><b>0</b> browsers involved</span>
+    </div>
+  </header>
+
+  <nav class="rail" aria-label="Contents">
+    <div class="rail-inner">
+      <h2>Contents</h2>
+      <ol>
+        <li><a href="#overview">What it actually does</a></li>
+        <li><a href="#flows">The two flows</a></li>
+        <li><a href="#chains">Three chains, three shapes</a></li>
+        <li><a href="#resilience">When a fetch fails</a></li>
+        <li><a href="#model">The data model</a></li>
+        <li><a href="#files">Every folder &amp; file</a></li>
+        <li><a href="#commands">Commands</a></li>
+        <li><a href="#config">Environments &amp; limits</a></li>
+        <li><a href="#identity">The known problem</a></li>
+      </ol>
+    </div>
+  </nav>
+
+  <main>
+
+    <!-- ============================================ OVERVIEW -->
+    <section id="overview">
+      <h2 class="sec">What it actually does</h2>
+      <p class="sec-note">Scope, and the things it deliberately isn't</p>
+
+      <p>
+        Kassepris is a deal aggregator, not a catalogue. It holds only the products that
+        appear in <em>this week's offers</em>, at the <em>specific physical stores</em> a
+        shopper has selected. Everything else about a supermarket's assortment is out of scope.
+      </p>
+      <p>
+        It runs as a batch job that starts, finishes and exits — weekly on AWS Fargate — not
+        as a server. And despite living in a folder called <code>supermarket-scraper</code>,
+        almost nothing here scrapes rendered HTML: every chain is reached over plain HTTP,
+        through the same endpoints their own websites call.
+      </p>
+
+      <ul class="keys">
+        <li><b>Only stores and chains are precious.</b> Product and offer data is disposable — it re-fetches in fifteen minutes. Store metadata and geo enrichment does not.</li>
+        <li><b>One barcode, one row, across all three chains.</b> That is what turns "cheapest price" into a plain SQL join rather than a matching problem at read time.</li>
+        <li><b>Money is integer öre.</b> Never a float, anywhere in the schema.</li>
+        <li><b>Politeness is only what a chain actually declares.</b> No invented delays — see <a href="#config">Environments &amp; limits</a>.</li>
+      </ul>
+    </section>
+
+    <!-- ============================================ FLOWS -->
+    <section id="flows">
+      <h2 class="sec">The two flows</h2>
+      <p class="sec-note">There are exactly two — everything else is supporting code</p>
+
+      <h3>Setup — run once per database</h3>
+      <p>
+        Creates the schema and loads the <em>stores</em>. Stores rarely change, so this is
+        deliberately not on a schedule. One command: <code>npm run db:init</code>.
+      </p>
+
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 950 168" role="img" aria-label="Setup flow: apply schema, fetch Coop and ICA store lists, upsert them, import the committed Willys store list, then enrich Willys coordinates, producing about 2,260 rows in the stores table.">
+            <defs>
+              <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <!-- steps -->
+            <g>
+              <rect class="svg-box" x="4"   y="26" width="166" height="60" rx="3"/>
+              <text class="svg-t" x="18" y="50">1 · Schema</text>
+              <text class="svg-s" x="18" y="68">db/schema.sql</text>
+
+              <rect class="svg-box" x="200" y="26" width="166" height="60" rx="3"/>
+              <text class="svg-t" x="214" y="50">2 · Fetch stores</text>
+              <text class="svg-s" x="214" y="68">stores/run.js</text>
+
+              <rect class="svg-box" x="396" y="26" width="166" height="60" rx="3"/>
+              <text class="svg-t" x="410" y="50">3 · Upsert</text>
+              <text class="svg-s" x="410" y="68">stores/update_db.js</text>
+
+              <rect class="svg-box" x="592" y="26" width="166" height="60" rx="3"/>
+              <text class="svg-t" x="606" y="50">4 · Willys import</text>
+              <text class="svg-s" x="606" y="68">scripts/import_stores.js</text>
+
+              <rect class="svg-box" x="788" y="26" width="158" height="60" rx="3"/>
+              <text class="svg-t" x="802" y="50">5 · Willys geo</text>
+              <text class="svg-s" x="802" y="68">enrich_locations.js</text>
+            </g>
+
+            <!-- arrows between -->
+            <g class="svg-line" marker-end="url(#ar)" stroke="currentColor">
+              <line x1="170" y1="56" x2="194" y2="56"/>
+              <line x1="366" y1="56" x2="390" y2="56"/>
+              <line x1="562" y1="56" x2="586" y2="56"/>
+              <line x1="758" y1="56" x2="782" y2="56"/>
+            </g>
+
+            <!-- annotations -->
+            <text class="svg-lbl" x="214" y="104">Coop bulk + per-store detail</text>
+            <text class="svg-lbl" x="214" y="118">ICA one page, whole country</text>
+            <text class="svg-lbl" x="606" y="104">from committed JSON —</text>
+            <text class="svg-lbl" x="606" y="118">Willys has no store API</text>
+
+            <!-- result -->
+            <g class="c-acc">
+              <path class="stroke-cur" d="M 867 86 L 867 122" marker-end="url(#ar)"/>
+              <rect class="box-cur" x="700" y="126" width="246" height="34" rx="3"/>
+              <text class="t-cur" x="716" y="148">stores  ·  ~2,260 rows  ·  permanent</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption>
+          <b>Setup, once per database.</b> Steps 4 and 5 exist only because Willys publishes no
+          store API: its store list is committed to the repo, and coordinates are backfilled
+          from a separate CMS endpoint. Coop and ICA get their coordinates during step 2.
+        </figcaption>
+      </figure>
+
+      <h3>The weekly job — fetch, normalize, load</h3>
+      <p>
+        This is the recurring one: <code>npm run products:update-all</code>. Three stages, and
+        the split between them is load-bearing.
+      </p>
+
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 950 470" role="img" aria-label="Weekly pipeline: Coop, ICA and Willys are each fetched to raw per-store JSON files, normalized into one deduped file per chain, then loaded by a single script into Postgres inside one transaction, with the previous cycle's offers archived first.">
+            <defs>
+              <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <!-- stage headers -->
+            <text class="svg-hdr" x="14"  y="18">① FETCH</text>
+            <text class="svg-hdr" x="394" y="18">② NORMALIZE</text>
+            <text class="svg-hdr" x="774" y="18">③ LOAD</text>
+            <line class="svg-line" x1="14" y1="26" x2="936" y2="26" stroke="currentColor" opacity="0.3"/>
+
+            <!-- ---- COOP row ---- -->
+            <g class="c-coop">
+              <rect class="box-cur" x="14" y="44" width="160" height="56" rx="3"/>
+              <text class="t-cur" x="28" y="68">Coop</text>
+              <text class="svg-s" x="28" y="86">JSON offers API</text>
+              <path class="stroke-cur" d="M 174 72 L 198 72" marker-end="url(#ar2)"/>
+            </g>
+            <rect class="svg-box" x="204" y="44" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="218" y="68">coop/data/</text>
+            <text class="svg-s" x="218" y="86">728 raw files</text>
+            <g stroke="currentColor" class="svg-line"><path d="M 364 72 L 388 72" marker-end="url(#ar2)"/></g>
+            <rect class="svg-box" x="394" y="44" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="408" y="68">coop_normalized</text>
+            <text class="svg-s" x="408" y="86">.json</text>
+
+            <!-- ---- ICA row ---- -->
+            <g class="c-ica">
+              <rect class="box-cur" x="14" y="144" width="160" height="56" rx="3"/>
+              <text class="t-cur" x="28" y="168">ICA</text>
+              <text class="svg-s" x="28" y="186">__INITIAL_DATA__</text>
+              <path class="stroke-cur" d="M 174 172 L 198 172" marker-end="url(#ar2)"/>
+            </g>
+            <rect class="svg-box" x="204" y="144" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="218" y="168">ica/data/</text>
+            <text class="svg-s" x="218" y="186">1283 raw files</text>
+            <g stroke="currentColor" class="svg-line"><path d="M 364 172 L 388 172" marker-end="url(#ar2)"/></g>
+            <rect class="svg-box" x="394" y="144" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="408" y="168">ica_normalized</text>
+            <text class="svg-s" x="408" y="186">.json</text>
+
+            <!-- ---- WILLYS row ---- -->
+            <g class="c-will">
+              <rect class="box-cur" x="14" y="244" width="160" height="56" rx="3"/>
+              <text class="t-cur" x="28" y="268">Willys</text>
+              <text class="svg-s" x="28" y="286">campaigns API</text>
+              <path class="stroke-cur" d="M 174 272 L 198 272" marker-end="url(#ar2)"/>
+            </g>
+            <rect class="svg-box" x="204" y="244" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="218" y="268">willys/data/</text>
+            <text class="svg-s" x="218" y="286">2 raw files</text>
+            <g stroke="currentColor" class="svg-line"><path d="M 364 272 L 388 272" marker-end="url(#ar2)"/></g>
+            <rect class="svg-box" x="394" y="244" width="160" height="56" rx="3"/>
+            <text class="svg-t" x="408" y="268">willys_normalized</text>
+            <text class="svg-s" x="408" y="286">.json</text>
+
+            <!-- arrow labels on fetch hops -->
+            <text class="svg-lbl" x="178" y="38">1 request per store</text>
+            <text class="svg-lbl" x="178" y="138">1 page per store</text>
+            <text class="svg-lbl" x="178" y="238">per category × 2 assortments</text>
+
+            <!-- normalize label -->
+            <text class="svg-lbl" x="368" y="330">dedupe by gtin, else by fingerprint</text>
+
+            <!-- ---- converge into loader ---- -->
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 554 72  L 604 72  L 604 172" />
+              <path d="M 554 172 L 604 172" />
+              <path d="M 554 272 L 604 272 L 604 172" />
+              <path d="M 604 172 L 700 172" marker-end="url(#ar2)"/>
+            </g>
+
+            <g class="c-acc">
+              <rect class="box-cur" x="706" y="118" width="230" height="108" rx="3"/>
+              <text class="t-cur" x="722" y="144">products/update_db.js</text>
+              <text class="svg-s" x="722" y="164">BEGIN</text>
+              <text class="svg-s" x="722" y="180">archive → upsert → insert</text>
+              <text class="svg-s" x="722" y="196">COMMIT  (else ROLLBACK)</text>
+              <text class="svg-s" x="722" y="214">one transaction, all 3 chains</text>
+            </g>
+
+            <!-- ---- outputs ---- -->
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 821 226 L 821 268" marker-end="url(#ar2)"/>
+            </g>
+            <rect class="svg-box" x="620" y="272" width="316" height="96" rx="3"/>
+            <text class="svg-hdr" x="636" y="292">CURRENT WEEK</text>
+            <text class="svg-s" x="636" y="312">offers · offer_products</text>
+            <text class="svg-hdr" x="636" y="334">PERSISTENT</text>
+            <text class="svg-s" x="636" y="354">products · product_groups · store_products</text>
+
+            <!-- archive side path -->
+            <g class="svg-line-dash" stroke="currentColor">
+              <path d="M 706 172 L 460 172 M 460 172 L 460 396" marker-end="url(#ar2)" opacity="0"/>
+            </g>
+            <g class="svg-line-dash" stroke="currentColor">
+              <path d="M 620 320 L 470 320 L 470 396" marker-end="url(#ar2)"/>
+            </g>
+            <rect class="svg-box-2" x="330" y="400" width="280" height="52" rx="3"/>
+            <text class="svg-t" x="346" y="422">historical_offers</text>
+            <text class="svg-s" x="346" y="440">last cycle, copied then deleted</text>
+            <text class="svg-lbl" x="484" y="352">per chain,</text>
+            <text class="svg-lbl" x="484" y="366">before the new</text>
+            <text class="svg-lbl" x="484" y="380">rows land</text>
+          </svg>
+        </div>
+        <figcaption>
+          <b>The weekly run.</b> Each chain is fetched to raw per-store files, deduped into one
+          normalized file, and then a single loader writes all three inside one transaction —
+          so a failure anywhere leaves the database exactly as it was. Archiving is scoped
+          <em>per chain</em>: if one chain's normalized file is missing this run, its current
+          offers are left completely untouched rather than wiped.
+        </figcaption>
+      </figure>
+
+      <h3>Why three stages and not one</h3>
+      <p>
+        Fetching is slow and fragile — roughly 2,000 HTTP calls against three rate-limited
+        third parties. Normalizing and loading are fast and pure. Keeping the raw responses on
+        disk between them means you can re-run normalize and load a hundred times while
+        debugging without touching the retailers again.
+      </p>
+    </section>
+
+    <!-- ============================================ CHAINS -->
+    <section id="chains">
+      <h2 class="sec">Three chains, three shapes</h2>
+      <p class="sec-note">Same output, wildly different request patterns</p>
+
+      <p>
+        All three fetchers write the same normalized shape. How they get there has almost
+        nothing in common — which is why the file counts differ by three orders of magnitude.
+      </p>
+
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 950 300" role="img" aria-label="Comparison of the three fetch strategies: Coop makes one API request per store for 728 stores; ICA downloads one HTML page per store for 1283 stores at 72 requests per 60 seconds; Willys collapses 252 stores into 2 shared assortments and fetches once per category.">
+            <defs>
+              <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <!-- ---------- COOP panel ---------- -->
+            <g class="c-coop">
+              <text class="svg-hdr" x="14" y="18" fill="currentColor">COOP</text>
+              <rect class="box-cur" x="14" y="32" width="286" height="42" rx="3"/>
+              <text class="t-cur" x="28" y="58">728 stores in the DB</text>
+
+              <path class="stroke-cur" d="M 60 74 L 60 108"  marker-end="url(#ar3)"/>
+              <path class="stroke-cur" d="M 157 74 L 157 108" marker-end="url(#ar3)"/>
+              <path class="stroke-cur" d="M 254 74 L 254 108" marker-end="url(#ar3)"/>
+            </g>
+            <text class="svg-lbl" x="168" y="96">1 API call each</text>
+            <rect class="svg-box" x="14" y="112" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="28" y="130">external.api.coop.se</text>
+            <text class="svg-s" x="28" y="146">no declared rate limit · concurrency 10</text>
+            <g class="svg-line" stroke="currentColor"><path d="M 157 154 L 157 182" marker-end="url(#ar3)"/></g>
+            <rect class="svg-box-2" x="14" y="186" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="28" y="204">728 files</text>
+            <text class="svg-s" x="28" y="220">cached 15 min · server's own max-age</text>
+
+            <!-- ---------- ICA panel ---------- -->
+            <g class="c-ica">
+              <text class="svg-hdr" x="332" y="18" fill="currentColor">ICA</text>
+              <rect class="box-cur" x="332" y="32" width="286" height="42" rx="3"/>
+              <text class="t-cur" x="346" y="58">1283 stores in the DB</text>
+
+              <path class="stroke-cur" d="M 378 74 L 378 108" marker-end="url(#ar3)"/>
+              <path class="stroke-cur" d="M 475 74 L 475 108" marker-end="url(#ar3)"/>
+              <path class="stroke-cur" d="M 572 74 L 572 108" marker-end="url(#ar3)"/>
+            </g>
+            <text class="svg-lbl" x="486" y="96">1 page each</text>
+            <rect class="svg-box" x="332" y="112" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="346" y="130">store HTML → __INITIAL_DATA__</text>
+            <text class="svg-s" x="346" y="146">72 req / 60s, enforced · concurrency 3</text>
+            <g class="svg-line" stroke="currentColor"><path d="M 475 154 L 475 182" marker-end="url(#ar3)"/></g>
+            <rect class="svg-box-2" x="332" y="186" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="346" y="204">1283 files</text>
+            <text class="svg-s" x="346" y="220">no cache · Cache-Control: no-store</text>
+
+            <!-- ---------- WILLYS panel ---------- -->
+            <g class="c-will">
+              <text class="svg-hdr" x="650" y="18" fill="currentColor">WILLYS</text>
+              <rect class="box-cur" x="650" y="32" width="286" height="42" rx="3"/>
+              <text class="t-cur" x="664" y="58">252 stores in the DB</text>
+
+              <path class="stroke-cur" d="M 793 74 L 793 108" marker-end="url(#ar3)"/>
+            </g>
+            <text class="svg-lbl" x="660" y="96">collapse: every store shares one of 2 assortments</text>
+            <rect class="svg-box" x="650" y="112" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="664" y="130">2 stores queried, per category</text>
+            <text class="svg-s" x="664" y="146">robots Crawl-delay: 10s in production</text>
+            <g class="svg-line" stroke="currentColor"><path d="M 793 154 L 793 182" marker-end="url(#ar3)"/></g>
+            <rect class="svg-box-2" x="650" y="186" width="286" height="42" rx="3"/>
+            <text class="svg-t" x="664" y="204">2 files</text>
+            <text class="svg-s" x="664" y="220">fanned back out to 252 stores at load</text>
+
+            <!-- bottom note line -->
+            <line class="svg-line" x1="14" y1="252" x2="936" y2="252" stroke="currentColor" opacity="0.25"/>
+            <text class="svg-lbl" x="14"  y="272">Coop: ~2 min</text>
+            <text class="svg-lbl" x="332" y="272">ICA: ~13–26 min — the whole job's runtime</text>
+            <text class="svg-lbl" x="650" y="272">Willys: minutes, dominated by the 10s delay</text>
+          </svg>
+        </div>
+        <figcaption>
+          <b>Why the file counts differ so much.</b> Coop and ICA are addressed per physical
+          store. Willys isn't: every Willys store shares one of two national "newspaper"
+          assortments — verified by their identical result totals — so the fetcher queries two
+          representative stores and the fan-out to all 252 happens later, in the loader.
+        </figcaption>
+      </figure>
+
+      <div class="chains">
+        <div class="chain-card c-coop">
+          <h5>Coop</h5>
+          <p class="stat">728 stores · 10 concurrent · no cache limit</p>
+          <p>Calls Coop's own offers JSON API, the same one their website uses. Needs two public
+          subscription keys lifted from Coop's frontend bundle — public, not secrets, but kept in
+          <code>.env</code> for hygiene.</p>
+        </div>
+        <div class="chain-card c-ica">
+          <h5>ICA</h5>
+          <p class="stat">1283 stores · 3 concurrent · 850 ms floor</p>
+          <p>No API — but ICA server-renders every offer into a <code>window.__INITIAL_DATA__</code>
+          blob, so one plain GET per store gets everything. The slow chain, and the reason the job
+          takes a quarter of an hour.</p>
+        </div>
+        <div class="chain-card c-will">
+          <h5>Willys</h5>
+          <p class="stat">252 stores · 2 assortments · per category</p>
+          <p>The most involved fetcher. Fetches per category because the plain response carries no
+          category per product, and recovers barcodes by <em>parsing them out of image URLs</em>,
+          validated by GS1 check digit.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================ RESILIENCE -->
+    <section id="resilience">
+      <h2 class="sec">When a fetch fails</h2>
+      <p class="sec-note">Three independent recovery layers, deliberately not merged</p>
+
+      <p>
+        Roughly two thousand requests against three third parties will fail in three distinct
+        ways, and each gets its own mechanism. The layering is the point: each one only handles
+        what escapes the one inside it.
+      </p>
+
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 950 420" role="img" aria-label="Nested recovery layers: one HTTP request sits inside httpClient's per-request retry with exponential backoff, which sits inside runWithRetries' whole-store retry passes; what escapes all of them hits a per-chain policy where Coop and ICA log and continue while Willys throws. Checkpointing runs alongside, covering process death.">
+            <defs>
+              <marker id="ar4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <!-- outer: runWithRetries -->
+            <rect class="svg-box-2" x="14" y="30" width="520" height="270" rx="3"/>
+            <text class="svg-hdr" x="30" y="52">LAYER 3 · concurrency.js — runWithRetries</text>
+            <text class="svg-s" x="30" y="70">re-queues the whole store for another pass</text>
+
+            <!-- mid: httpClient -->
+            <rect class="svg-box" x="46" y="86" width="456" height="184" rx="3"/>
+            <text class="svg-hdr" x="62" y="108">LAYER 2 · httpClient — per request</text>
+            <text class="svg-s" x="62" y="126">exponential backoff on 408 / 429 / 5xx, up to MAX_RETRIES</text>
+
+            <!-- inner: one request -->
+            <g class="c-acc">
+              <rect class="box-cur" x="80" y="142" width="388" height="108" rx="3"/>
+              <text class="t-cur" x="96" y="166">LAYER 1 · one HTTP request</text>
+              <text class="svg-s" x="96" y="186">cache hit?  →  no network call at all</text>
+              <text class="svg-s" x="96" y="204">rate gate  →  spacing adapts to RateLimit-* headers</text>
+              <text class="svg-s" x="96" y="222">schemaCheck  →  did the response shape drift?</text>
+            </g>
+
+            <!-- escapes -->
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 468 196 L 560 196" marker-end="url(#ar4)"/>
+              <path d="M 502 118 L 560 118" marker-end="url(#ar4)"/>
+              <path d="M 534 62  L 560 62"  marker-end="url(#ar4)"/>
+            </g>
+            <text class="svg-s" x="568" y="192">429 · 503 · timeout</text>
+            <text class="svg-lbl" x="568" y="208">retried in place</text>
+            <text class="svg-s" x="568" y="114">retries exhausted</text>
+            <text class="svg-lbl" x="568" y="130">whole store re-queued</text>
+            <text class="svg-s" x="568" y="58">all passes exhausted</text>
+            <text class="svg-lbl" x="568" y="74">store is genuinely lost</text>
+
+            <!-- chain policy split -->
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 700 80 L 748 80 L 748 118" marker-end="url(#ar4)"/>
+              <path d="M 700 80 L 878 80 L 878 118" marker-end="url(#ar4)"/>
+            </g>
+            <g class="c-coop">
+              <rect class="box-cur" x="664" y="122" width="168" height="62" rx="3"/>
+              <text class="t-cur" x="678" y="144">Coop &amp; ICA</text>
+              <text class="svg-s" x="678" y="162">log it, keep going —</text>
+              <text class="svg-s" x="678" y="176">partial data is fine</text>
+            </g>
+            <g class="c-will">
+              <rect class="box-cur" x="800" y="196" width="136" height="62" rx="3"/>
+              <text class="t-cur" x="814" y="218">Willys</text>
+              <text class="svg-s" x="814" y="236">throw — losing 1 of</text>
+              <text class="svg-s" x="814" y="250">2 files loses half</text>
+            </g>
+
+            <!-- checkpoint band -->
+            <rect class="svg-box" x="14" y="330" width="922" height="72" rx="3" stroke-dasharray="5 4"/>
+            <text class="svg-hdr" x="30" y="352">ORTHOGONAL · checkpoint.js — the process itself dies</text>
+            <text class="svg-s" x="30" y="372">Every completed store id is written to disk immediately, not batched — so a crash, a kill, or a lost network resumes</text>
+            <text class="svg-s" x="30" y="388">where it stopped. Cleared on a fully successful run: this is per-run resume, not a cross-run cache.</text>
+          </svg>
+        </div>
+        <figcaption>
+          <b>Three concerns, three layers.</b> Flakiness <em>within</em> a request, a <em>whole
+          unit of work</em> that still failed, and <em>the process dying</em> are handled
+          separately on purpose — merging them would mean a crashed run re-fetching two thousand
+          stores it had already finished.
+        </figcaption>
+      </figure>
+
+      <div class="note">
+        <p>
+          A fourth failure mode has no retry at all, because retrying wouldn't help:
+          <b>silent schema drift</b>. If Coop renames a price field, nothing errors — the pipeline
+          just starts writing nulls. <code>schemaCheck.js</code> reduces each response to sorted
+          <code>path:type</code> pairs and diffs them against a stored baseline, so drift surfaces
+          as a warning instead of a column quietly emptying.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================ MODEL -->
+    <section id="model">
+      <h2 class="sec">The data model</h2>
+      <p class="sec-note">Ten tables, three lifetimes</p>
+
+      <p>
+        There are deliberately no retailer-specific tables — no <code>ica_products</code>, no
+        <code>coop_offers</code>. Which chain a row came from is expressed only through
+        <code>stores.chain_id</code>. The distinction that actually matters is <em>lifetime</em>:
+        what persists forever, what is replaced every week, and what is kept only for history.
+      </p>
+
+      <figure>
+        <div class="fig-scroll">
+          <svg viewBox="0 0 950 320" role="img" aria-label="Entity model grouped by lifetime: persistent tables are chains, stores, categories, product_groups, products and store_products; the current-week tables are offers and offer_products; the archive tables are historical_offers and historical_offer_products, filled by copying the current offers before they are deleted.">
+            <defs>
+              <marker id="ar5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 9 5 L 0 9 z" fill="currentColor"/>
+              </marker>
+            </defs>
+
+            <!-- bands -->
+            <rect class="svg-band" x="4"   y="30" width="326" height="270" rx="3"/>
+            <rect class="svg-band" x="346" y="30" width="230" height="270" rx="3"/>
+            <rect class="svg-band" x="592" y="30" width="344" height="270" rx="3"/>
+
+            <text class="svg-hdr" x="18"  y="22" fill="currentColor">PERSISTENT · never archived</text>
+            <text class="svg-hdr" x="360" y="22" fill="currentColor">CURRENT WEEK ONLY</text>
+            <text class="svg-hdr" x="606" y="22" fill="currentColor">ARCHIVE · off the read path</text>
+
+            <!-- persistent boxes -->
+            <rect class="svg-box" x="20" y="48"  width="140" height="40" rx="3"/>
+            <text class="svg-t" x="32" y="73">chains</text>
+            <rect class="svg-box" x="20" y="118" width="140" height="40" rx="3"/>
+            <text class="svg-t" x="32" y="143">stores</text>
+            <rect class="svg-box" x="20" y="216" width="140" height="46" rx="3"/>
+            <text class="svg-t" x="32" y="235">store_products</text>
+            <text class="svg-s" x="32" y="251">first / last seen</text>
+
+            <rect class="svg-box" x="176" y="48"  width="140" height="40" rx="3"/>
+            <text class="svg-t" x="188" y="73">categories</text>
+            <rect class="svg-box" x="176" y="118" width="140" height="46" rx="3"/>
+            <text class="svg-t" x="188" y="137">product_groups</text>
+            <text class="svg-s" x="188" y="153">one search result</text>
+            <g class="c-acc">
+              <rect class="box-cur" x="176" y="192" width="140" height="46" rx="3"/>
+              <text class="t-cur" x="188" y="211">products</text>
+              <text class="svg-s" x="188" y="227">keyed by GTIN</text>
+            </g>
+
+            <!-- persistent edges -->
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 90 88 L 90 112" marker-end="url(#ar5)"/>
+              <path d="M 90 158 L 90 210" marker-end="url(#ar5)"/>
+              <path d="M 246 88 L 246 112" marker-end="url(#ar5)"/>
+              <path d="M 246 164 L 246 186" marker-end="url(#ar5)"/>
+              <path d="M 176 224 L 166 224" marker-end="url(#ar5)"/>
+            </g>
+            <text class="svg-lbl" x="96" y="104">has</text>
+            <text class="svg-lbl" x="96" y="188">observed at</text>
+            <text class="svg-lbl" x="252" y="104">classifies</text>
+            <text class="svg-lbl" x="252" y="180">holds variants</text>
+
+            <!-- current week -->
+            <g class="c-ica">
+              <rect class="box-cur" x="362" y="118" width="150" height="46" rx="3"/>
+              <text class="t-cur" x="374" y="137">offers</text>
+              <text class="svg-s" x="374" y="153">integer öre</text>
+              <rect class="box-cur" x="362" y="200" width="150" height="46" rx="3"/>
+              <text class="t-cur" x="374" y="219">offer_products</text>
+              <text class="svg-s" x="374" y="235">mix-and-match</text>
+              <path class="stroke-cur" d="M 437 164 L 437 194" marker-end="url(#ar5)"/>
+            </g>
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 160 138 L 356 138" marker-end="url(#ar5)"/>
+              <path d="M 316 215 L 356 215" marker-end="url(#ar5)"/>
+            </g>
+            <text class="svg-lbl" x="196" y="132">a store runs an offer</text>
+            <text class="svg-lbl" x="322" y="208">eligible</text>
+
+            <!-- archive -->
+            <rect class="svg-box" x="608" y="118" width="180" height="46" rx="3"/>
+            <text class="svg-t" x="620" y="137">historical_offers</text>
+            <text class="svg-s" x="620" y="153">verbatim copy</text>
+            <rect class="svg-box" x="608" y="200" width="212" height="46" rx="3"/>
+            <text class="svg-t" x="620" y="219">historical_offer_products</text>
+            <text class="svg-s" x="620" y="235">frozen eligibility</text>
+            <g class="svg-line" stroke="currentColor">
+              <path d="M 698 164 L 698 194" marker-end="url(#ar5)"/>
+            </g>
+
+            <g class="svg-line-dash" stroke="currentColor">
+              <path d="M 512 138 L 602 138" marker-end="url(#ar5)"/>
+            </g>
+            <text class="svg-lbl" x="516" y="130">copied, then</text>
+            <text class="svg-lbl" x="516" y="158">deleted — per chain</text>
+
+            <!-- footnote -->
+            <text class="svg-lbl" x="18" y="288">store_products records observation, not assortment — a product isn't unlinked just because it left the weekly deal.</text>
+            <text class="svg-lbl" x="606" y="288">original_offer_id is kept for traceability but is deliberately not a foreign key.</text>
+          </svg>
+        </div>
+        <figcaption>
+          <b>Lifetime is the organizing idea.</b> <code>products</code> and
+          <code>product_groups</code> are permanent and shared across chains;
+          <code>offers</code> holds only the live week and is wiped and rebuilt every run;
+          the historical tables preserve past cycles and are not on the read path.
+        </figcaption>
+      </figure>
+
+      <div class="t-wrap">
+        <table>
+          <thead>
+            <tr><th>Table</th><th>Lifetime</th><th>Holds</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="path">chains</td><td><span class="pill pill-persist">Persistent</span></td><td>Coop, ICA, Willys — identified in code by a stable slug</td></tr>
+            <tr><td class="path">stores</td><td><span class="pill pill-persist">Persistent</span></td><td>One physical shop. Unique on <code>(chain_id, external_id)</code> — a retailer's store id is only unique within its own chain</td></tr>
+            <tr><td class="path">categories</td><td><span class="pill pill-persist">Persistent</span></td><td>The 11 normalized categories. The app never sees a raw retailer category</td></tr>
+            <tr><td class="path">product_groups</td><td><span class="pill pill-persist">Persistent</span></td><td>The user-facing "one search result". Carries the category — <em>not</em> products</td></tr>
+            <tr><td class="path">products</td><td><span class="pill pill-persist">Persistent</span></td><td>One SKU, keyed globally by GTIN, shared across every chain that sells it</td></tr>
+            <tr><td class="path">store_products</td><td><span class="pill pill-persist">Persistent</span></td><td>"We have observed this product at this store", with first and last seen</td></tr>
+            <tr><td class="path">offers</td><td><span class="pill pill-week">Current week</span></td><td>One deal at one store. Integer öre, plus a per-unit comparison price <em>range</em></td></tr>
+            <tr><td class="path">offer_products</td><td><span class="pill pill-week">Current week</span></td><td>Which SKUs a mix-and-match deal covers — why there is no <code>product_id</code> on <code>offers</code></td></tr>
+            <tr><td class="path">historical_offers</td><td><span class="pill pill-arch">Archive</span></td><td>Previous cycles, copied verbatim before deletion</td></tr>
+            <tr><td class="path">historical_offer_products</td><td><span class="pill pill-arch">Archive</span></td><td>The frozen eligibility of a past offer</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <p>
+          <b>Why a group holds many products.</b> A "3 för 59 kr" campaign spanning chorizo,
+          grillkorv and bratwurst is <em>one</em> group with <em>three</em> products and one
+          offer. That is also why eligibility lives in <code>offer_products</code> rather than a
+          column — an offer genuinely applies to a set.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================ FILES -->
+    <section id="files">
+      <h2 class="sec">Every folder &amp; file</h2>
+      <p class="sec-note">33 source files, in plain terms</p>
+
+      <p>
+        <code>products/</code> and <code>stores/</code> share the same shape on purpose —
+        <code>&lt;chain&gt;/fetch.js</code> → <code>run.js</code> → <code>update_db.js</code>.
+        Learn one and you know the other.
+      </p>
+
+      <pre><span class="cm">supermarket-scraper/</span>
+├── products/          <span class="cm">← THE WEEKLY JOB: offers → normalized → DB</span>
+│   ├── lib/           <span class="cm">← shared fetch infrastructure</span>
+│   ├── categories/    <span class="cm">← retailer vocabulary → ours</span>
+│   ├── coop/ ica/ willys/
+│   ├── run.js
+│   └── update_db.js
+├── stores/            <span class="cm">← THE ONE-TIME JOB: discover physical stores</span>
+│   ├── coop/ ica/ willys/
+│   ├── scripts/       <span class="cm">← Willys import + geo enrichment</span>
+│   ├── run.js
+│   └── update_db.js
+├── db/                <span class="cm">← pool, schema.sql, migration.sql + runners</span>
+├── config/            <span class="cm">← env.js: which .env is in play</span>
+├── scripts/           <span class="cm">← the two bash flows</span>
+├── deploy/            <span class="cm">← Fargate task def + runbook</span>
+└── docs/              <span class="cm">← design docs</span></pre>
+
+      <h4>products/ — the weekly job</h4>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="path">products/run.js</td><td>Four lines of orchestration: fetch Coop → normalize Coop → fetch ICA → normalize ICA. Willys is <em>not</em> here — its fetch is shaped differently, so it has its own npm scripts</td></tr>
+            <tr><td class="path">products/update_db.js</td><td>The loader. Reads the three normalized files and writes the entire current-offer side of the database in one transaction, archiving the previous cycle per chain first. 353 lines — the densest file in the repo</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>products/lib/ — shared fetch infrastructure</h4>
+      <p>
+        This folder is why each <code>fetch.js</code> only has to describe <em>what</em> to
+        fetch. Everything about fetching <em>safely</em> lives here.
+      </p>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="path">httpClient.js</td><td>The workhorse. Retries with backoff, plus an adaptive rate gate that spaces request <em>starts</em> independently of concurrency — backing off fast on failure, recovering slowly on success, and deferring to <code>RateLimit-*</code> headers when a server publishes them</td></tr>
+            <tr><td class="path">httpCache.js</td><td>File cache keyed by URL hash, honoring the server's own <code>max-age</code>. Sends conditional headers when an entry carries them — no chain supports that today, but it will work the moment one does</td></tr>
+            <tr><td class="path">concurrency.js</td><td>Two worker pools. <code>runWithConcurrency</code> bounds parallel fetches; <code>runWithRetries</code> adds whole-unit retry passes</td></tr>
+            <tr><td class="path">checkpoint.js</td><td>Crash recovery. Writes each completed store id immediately, so a killed run resumes rather than restarting</td></tr>
+            <tr><td class="path">schemaCheck.js</td><td>Silent-failure detector — diffs the response's shape against a stored baseline</td></tr>
+            <tr><td class="path">metrics.js</td><td>Run counters: requests, cache hits, retries, failures, response times, payload sizes, schema changes</td></tr>
+            <tr><td class="path">logger.js</td><td>Scoped logger — one human line plus JSON fields, filtered by <code>LOG_LEVEL</code></td></tr>
+            <tr><td class="path">priceParsing.js</td><td>Turns Swedish price text (<code>"79,90 kr"</code>) into integer öre. A range reports its lower bound</td></tr>
+            <tr><td class="path">comparisonPrice.js</td><td>Parses "jämförpris". Far messier than the sticker price: Coop writes <code>73,20</code>, ICA and Willys write <code>16:66</code>, and units carry qualifiers like <code>/kgutanspad</code> (per kg <em>drained</em>) that look comparable but aren't. Anything ambiguous returns null rather than guess</td></tr>
+            <tr><td class="path">gtin.js</td><td>GS1 check-digit validation. Its real job is filtering numbers recovered from places that aren't a barcode field</td></tr>
+            <tr><td class="path">fingerprint.js</td><td>Fallback identity for offers with no barcode, so they can still be deduped</td></tr>
+            <tr><td class="path">config.js</td><td><code>requireEnv</code> fails loudly at startup on a missing key; <code>getEnvInt</code> validates tuning knobs</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>products/categories/ &amp; the per-chain folders</h4>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="path">categories/displayCategories.js</td><td>The 11 Kassepris categories. Must stay in sync with the seed block in <code>db/schema.sql</code></td></tr>
+            <tr><td class="path">categories/badges.js</td><td>Maps each chain's raw label codes (<code>krav</code>, <code>keyhole</code>, <code>glutenfree</code>) into one shape. Coop has no badge data at all</td></tr>
+            <tr><td class="path">coop/fetch.js</td><td>One API call per store, straight into <code>data/&lt;store&gt;.json</code></td></tr>
+            <tr><td class="path">coop/normalize.js</td><td>Collapses 728 files into one deduped list, each product carrying a <code>storeOffers[]</code> array</td></tr>
+            <tr><td class="path">ica/fetch.js</td><td>One GET per store, ripping the <code>__INITIAL_DATA__</code> blob out of the HTML. No response cache — ICA sends <code>no-store</code></td></tr>
+            <tr><td class="path">ica/normalize.js</td><td>Same collapse, plus badges. Per-store prices matter more here: ICA stores are independently owned and about 37% of products have more than one price across stores</td></tr>
+            <tr><td class="path">willys/fetch.js</td><td>441 lines. Two assortments, fetched per category, with GTINs recovered from image URLs and a second pass against the catalogue search for the handful of products whose promo image has none</td></tr>
+            <tr><td class="path">willys/normalize.js</td><td>Same output shape from the two assortment files</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>stores/ — the one-time job</h4>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="path">stores/run.js</td><td>Fetch Coop stores, then ICA stores</td></tr>
+            <tr><td class="path">stores/update_db.js</td><td>Upserts on <code>(chain_id, external_id)</code>. Never a truncate-and-reload — offers and <code>store_products</code> hold foreign keys into <code>stores</code>, so store identity has to stay stable</td></tr>
+            <tr><td class="path">stores/coop/fetch.js</td><td>One bulk call lists every store; a second call per store gets address and coordinates. That detail endpoint throttles hard</td></tr>
+            <tr><td class="path">stores/ica/fetch.js</td><td>A single GET of the store-locator page yields every ICA store in the country, with coordinates</td></tr>
+            <tr><td class="path">stores/willys/willys_stores.js</td><td>The only Puppeteer code in the repo — and it is in neither flow. A one-off discovery script whose output is committed as JSON. This is why the Docker image skips Chromium entirely</td></tr>
+            <tr><td class="path">stores/scripts/import_stores.js</td><td>Upserts that committed Willys list. Separate because Willys publishes no store API</td></tr>
+            <tr><td class="path">stores/scripts/enrich_locations.js</td><td>Willys only — the sole source of its coordinates</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h4>db/, config/, scripts/, deploy/</h4>
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it is</th></tr></thead>
+          <tbody>
+            <tr><td class="path">db/schema.sql</td><td>The canonical schema, and the best domain document in the repo — heavily commented with <em>why</em> each table is shaped that way. Idempotent; seeds the chains and categories</td></tr>
+            <tr><td class="path">db/pool.js</td><td>The single shared <code>pg</code> pool. SSL on for RDS in production</td></tr>
+            <tr><td class="path">db/apply-schema.js</td><td>Runs the schema. Node-native, needing no <code>psql</code> binary — which is what lets <code>db:init</code> run inside the slim container</td></tr>
+            <tr><td class="path">db/migration.sql</td><td>The destructive half of the legacy migration. No <code>BEGIN</code>/<code>COMMIT</code>, creates nothing</td></tr>
+            <tr><td class="path">db/migrate.js</td><td>Runs the migration <em>then</em> the schema in a single transaction, so the redesign is atomic. Only stores and chains survive. Back up first</td></tr>
+            <tr><td class="path">config/env.js</td><td>The one place that decides which environment is active. <code>.env.&lt;APP_ENV&gt;</code> loads first and wins; <code>.env</code> fills in the rest</td></tr>
+            <tr><td class="path">scripts/init-db.sh</td><td>The five-step setup flow</td></tr>
+            <tr><td class="path">scripts/update-products.sh</td><td>The four-step weekly flow. Never touches <code>stores</code></td></tr>
+            <tr><td class="path">deploy/README.md</td><td>Full runbook: build → local test → ECR → IAM → Secrets Manager → register task → first manual run → weekly EventBridge schedule</td></tr>
+            <tr><td class="path">Dockerfile</td><td><code>node:22-slim</code>, <code>tini</code> as PID 1 for clean shutdown on Fargate, Chromium download skipped, runs unprivileged</td></tr>
+            <tr><td class="path">docker-compose.yml</td><td>Throwaway Postgres 17 on port <span class="mono">5433</span>, so it never collides with a local 5432</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <p>
+          <b>Not in git, but on disk.</b> <code>products/&lt;chain&gt;/data/</code>,
+          <code>normalized/</code> and <code>.state/</code> are all rebuilt by a run — over two
+          thousand files that deliberately aren't versioned. <code>products/lib/imageSources/exports/</code>
+          holds Open Food Facts dumps staged for the separate product-images work, and isn't
+          wired into any flow yet.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================ COMMANDS -->
+    <section id="commands">
+      <h2 class="sec">Commands</h2>
+      <p class="sec-note">Two matter; the rest are the pieces they call</p>
+
+      <pre><span class="cm"># fresh start, local</span>
+cp .env.example .env          <span class="cm"># fill in the two COOP_* keys and DB_URL</span>
+npm install
+docker compose up -d db       <span class="cm"># throwaway Postgres on 5433</span>
+npm run db:init               <span class="cm"># schema + all stores   (once)</span>
+npm run products:update-all   <span class="cm"># the weekly job        (~15 min)</span>
+
+<span class="cm"># or entirely in Docker</span>
+make build
+make test                     <span class="cm"># Postgres → db:init → pipeline → row counts</span>
+make test-down</pre>
+
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>Command</th><th>Does</th></tr></thead>
+          <tbody>
+            <tr><td class="path">npm run db:init</td><td><b>Setup flow</b> — schema plus every store, for a fresh database</td></tr>
+            <tr><td class="path">npm run products:update-all</td><td><b>Weekly flow</b> — fetch, normalize and load all three chains</td></tr>
+            <tr><td class="path">npm run db:schema</td><td>Apply the schema only. Idempotent</td></tr>
+            <tr><td class="path">npm run db:migrate</td><td>Migrate a <em>legacy</em> database into the current schema. Destructive — back up first</td></tr>
+            <tr><td class="path">npm run products:fetch</td><td>Coop and ICA: fetch <em>and</em> normalize</td></tr>
+            <tr><td class="path">npm run products:willys:fetch</td><td>Willys: fetch only</td></tr>
+            <tr><td class="path">npm run products:willys:normalize</td><td>Willys: normalize only</td></tr>
+            <tr><td class="path">npm run products:update-db</td><td>Load the three normalized files into Postgres</td></tr>
+            <tr><td class="path">npm run stores:fetch</td><td>Coop and ICA store lists</td></tr>
+            <tr><td class="path">npm run stores:update-db</td><td>Upsert Coop and ICA stores</td></tr>
+            <tr><td class="path">npm run stores:willys:update-db</td><td>Upsert Willys stores from the committed JSON</td></tr>
+            <tr><td class="path">npm run stores:willys:enrich-locations</td><td>Fill in Willys coordinates</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Deployment — build, ECR push, Fargate — is all <code>make</code>. The runbook is in <code>deploy/README.md</code>.</p>
+    </section>
+
+    <!-- ============================================ CONFIG -->
+    <section id="config">
+      <h2 class="sec">Environments &amp; limits</h2>
+      <p class="sec-note">Only what each chain actually declares</p>
+
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>APP_ENV</th><th>Database</th><th>Fetch pacing</th></tr></thead>
+          <tbody>
+            <tr><td class="path">development</td><td>Local Postgres</td><td>Fast — no politeness delay</td></tr>
+            <tr><td class="path">test</td><td>The throwaway Postgres on 5433</td><td>Fast, except ICA's hard floor</td></tr>
+            <tr><td class="path">production</td><td>AWS RDS, SSL on</td><td>Honors every declared limit</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        The rule is that no delay is invented. Each number below traces to something the chain
+        itself publishes:
+      </p>
+
+      <div class="t-wrap">
+        <table>
+          <thead><tr><th>Chain</th><th>Declares</th><th>What we do</th></tr></thead>
+          <tbody>
+            <tr><td class="path">Coop</td><td>Nothing — no <code>Crawl-delay</code>, no <code>RateLimit</code> headers</td><td class="num">0 ms, every environment</td></tr>
+            <tr><td class="path">ICA</td><td><code>72 requests / 60s</code> via <code>RateLimit-*</code> headers</td><td class="num">850 ms floor, adapting live</td></tr>
+            <tr><td class="path">Willys</td><td><code>Crawl-delay: 10</code> in robots.txt</td><td class="num">10,000 ms in production only</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        ICA's limit is the one that is genuinely enforced — exceeding it gets the IP blocked with
+        a 403, so it holds even in test. That single constraint is most of the job's fifteen
+        minutes. Willys' is a politeness request rather than a block, so development and test
+        leave it at zero for iteration speed.
+      </p>
+    </section>
+
+    <!-- ============================================ IDENTITY -->
+    <section id="identity">
+      <h2 class="sec">The known problem</h2>
+      <p class="sec-note">Product identity, currently being redesigned</p>
+
+      <p>
+        One part of the model is understood to be wrong, and it is the part everything else rests
+        on. <code>products.gtin</code> is a single <code>NOT NULL UNIQUE</code> text column
+        holding whatever string the retailer sent, and it is being asked to mean three different
+        things at once.
+      </p>
+
+      <div class="callout">
+        <h4>Three failures in one column</h4>
+        <p>
+          <b>Same barcode, different widths.</b> A GTIN legitimately appears as 8, 12, 13 or 14
+          digits depending on who reports it. Compared as raw strings, one physical product
+          becomes two rows — Nutella arrives as <code>80177173</code> from ICA and
+          <code>00000080177173</code> from Willys, silently breaking the "one barcode, one row"
+          premise the whole comparison depends on.
+        </p>
+        <p>
+          <b>No-GTIN products vanish.</b> The strict rule skips any product without a recoverable
+          barcode. Those are real, shoppable deals — 53 products and 7,598 store-offers from Coop
+          alone. The decision made is to keep them, with a chain-scoped fallback identity, flagged
+          as not comparable.
+        </p>
+        <p>
+          <b>Having a barcode isn't the same as being comparable.</b> Roughly 8% are GS1
+          restricted-circulation codes: valid check digits, but minted in-house for weighed and
+          counter goods, meaningful only inside one retailer — sometimes inside one store. ICA's
+          in-store bakery mints a different code per store for the same cookie. So
+          <code>gtin IS NOT NULL</code> is the wrong comparability test.
+        </p>
+      </div>
+
+      <p>
+        The full problem statement, the evidence behind each claim, and the validated normalizer
+        that a fix should reuse live in <code>docs/product-identity.md</code>. Worth reading
+        before touching anything barcode-shaped.
+      </p>
+
+      <div class="note">
+        <p>
+          Note that the schema's own comments still describe the current strict-GTIN rule as
+          correct. That contradiction is real and unresolved — the schema documents what is
+          built, the design doc documents what is wrong with it.
+        </p>
+      </div>
+    </section>
+
+  </main>
+
+  <footer>
+    Kassepris scraper · architecture reference · generated from the codebase at <span class="mono">ab63450</span><br>
+    Source of truth remains the code: <span class="mono">db/schema.sql</span> for the domain model,
+    <span class="mono">.env.example</span> for every tuning knob, <span class="mono">deploy/README.md</span> for the runbook.
+  </footer>
+
+</div>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('.rail a'));
+    var map = {};
+    links.forEach(function (a) {
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if (el) map[id] = a;
+    });
+    var sections = Object.keys(map).map(function (id) { return document.getElementById(id); });
+    if (!sections.length || !('IntersectionObserver' in window)) return;
+
+    var visible = {};
+    var obs = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { visible[e.target.id] = e.isIntersecting ? e.intersectionRatio : 0; });
+      var best = null, bestRatio = 0;
+      sections.forEach(function (s) {
+        var r = visible[s.id] || 0;
+        if (r > bestRatio) { bestRatio = r; best = s.id; }
+      });
+      links.forEach(function (a) { a.classList.remove('is-active'); });
+      if (best && map[best]) map[best].classList.add('is-active');
+    }, { rootMargin: '-10% 0px -60% 0px', threshold: [0, 0.15, 0.4, 0.75, 1] });
+
+    sections.forEach(function (s) { obs.observe(s); });
+  })();
+</script>
