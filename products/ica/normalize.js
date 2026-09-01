@@ -12,12 +12,13 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, normalizedFile } from "../lib/paths.js";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
 import { ICA_TRAIT_MAP, normalizeBadges } from "../categories/badges.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "data");
-const OUTPUT_FILE = path.resolve(__dirname, "normalized/ica_normalized.json");
+const DATA_DIR = dataDir("ica");
+const OUTPUT_FILE = normalizedFile("ica");
 
 const ICA_CATEGORY_MAP = {
   Färskvaror: "fresh_food",

@@ -25,13 +25,14 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { pool } from "../db/pool.js";
+import { normalizedFile } from "./lib/paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const productFiles = [
-  { file: path.resolve(__dirname, "coop/normalized/coop_normalized.json"), slug: "coop" },
-  { file: path.resolve(__dirname, "ica/normalized/ica_normalized.json"), slug: "ica" },
-  { file: path.resolve(__dirname, "willys/normalized/willys_normalized.json"), slug: "willys" },
+  { file: normalizedFile("coop"), slug: "coop" },
+  { file: normalizedFile("ica"), slug: "ica" },
+  { file: normalizedFile("willys"), slug: "willys" },
 ];
 
 function extractIcaStorePathFromUrl(url) {

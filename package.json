@@ -16,7 +16,10 @@
     "db:schema": "node db/apply-schema.js",
     "db:init": "bash scripts/init-db.sh",
     "db:migrate": "node db/migrate.js",
-    "products:update-all": "bash scripts/update-products.sh"
+    "products:update-all": "bash scripts/update-products.sh",
+    "test": "bash scripts/test.sh",
+    "test:unit": "node --test test/unit/*.test.js",
+    "test:integration": "APP_ENV=test node --test test/integration/*.test.js"
   },
   "license": "ISC",
   "dependencies": {

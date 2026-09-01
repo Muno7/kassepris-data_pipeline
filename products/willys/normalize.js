@@ -11,13 +11,14 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, normalizedFile } from "../lib/paths.js";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
 import { WILLYS_BADGE_MAP, normalizeBadges } from "../categories/badges.js";
 import { buildFingerprint } from "../lib/fingerprint.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "data");
-const OUTPUT_FILE = path.resolve(__dirname, "normalized/willys_normalized.json");
+const DATA_DIR = dataDir("willys");
+const OUTPUT_FILE = normalizedFile("willys");
 
 const ASSORTMENT_FILES = [
   { file: "willys.json", store: "willys" },

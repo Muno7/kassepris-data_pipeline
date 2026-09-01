@@ -29,6 +29,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, stateDir } from "../lib/paths.js";
 import { createLogger } from "../lib/logger.js";
 import { createMetrics } from "../lib/metrics.js";
 import { createHttpClient } from "../lib/httpClient.js";
@@ -41,8 +42,8 @@ import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/c
 import { isValidGtin13 } from "../lib/gtin.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "data");
-const STATE_DIR = path.resolve(__dirname, ".state");
+const DATA_DIR = dataDir("willys");
+const STATE_DIR = stateDir("willys");
 const STORES_FILE = path.resolve(__dirname, "../../stores/willys/willys_stores.json");
 
 const BASE_URL = "https://www.willys.se/axfood/rest/v1/search/campaigns/offline";

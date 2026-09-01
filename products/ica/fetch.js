@@ -13,6 +13,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, stateDir } from "../lib/paths.js";
 import { pool } from "../../db/pool.js";
 import { createLogger } from "../lib/logger.js";
 import { createMetrics } from "../lib/metrics.js";
@@ -26,8 +27,8 @@ import { parsePriceToCents } from "../lib/priceParsing.js";
 import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "data");
-const STATE_DIR = path.resolve(__dirname, ".state");
+const DATA_DIR = dataDir("ica");
+const STATE_DIR = stateDir("ica");
 
 // Left tunable per-environment: ICA's edge protection (Akamai) blocks bursts
 // of concurrent requests, so this chain needs a lower concurrency ceiling

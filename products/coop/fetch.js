@@ -14,6 +14,7 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, stateDir } from "../lib/paths.js";
 import { pool } from "../../db/pool.js";
 import { createLogger } from "../lib/logger.js";
 import { createMetrics } from "../lib/metrics.js";
@@ -27,8 +28,8 @@ import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/c
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const DATA_DIR = path.resolve(__dirname, "data");
-const STATE_DIR = path.resolve(__dirname, ".state");
+const DATA_DIR = dataDir("coop");
+const STATE_DIR = stateDir("coop");
 // Left tunable per-environment rather than hardcoded, since the right value
 // depends on what Coop's infrastructure tolerates today, not on this code.
 const CONCURRENCY = getEnvInt("COOP_FETCH_CONCURRENCY", 10);

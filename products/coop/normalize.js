@@ -10,11 +10,12 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { dataDir, normalizedFile } from "../lib/paths.js";
 import { DISPLAY_CATEGORIES } from "../categories/displayCategories.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.resolve(__dirname, "data");
-const OUTPUT_FILE = path.resolve(__dirname, "normalized/coop_normalized.json");
+const DATA_DIR = dataDir("coop");
+const OUTPUT_FILE = normalizedFile("coop");
 
 const COOP_CATEGORY_MAP = {
   "Fågel, fisk & kött": "fresh_food",

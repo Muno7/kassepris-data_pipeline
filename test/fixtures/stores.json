@@ -1,0 +1,8 @@
+[
+  { "chain": "coop", "external_id": "coop/coop-aby/", "name": "Coop Åby", "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-aby/", "city": "Åby", "latitude": 58.6641898, "longitude": 16.1810942 },
+  { "chain": "coop", "external_id": "coop/coop-alidhem/", "name": "Coop Ålidhem", "url": "https://www.coop.se/butiker-erbjudanden/coop/coop-alidhem/", "city": "Umeå", "latitude": 63.8258462, "longitude": 20.2630331 },
+  { "chain": "ica", "external_id": "1003617", "name": "ICA Abrahamsberg", "url": "https://www.ica.se/erbjudanden/ica-abrahamsberg-1003617/", "city": "Bromma", "latitude": 59.33618, "longitude": 17.95192 },
+  { "chain": "ica", "external_id": "1003909", "name": "ICA Affären Örarna", "url": "https://www.ica.se/erbjudanden/ica-affaren-orarna-1003909/", "city": "Luleå", "latitude": 65.70775, "longitude": 22.2363 },
+  { "chain": "willys", "external_id": "2286", "name": "Willys Åhus Rondellen", "url": "https://www.willys.se/butik/2286", "city": "Åhus", "latitude": 55.9306, "longitude": 14.2877 },
+  { "chain": "willys", "external_id": "2813", "name": "Willys Hemma Alvesta", "url": "https://www.willys.se/butik/2813", "city": null, "latitude": null, "longitude": null }
+]
