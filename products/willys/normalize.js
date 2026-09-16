@@ -83,7 +83,7 @@ function normalizeProduct(rawProduct, store) {
   return {
     gtin: rawProduct.gtin ?? null,
     fingerprint,
-    variantGroup: null,
+    variantGroup: rawProduct.variantGroup ?? null,
 
     title,
     image: rawProduct.image,

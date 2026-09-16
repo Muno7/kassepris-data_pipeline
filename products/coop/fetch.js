@@ -15,6 +15,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dataDir, stateDir } from "../lib/paths.js";
+import { normalizeGtin } from "../lib/gtin.js";
 import { pool } from "../../db/pool.js";
 import { createLogger } from "../lib/logger.js";
 import { createMetrics } from "../lib/metrics.js";
@@ -175,7 +176,11 @@ function mapOfferFields(offer) {
     image: content.imageUrl ? `https:${content.imageUrl}` : null,
     isMember: priceInformation.isMemberPrice ?? false,
     badges: [],
-    gtin: offer.externalId ?? null,
+    // Coop's externalId is a real GTIN for some offers but a composite
+    // store+cluster+item catalog key wearing a gtin-shaped string for others -
+    // only the checksum tells them apart, which normalizeGtin applies (it
+    // returns null for the ones that fail, handled like any gtin-less offer).
+    gtin: normalizeGtin(offer.externalId),
     validFrom: offer.campaignStartDate ?? null,
     validUntil: offer.campaignEndDate ?? null,
     // Coop's API never exposes a regular/original price - priceInformation

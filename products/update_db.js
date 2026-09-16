@@ -9,14 +9,15 @@
 //   offers           - CURRENT weekly offers only, one per (store, deal)
 //   offer_products   - eligible GTIN products per current offer (mix-and-match)
 //
-// and archives the previous cycle's current offers into historical_offers /
-// historical_offer_products before replacing them.
+// and replaces the previous cycle's current offers. Previous offers are
+// deliberately discarded for now; offer history will be introduced later as
+// a separate, designed feature.
 //
 // Identity: a product is keyed by its GTIN. A normalized product with no GTIN
 // cannot be represented canonically and is skipped (counted) - the fetch layer
 // recovers GTINs aggressively (see products/willys/fetch.js) so this is rare.
 //
-// Everything runs in ONE transaction. Offer archival + replacement is scoped
+// Everything runs in ONE transaction. Offer replacement is scoped
 // per chain (offers of stores belonging to that chain), so refreshing e.g. ICA
 // never touches Coop's or Willys' current offers, and a chain whose normalized
 // file is missing this run is left completely untouched.
@@ -25,6 +26,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { pool } from "../db/pool.js";
+import { normalizeGtin } from "./lib/gtin.js";
 import { normalizedFile } from "./lib/paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -83,33 +85,10 @@ async function buildStoreIdsLookup(client, slug, chainId) {
   };
 }
 
-// Archives this chain's current offers into the historical tables (preserving
-// exact state + product eligibility), then removes them, so the caller can
-// insert this cycle's fresh offers. Scoped strictly to stores of `chainId`.
+// Removes this chain's current offers so the caller can insert this cycle's
+// fresh offers. Scoped strictly to stores of `chainId`.
 // offer_products rows are removed by ON DELETE CASCADE when their offer goes.
-async function archiveAndClearChainOffers(client, chainId) {
-  await client.query(
-    `WITH archived AS (
-       INSERT INTO historical_offers (
-         original_offer_id, store_id, price_cents, original_price_cents, is_member,
-         deal_quantity, unit, comparison_price_min_cents, comparison_price_max_cents,
-         comparison_unit, deal_text, more_info, valid_from, valid_until
-       )
-       SELECT o.id, o.store_id, o.price_cents, o.original_price_cents, o.is_member,
-              o.deal_quantity, o.unit, o.comparison_price_min_cents, o.comparison_price_max_cents,
-              o.comparison_unit, o.deal_text, o.more_info, o.valid_from, o.valid_until
-       FROM offers o
-       JOIN stores s ON s.id = o.store_id
-       WHERE s.chain_id = $1
-       RETURNING id AS historical_id, original_offer_id
-     )
-     INSERT INTO historical_offer_products (historical_offer_id, product_id)
-     SELECT a.historical_id, op.product_id
-     FROM archived a
-     JOIN offer_products op ON op.offer_id = a.original_offer_id`,
-    [chainId]
-  );
-
+async function clearChainOffers(client, chainId) {
   const { rowCount } = await client.query(
     `DELETE FROM offers o USING stores s WHERE s.id = o.store_id AND s.chain_id = $1`,
     [chainId]
@@ -149,7 +128,7 @@ async function importProducts() {
       const products = JSON.parse(fs.readFileSync(file, "utf-8"));
       console.log(`Loaded ${products.length} normalized products for chain "${slug}"`);
 
-      const archivedCount = await archiveAndClearChainOffers(client, chainId);
+      const removedOfferCount = await clearChainOffers(client, chainId);
 
       // Campaign (variant group) -> product_group id, for THIS run. A campaign
       // id is chain-scoped and rotates weekly, so it's only used to keep this
@@ -164,14 +143,18 @@ async function importProducts() {
       let unmatchedStores = 0;
 
       for (const product of products) {
-        if (!product.gtin) {
+        // Treat normalized JSON as an input boundary, not a trusted database
+        // key. This makes imports of older artifacts safe and guarantees every
+        // lookup/insert uses the same canonical representation regardless of
+        // which retailer produced it.
+        const gtin = normalizeGtin(product.gtin);
+        if (!gtin) {
           skippedNoGtin++;
           continue;
         }
-
         const categoryId = categoryIdBySlug.get(product.categorySlug);
         if (!categoryId) {
-          console.warn(`Unknown category slug "${product.categorySlug}" for gtin ${product.gtin}, skipping product.`);
+          console.warn(`Unknown category slug "${product.categorySlug}" for gtin ${gtin}, skipping product.`);
           continue;
         }
 
@@ -180,11 +163,11 @@ async function importProducts() {
         // Resolve the canonical product row, creating its product_group only
         // when the product is genuinely new (an existing product keeps the
         // group it was first filed under - products are persistent).
-        let productId = productIdByGtin.get(product.gtin);
+        let productId = productIdByGtin.get(gtin);
         if (!productId) {
           const existing = await client.query(
             "SELECT id, product_group_id FROM products WHERE gtin = $1",
-            [product.gtin]
+            [gtin]
           );
           if (existing.rows.length > 0) {
             productId = existing.rows[0].id;
@@ -214,12 +197,12 @@ async function importProducts() {
             const p = await client.query(
               `INSERT INTO products (product_group_id, gtin, title, brand, size, image_url)
                VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-              [groupId, product.gtin, product.title, product.brand, product.size, product.image]
+              [groupId, gtin, product.title, product.brand, product.size, product.image]
             );
             productId = p.rows[0].id;
             insertedProducts++;
           }
-          productIdByGtin.set(product.gtin, productId);
+          productIdByGtin.set(gtin, productId);
         }
 
         // store_products (persistent membership) + accumulate current offers.
@@ -332,7 +315,7 @@ async function importProducts() {
       }
 
       console.log(
-        `Chain "${slug}": archived ${archivedCount} old offers, +${insertedProducts} new products, ` +
+        `Chain "${slug}": removed ${removedOfferCount} old offers, +${insertedProducts} new products, ` +
           `${storeLinks} store links, ${insertedOffers} offers, ${insertedOfferProducts} offer-products` +
           (skippedNoGtin > 0 ? `, ${skippedNoGtin} skipped (no gtin)` : "") +
           (unmatchedStores > 0 ? `, ${unmatchedStores} unmatched store keys` : "")

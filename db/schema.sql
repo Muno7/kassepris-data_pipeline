@@ -15,16 +15,21 @@
 --     category. A group holds one or many gtin products (mix-and-match
 --     campaigns expose several variant SKUs under one group).
 --   * offers holds ONLY the current active weekly dataset (what the app
---     queries). historical_offers holds past cycles and is not on the MVP
---     read path. products / product_groups are persistent and never archived.
+--     queries). Previous offers are discarded on refresh for now; products /
+--     product_groups are persistent and never archived.
 --
--- This file is idempotent (CREATE ... IF NOT EXISTS) and is the canonical
--- schema. To migrate an already-populated legacy database (chain/product/
--- store_product/...) into this shape, run db/migration.sql instead - it
--- preserves stores + chains and rebuilds the rest.
+-- This file is the canonical fresh-start schema. Its CREATE statements are
+-- idempotent for objects that already match; it is not a general-purpose
+-- migration mechanism for incompatible existing table definitions.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;   -- gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS pg_trgm;     -- trigram search on product titles
+
+-- Offer history is intentionally not part of the current model. These drops
+-- remove tables from an earlier experiment without touching products, product
+-- groups, stores, or current offers.
+DROP TABLE IF EXISTS historical_offer_products;
+DROP TABLE IF EXISTS historical_offers;
 
 -- ---------------------------------------------------------------------------
 -- chains: supermarket chains/retailers (ICA, Coop, Willys).
@@ -96,16 +101,14 @@ CREATE TABLE IF NOT EXISTS product_groups (
 CREATE INDEX IF NOT EXISTS idx_product_groups_category_id ON product_groups (category_id);
 
 -- ---------------------------------------------------------------------------
--- products: one exact physical product/SKU, identified globally by its GTIN.
--- Persistent and canonical - never archived, never duplicated per chain. When
--- several chains describe the same gtin differently, the display fields hold
--- one normalized version (first non-null wins at ingest time; each chain's raw
--- naming is not preserved separately).
+-- products: one exact physical product/SKU, identified globally by its
+-- canonical GTIN. Persistent and canonical - never archived, never duplicated
+-- per chain. When several chains describe the same GTIN differently, the
+-- display fields hold one normalized version (first non-null wins at ingest).
 -- ---------------------------------------------------------------------------
--- gtin is TEXT, never an integer (leading zeros / length matter). A product
--- with no reliable gtin is not stored here - the ingestion pipeline recovers
--- gtins aggressively (incl. Willys' image/catalog fallback) and skips the rare
--- residual offer that still lacks one, rather than minting a non-gtin identity.
+-- gtin is TEXT, never an integer: leading zeros and width matter. The fetchers
+-- canonicalize each retailer's representation before import, and rows without
+-- a verified GTIN are not stored in this strict product catalogue.
 CREATE TABLE IF NOT EXISTS products (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   product_group_id uuid NOT NULL REFERENCES product_groups(id),
@@ -181,47 +184,6 @@ CREATE TABLE IF NOT EXISTS offer_products (
   PRIMARY KEY (offer_id, product_id)
 );
 CREATE INDEX IF NOT EXISTS idx_offer_products_product_offer ON offer_products (product_id, offer_id);
-
--- ---------------------------------------------------------------------------
--- historical_offers: offers from previous weekly cycles, archived verbatim
--- from `offers` when a store's/chain's current offers are replaced. Completely
--- separate from the current dataset and not on the MVP read path (kept for
--- future price history / analytics). Preserves the offer's exact state at the
--- time it was active.
--- ---------------------------------------------------------------------------
--- original_offer_id is the id the row had in `offers`, kept for traceability
--- only - deliberately NOT a foreign key, so archiving must never be blocked by
--- (or cascade from) the current offer being deleted right after.
-CREATE TABLE IF NOT EXISTS historical_offers (
-  id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  original_offer_id          uuid,
-  store_id                   uuid NOT NULL REFERENCES stores(id) ON DELETE CASCADE,
-  price_cents                integer NOT NULL,
-  original_price_cents       integer,
-  is_member                  boolean NOT NULL DEFAULT false,
-  deal_quantity              integer,
-  unit                       text,
-  comparison_price_min_cents integer,
-  comparison_price_max_cents integer,
-  comparison_unit            text,
-  deal_text                  text,
-  more_info                  text,
-  valid_from                 timestamptz NOT NULL,
-  valid_until                timestamptz NOT NULL,
-  archived_at                timestamptz NOT NULL DEFAULT now()
-);
-CREATE INDEX IF NOT EXISTS idx_historical_offers_store_id ON historical_offers (store_id);
-CREATE INDEX IF NOT EXISTS idx_historical_offers_valid ON historical_offers (valid_from, valid_until);
-
--- historical_offer_products: frozen product eligibility of each past offer -
--- which exact gtins were part of that historical mix-and-match, even if the
--- product's group later changes (products persist; this stays as it was).
-CREATE TABLE IF NOT EXISTS historical_offer_products (
-  historical_offer_id uuid NOT NULL REFERENCES historical_offers(id) ON DELETE CASCADE,
-  product_id          uuid NOT NULL REFERENCES products(id) ON DELETE CASCADE,
-  PRIMARY KEY (historical_offer_id, product_id)
-);
-CREATE INDEX IF NOT EXISTS idx_historical_offer_products_product ON historical_offer_products (product_id, historical_offer_id);
 
 -- ---------------------------------------------------------------------------
 -- Seed data.

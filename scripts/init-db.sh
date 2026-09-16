@@ -9,7 +9,10 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
 # Load .env when present (local host). In containers there's no .env file - the
 # environment is injected at runtime (compose env_file / -e) - so this is
 # optional, not required.
-if [ -f .env ]; then
+# An explicitly selected environment (notably APP_ENV=test in the production
+# E2E suite) must win over a host .env file. Containers do not have .env, but
+# this also makes host setup predictable when a caller supplies its own DB_URL.
+if [ -f .env ] && [ -z "${APP_ENV:-}" ]; then
   set -a
   source .env
   set +a

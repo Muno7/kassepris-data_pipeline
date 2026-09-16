@@ -1,0 +1,16 @@
+# Persistent local environment used only by `npm run test:production-e2e`.
+# It deliberately has its own database name, host port, and Compose project so
+# it cannot be confused with the quick disposable test database on port 5433.
+services:
+  db:
+    environment:
+      POSTGRES_DB: kassepris_production_test
+    # Compose merges ordinary port lists. !override is required to replace the
+    # disposable suite's 5433 binding instead of also publishing it.
+    ports: !override
+      - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kassepris -d kassepris_production_test"]
+  app:
+    environment:
+      DB_URL: postgresql://kassepris:kassepris@db:5432/kassepris_production_test

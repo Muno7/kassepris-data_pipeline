@@ -39,7 +39,7 @@ import { getEnvInt, DEFAULT_USER_AGENT } from "../lib/config.js";
 import { runWithConcurrency } from "../lib/concurrency.js";
 import { parsePriceToCents } from "../lib/priceParsing.js";
 import { parseComparisonPrice, deriveComparisonFromDealQuantity } from "../lib/comparisonPrice.js";
-import { isValidGtin13 } from "../lib/gtin.js";
+import { normalizeGtin } from "../lib/gtin.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = dataDir("willys");
@@ -55,7 +55,8 @@ const PAGE_SIZE = 100;
 // fallback: a handful of campaign products per run carry a promo-only image
 // with no GTIN in it, but the same product exists in the regular catalog under
 // the same internal `code` (== the campaign's mainProductCode) with a
-// GTIN-bearing catalog photo. See products/willys/GTIN_FALLBACK_PLAN.md.
+// GTIN-bearing catalog photo. Real mix-and-match cards are expanded from
+// catalog products carrying the same retailer promotion code.
 const SEARCH_URL = "https://www.willys.se/axfood/rest/v1/search";
 // Kept below CONCURRENCY: this backs /sok, which robots.txt marks
 // crawl-sensitive, and it's only ever a small per-run cleanup (~15-25 items).
@@ -139,8 +140,10 @@ function resolveImageUrl(image) {
 function extractGtinFromImageUrl(imageUrl) {
   const match = imageUrl?.match(/assets\.axfood\.se\/image\/upload\/[^/]+\/(\d{14})_/);
   if (!match) return null;
-  const candidate = match[1].slice(1);
-  return isValidGtin13(candidate) ? candidate : null;
+  // Axfood uses a 14-digit, left-zero-padded filename.  Passing the complete
+  // value to the shared normalizer preserves genuine GTIN-14s and turns a
+  // padded GTIN-8/UPC/EAN into the exact same key reported by ICA or Coop.
+  return normalizeGtin(match[1]);
 }
 
 // rewardLabel carries the headline price exactly as Willys's UI displays it
@@ -200,6 +203,10 @@ function mapProduct(rawItem, categoryName) {
     validFrom,
     validUntil,
     gtin: extractGtinFromImageUrl(image),
+    // A genuine mix-and-match campaign is one deal over several barcoded
+    // SKUs. Keep its retailer campaign code so a fallback-expanded set of
+    // products remains one offer when the importer groups it.
+    variantGroup: promo.realMixAndMatch && promo.code ? promo.code : null,
     size: rawItem.displayVolume ?? null,
     brand: rawItem.manufacturer ?? null,
     moreInfo: promo.description ?? null,
@@ -282,6 +289,8 @@ async function fetchCategoryProducts(storeCode, categoryCode, categoryName) {
       ...(data.results ?? []).map((item) => ({
         product: mapProduct(item, categoryName),
         mainProductCode: item.potentialPromotions?.[0]?.mainProductCode ?? null,
+        promotionCode: item.potentialPromotions?.[0]?.code ?? null,
+        isMixAndMatch: item.potentialPromotions?.[0]?.realMixAndMatch === true,
       }))
     );
     const total = data.pagination?.totalNumberOfResults ?? entries.length;
@@ -302,7 +311,7 @@ async function fetchOneCategory(storeCode, category, entries) {
   entries.push(...categoryEntries);
 }
 
-// --- GTIN fallback (see products/willys/GTIN_FALLBACK_PLAN.md) -------------
+// --- GTIN recovery through the regular catalog -----------------------------
 
 async function searchCatalogPage(query, page) {
   const qs = new URLSearchParams({
@@ -322,31 +331,96 @@ async function searchCatalogPage(query, page) {
 // way as the campaign path - the catalog photo is GTIN-bearing even when the
 // campaign photo isn't. Empirically resolves on page 0; paginates a few pages
 // defensively since the endpoint's behavior isn't a documented contract.
-async function findCatalogProductByCode(query, targetCode) {
-  for (let page = 0; page < GTIN_FALLBACK_MAX_PAGES; page++) {
-    const data = await searchCatalogPage(query, page);
-    const hit = (data.results ?? []).find((r) => r.code === targetCode);
-    if (hit) return hit;
-    const totalPages = data.pagination?.numberOfPages ?? 1;
-    if (page + 1 >= totalPages) return null;
+async function findCatalogProductByCode(queries, targetCode) {
+  for (const query of queries) {
+    for (let page = 0; page < GTIN_FALLBACK_MAX_PAGES; page++) {
+      const data = await searchCatalogPage(query, page);
+      const hit = (data.results ?? []).find((r) => r.code === targetCode);
+      if (hit) return hit;
+      const totalPages = data.pagination?.numberOfPages ?? 1;
+      if (page + 1 >= totalPages) break;
+    }
   }
   return null;
 }
 
+// A campaign card can describe a genuine mix-and-match offer rather than one
+// sellable SKU. Its campaign endpoint can omit productCodes entirely, while
+// regular catalog results for that same promotion expose the eligible catalog
+// products. Match the promotion code (not merely similar title text), then
+// only retain catalog products with a verified GTIN-bearing Axfood image.
+async function findCatalogProductsByPromotion(queries, promotionCode) {
+  const foundByCode = new Map();
+  for (const query of queries) {
+    for (let page = 0; page < GTIN_FALLBACK_MAX_PAGES; page++) {
+      const data = await searchCatalogPage(query, page);
+      for (const product of data.results ?? []) {
+        if (product.potentialPromotions?.some((promotion) => promotion.code === promotionCode)) {
+          foundByCode.set(product.code, product);
+        }
+      }
+      const totalPages = data.pagination?.numberOfPages ?? 1;
+      if (page + 1 >= totalPages) break;
+    }
+  }
+  return [...foundByCode.values()];
+}
+
+// Search relevance differs between regular Willys and Hemma: a store-specific
+// promotion code need not be indexed in the public catalog. These queries only
+// locate a result; acceptance still requires the exact retailer product code
+// (or exact promotion code above), so widening the query cannot assign a GTIN
+// to a merely similar product.
+function catalogQueriesForEntry(entry) {
+  const values = [
+    [entry.product.brand, entry.product.title].filter(Boolean).join(" "),
+    [entry.product.brand, entry.product.size].filter(Boolean).join(" "),
+    entry.product.title,
+  ];
+  return [...new Set(values.filter(Boolean))];
+}
+
+function productFromCatalogCampaignEntry(entry, catalogProduct) {
+  const gtin = extractGtinFromImageUrl(resolveImageUrl(catalogProduct.image));
+  if (!gtin) return null;
+  return {
+    ...entry.product,
+    gtin,
+    title: catalogProduct.name ?? entry.product.title,
+    brand: catalogProduct.manufacturer ?? entry.product.brand,
+    size: catalogProduct.displayVolume ?? entry.product.size,
+    image: resolveImageUrl(catalogProduct.image) ?? entry.product.image,
+  };
+}
+
 // For each entry whose campaign image didn't yield a GTIN, look it up in the
-// catalog by mainProductCode and backfill entry.product.gtin in place. A
-// single failed lookup can't fail the run (runWithConcurrency isolates each).
+// catalog. Ordinary offers are recovered by exact internal product code. A
+// mix-and-match card instead expands into each catalog SKU verified as eligible
+// for its exact promotion code. A single failed lookup can't fail the run.
 async function recoverMissingGtins(entries) {
   const candidates = entries.filter((e) => !e.product.gtin && e.mainProductCode);
   let recovered = 0;
+  let expandedCampaigns = 0;
 
   await runWithConcurrency(
     candidates,
     GTIN_FALLBACK_CONCURRENCY,
     async (entry) => {
-      const query = [entry.product.brand, entry.product.title].filter(Boolean).join(" ");
-      if (!query) return;
-      const hit = await findCatalogProductByCode(query, entry.mainProductCode);
+      const queries = catalogQueriesForEntry(entry);
+      if (queries.length === 0) return;
+
+      if (entry.isMixAndMatch && entry.promotionCode) {
+        const catalogProducts = await findCatalogProductsByPromotion(queries, entry.promotionCode);
+        const expanded = catalogProducts.map((product) => productFromCatalogCampaignEntry(entry, product)).filter(Boolean);
+        if (expanded.length > 0) {
+          entry.recoveredProducts = expanded;
+          recovered += expanded.length;
+          expandedCampaigns++;
+          return;
+        }
+      }
+
+      const hit = await findCatalogProductByCode(queries, entry.mainProductCode);
       const gtin = hit ? extractGtinFromImageUrl(resolveImageUrl(hit.image)) : null;
       if (gtin) {
         entry.product.gtin = gtin;
@@ -356,7 +430,14 @@ async function recoverMissingGtins(entries) {
     { onFailure: (entry, err) => logger.warn("gtin fallback lookup failed", { code: entry.mainProductCode, error: err.message }) }
   );
 
-  return { attempted: candidates.length, recovered };
+  // Replace a campaign card only after all concurrent lookups finish. Mutating
+  // the shared array inside workers would make expansion order nondeterministic.
+  const expandedEntries = entries.flatMap((entry) =>
+    entry.recoveredProducts ? entry.recoveredProducts.map((product) => ({ ...entry, product })) : [entry]
+  );
+  entries.splice(0, entries.length, ...expandedEntries);
+
+  return { attempted: candidates.length, recovered, expandedCampaigns };
 }
 
 async function fetchAssortment({ slug, isHemma }) {
@@ -380,11 +461,15 @@ async function fetchAssortment({ slug, isHemma }) {
   );
   if (failed > 0) throw new Error(`${failed}/${categories.length} categories failed for assortment "${slug}"`);
 
-  const { attempted, recovered } = await recoverMissingGtins(entries);
-  logger.info("gtin fallback done", { assortment: slug, attempted, recovered, stillMissing: attempted - recovered });
+  const { attempted, recovered, expandedCampaigns } = await recoverMissingGtins(entries);
+  const stillMissing = entries.filter((entry) => !entry.product.gtin).length;
+  logger.info("gtin fallback done", { assortment: slug, attempted, recovered, expandedCampaigns, stillMissing });
+  if (stillMissing > 0) {
+    throw new Error(`GTIN recovery incomplete for assortment "${slug}": ${stillMissing} product rows still lack a verified GTIN`);
+  }
 
-  // Drop mainProductCode - the written file's shape is exactly what it was,
-  // just with fewer gtin:null entries.
+  // Drop lookup-only campaign metadata; the written file remains the shared
+  // raw-product shape, now with an expanded GTIN-bearing row per recovered SKU.
   const products = entries.map((e) => e.product);
   fs.writeFileSync(path.join(DATA_DIR, `${slug}.json`), JSON.stringify(products, null, 2));
   logger.info("assortment done", { assortment: slug, products: products.length });
@@ -407,10 +492,12 @@ export async function fetchAllWillysStores() {
   }
 
   let total = 0;
+  let failedAssortments = 0;
   for (const assortment of ASSORTMENTS) {
     try {
       total += await fetchAssortment(assortment);
     } catch (err) {
+      failedAssortments++;
       logger.error("assortment fetch failed", { assortment: assortment.slug, error: err.message });
     }
   }
@@ -430,6 +517,9 @@ export async function fetchAllWillysStores() {
   checkpoint.clear();
 
   metrics.report();
+  if (failedAssortments > 0) {
+    throw new Error(`${failedAssortments} Willys assortment fetch(es) failed`);
+  }
   return { total };
 }
 

@@ -6,7 +6,7 @@
 # clashes with a Postgres already running locally on 5432.
 #
 #   docker compose up -d db
-#   APP_ENV=test npm run db:init        # or db:migrate against a legacy dump
+#   APP_ENV=test npm run db:init
 #   APP_ENV=test npm run products:update-all
 #
 # Point .env.test at it:

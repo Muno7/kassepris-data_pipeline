@@ -21,6 +21,7 @@ const FIXTURE = path.join(__dirname, "../fixtures/stores.json");
 describe("pipeline (sample live fetch -> ingest)", () => {
   let dataRoot;
   let offersAfterFirstLoad;
+  let productsAfterFirstLoad;
 
   before(async () => {
     // Fail fast with a clear message if the test DB isn't reachable.
@@ -38,6 +39,9 @@ describe("pipeline (sample live fetch -> ingest)", () => {
     runStep(LOAD, dataRoot);
 
     offersAfterFirstLoad = await count("SELECT count(*) n FROM offers");
+    productsAfterFirstLoad = new Map(
+      (await pool.query("SELECT gtin, id FROM products")).rows.map((row) => [row.gtin, row.id])
+    );
   });
 
   after(async () => {
@@ -102,11 +106,22 @@ describe("pipeline (sample live fetch -> ingest)", () => {
     );
   });
 
-  it("archival: a second load moves the prior cycle to historical without doubling current", async () => {
+  it("replacement: a second load replaces current offers without duplicating products", async () => {
     runStep(LOAD, dataRoot); // re-ingest the same normalized data
-    const historical = await count("SELECT count(*) n FROM historical_offers");
     const offersNow = await count("SELECT count(*) n FROM offers");
-    assert.equal(historical, offersAfterFirstLoad, "prior cycle should be archived");
     assert.equal(offersNow, offersAfterFirstLoad, "current offers replaced, not doubled");
+    const productsNow = new Map(
+      (await pool.query("SELECT gtin, id FROM products")).rows.map((row) => [row.gtin, row.id])
+    );
+    assert.deepEqual(productsNow, productsAfterFirstLoad, "GTIN products should persist across offer refreshes");
+    assert.equal(
+      await count(`
+        SELECT count(*) n FROM pg_tables
+        WHERE schemaname = 'public'
+          AND tablename IN ('historical_offers', 'historical_offer_products')
+      `),
+      0,
+      "offer history tables should not exist"
+    );
   });
 });
