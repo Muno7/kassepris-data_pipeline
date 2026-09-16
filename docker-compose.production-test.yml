@@ -5,8 +5,12 @@ services:
   db:
     environment:
       POSTGRES_DB: kassepris_production_test
-    ports:
+    # Compose merges ordinary port lists. !override is required to replace the
+    # disposable suite's 5433 binding instead of also publishing it.
+    ports: !override
       - "5434:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kassepris -d kassepris_production_test"]
   app:
     environment:
       DB_URL: postgresql://kassepris:kassepris@db:5432/kassepris_production_test
