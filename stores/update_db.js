@@ -3,7 +3,7 @@
 // Upserts stores/data/{chain}_stores.json into the stores table, keyed on
 // (chain_id, external_id). This is a plain upsert (insert new stores, refresh
 // existing ones) - not a truncate-and-reload - because stores are referenced
-// by store_products / offers / historical_offers via foreign keys, and store
+// by store_products / offers via foreign keys, and store
 // identity should stay stable across runs.
 
 import fs from "fs";

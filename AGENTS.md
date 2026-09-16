@@ -16,7 +16,7 @@ This repository is Kassepris's Node.js ES-module batch pipeline for Swedish Coop
 - `products/run.js` runs Coop/ICA only. Their fetch/normalize modules export functions; invoking a normalizer file directly does not execute its function.
 - Coop/ICA products select stores from PostgreSQL. Willys fetches newspaper assortments using `stores/willys/willys_stores.json`; import fans these out to physical stores by name (`Hemma`).
 - Prices are integer öre/cents; a multi-buy price is the whole bundle. Comparison prices have min/max and a unit. Offers may apply to several products.
-- Import runs in one transaction. Present files replace current offers per chain after archiving them; missing files leave that chain untouched. Products/groups/store observations persist.
+- Import runs in one transaction. Present files replace current offers per chain and discard the prior rows; missing files leave that chain untouched. Products/groups/store observations persist.
 - `store_products` means observed through this feed, not complete assortment or current stock.
 - `PIPELINE_DATA_ROOT` relocates product artifacts, not store discovery files or the Willys input fixture.
 
@@ -26,7 +26,7 @@ This repository is Kassepris's Node.js ES-module batch pipeline for Swedish Coop
 - Keep retailer-specific transformations in that retailer's modules and shared behavior in `products/lib/`. Update documentation when commands, contracts, or deployment behavior change.
 - Do not copy `.env`/`.env.test` values into documentation, output, or commits. Use `.env.example` for configuration discovery.
 - Prefer `npm run test:unit` for offline verification. Integration tests use live retailers and **drop the test database's public schema**; verify a disposable database explicitly. `make test` is a full live refresh, not the unit suite.
-- `db:migrate` drops product/offer/history tables; it is a legacy redesign tool, not a generic schema upgrade or the unfinished identity migration. It does not create a backup.
+- No generic database-migration command is provided. Design and test a dedicated migration before changing an existing production schema.
 - Host `db:init` sources `.env` as shell code and can override exported settings; prefer the documented Compose setup.
 - Do not infer AWS deployment state from the template. Check image tag/architecture and task revision when a deployment task is requested.
 

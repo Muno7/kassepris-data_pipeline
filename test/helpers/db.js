@@ -15,7 +15,7 @@ const REPO = path.resolve(__dirname, "../..");
 // test database.
 function assertTestDb() {
   const url = process.env.DB_URL || "";
-  if (!/kassepris_test|:5433(\/|\b)/.test(url)) {
+  if (!/kassepris_(test|production_test)|:543[34](\/|\b)/.test(url)) {
     throw new Error(
       `Refusing to reset a non-test database (DB_URL=${url.replace(/:[^:@/]*@/, ":<pw>@")}). ` +
         `Run tests with APP_ENV=test so DB_URL points at the disposable Postgres from docker-compose.yml.`

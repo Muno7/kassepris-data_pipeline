@@ -21,7 +21,7 @@ is checked in.
   configured. A replacement task starts with fresh local state.
 
 The recurring job is `products:update-all` (fetch Coop/ICA/Willys offers,
-normalize, load current offers, archive the previous cycle). It runs to
+normalize, replace current offers and discard the previous cycle). It runs to
 completion and exits — a scheduled batch task, not a server. Store/schema
 setup (`db:init`) is a separate one-time step per database.
 
@@ -107,11 +107,10 @@ Prefer container initialization: on a host, `scripts/init-db.sh` sources `.env`
 and can overwrite inline production `DB_URL`/`APP_ENV` settings. Inside the
 image there is no `.env` file, and the task injects configuration directly.
 `db:init` applies the schema and populates stores (Coop/ICA fetched live, Willys
-imported from the committed list). Migrating an existing legacy DB instead? use
-`node db/migrate.js` only after reviewing its legacy assumptions and creating a
-backup separately. It drops product/offer/history data, does not create a backup,
-and is not the unfinished product-identity migration. Reapplying `db:schema`
-does not update existing table columns to match changed DDL.
+imported from the committed list). Reapplying `db:schema` does not update
+existing table columns to match changed DDL. For any production schema change,
+create a dedicated migration, test it against the production-shaped local
+database, and review backup/recovery before release.
 
 ## 6. Manual production run (verify before scheduling)
 ```bash
@@ -143,9 +142,9 @@ Retain the previous image tag and task-definition revision so a code rollback
 can select them explicitly. The Make run shortcut alone selects a family,
 so use an explicit revision in the ECS console/CLI when rolling back.
 Rolling back an image does not reverse database writes. A repeated import
-archives another snapshot, and this repository has no restore-from-history
-command. Database recovery depends on separately managed backups and the
-specific failed operation.
+discards the previously current offers, and this repository has no offer-history
+or restore command. Database recovery depends on separately managed backups and
+the specific failed operation.
 
 ## Config reference (production env)
 Set on the task (non-secret) — see the task definition:

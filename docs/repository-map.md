@@ -43,8 +43,6 @@ Local `.env` profiles contain environment-specific values. `.vscode/` and `.clau
 | [db/schema.sql](../db/schema.sql) | Fresh DDL, indexes, constraints, chain/category seeds |
 | [db/pool.js](../db/pool.js) | Shared PostgreSQL pool and TLS options |
 | [db/apply-schema.js](../db/apply-schema.js) | Executes schema with Node; closes pool and reports failure |
-| [db/migration.sql](../db/migration.sql) | Legacy table reshape/drop statements; preserves stores/chains |
-| [db/migrate.js](../db/migrate.js) | Runs legacy migration + fresh schema transactionally; no backup creation |
 
 ## Stores
 
@@ -67,7 +65,7 @@ Local `.env` profiles contain environment-specific values. `.vscode/` and `.clau
 | File | Responsibility |
 | --- | --- |
 | [products/run.js](../products/run.js) | Coop fetch/normalize, ICA fetch/normalize, pool shutdown |
-| [products/update_db.js](../products/update_db.js) | Product/group/store observation upserts; transactional chain offer archival/replacement |
+| [products/update_db.js](../products/update_db.js) | Product/group/store observation upserts; transactional chain offer replacement |
 | [products/coop/fetch.js](../products/coop/fetch.js) | Offer API calls, ledger mapping, cluster expansion, initial price/GTIN shaping |
 | [products/coop/normalize.js](../products/coop/normalize.js) | Coop categories, display cleanup, cross-store deduplication |
 | [products/ica/fetch.js](../products/ica/fetch.js) | HTML state extraction, offer/EAN expansion, ICA deal mechanics |
@@ -103,7 +101,7 @@ Each chain's `data/`, `normalized/`, and `.state/` directories are generated. St
 | --- | --- |
 | [test/unit/parsers.test.js](../test/unit/parsers.test.js) | Comparison price, price parsing, fingerprint tests |
 | [test/unit/gtin.test.js](../test/unit/gtin.test.js) | Canonical GTIN/checksum/restricted-code tests; existed as untracked work at review |
-| [test/integration/pipeline.test.js](../test/integration/pipeline.test.js) | Live sample fetch/import invariants and second-load archival |
+| [test/integration/pipeline.test.js](../test/integration/pipeline.test.js) | Live sample fetch/import invariants and second-load replacement |
 | [test/helpers/db.js](../test/helpers/db.js) | Disposable DB guard, destructive schema reset, fixture seeding, count helper |
 | [test/helpers/pipeline.js](../test/helpers/pipeline.js) | Real entrypoints as subprocesses with temporary product root |
 | [test/fixtures/stores.json](../test/fixtures/stores.json) | Six physical test stores, two per chain |

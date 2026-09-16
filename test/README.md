@@ -30,8 +30,8 @@ into a disposable Postgres, then asserts the structural invariants:
 - `valid_from` never in the future or after `valid_until`;
 - mix-and-match (multi-product) offers exist;
 - referential integrity of offers/store_products;
-- archival: a second load moves the prior cycle to `historical_offers` without
-  doubling the current offers.
+- replacement: a second load discards the prior current offers without
+  doubling them, while GTIN product identities persist.
 
 Most checks test structural invariants. Assertions requiring a real comparison
 range and a multi-product offer also depend on the live sample, so changing

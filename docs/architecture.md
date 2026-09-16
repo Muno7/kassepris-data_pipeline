@@ -95,9 +95,6 @@ erDiagram
     stores ||--o{ offers : advertises
     offers ||--o{ offer_products : includes
     products ||--o{ offer_products : eligible
-    stores ||--o{ historical_offers : archives
-    historical_offers ||--o{ historical_offer_products : includes
-    products ||--o{ historical_offer_products : was_eligible
 ```
 
 | Table | Lifetime and purpose |
@@ -110,21 +107,19 @@ erDiagram
 | `store_products` | Persistent observations with first/last seen timestamps; not inventory or stock availability |
 | `offers` | Latest imported deal rows, replaced by chain |
 | `offer_products` | Eligible products, allowing mix-and-match deals |
-| `historical_offers` | Prior imported offers, retaining original offer ID and archival metadata |
-| `historical_offer_products` | Eligibility relationships for archived offers |
 
 ### Import transaction and replacement semantics
 
 `products/update_db.js` opens **one transaction for all available chain files**:
 
 1. Load chain/category/store lookups and normalized JSON.
-2. Archive every current offer and its eligibility links for that chain; delete those current offers.
+2. Delete every current offer and its eligibility links for that chain; prior offers are discarded.
 3. Resolve GTIN products, retaining existing UUIDs/groups; create new products/groups when needed.
 4. Upsert store observations for matched offers with price/end date.
 5. Group variant deals, aggregate comparison ranges, and insert offers plus product links.
 6. Commit all chains; a parsing/SQL exception rolls the transaction back.
 
-Missing files leave a chain untouched. A present empty array clears its current offers. There is no timestamp/freshness gate, cycle identifier, importer chain selector, or overlapping-run lock. Running the importer twice on the same input adds another historical snapshot; it does not deduplicate history by week.
+Missing files leave a chain untouched. A present empty array clears its current offers. There is no timestamp/freshness gate, cycle identifier, importer chain selector, or overlapping-run lock. Running the importer twice replaces current offers again; it does not retain a prior-offer history.
 
 Unknown categories, missing GTINs, unmatched stores, or absent price/end date can skip data without aborting import. Existing product titles/categories/groups are retained; brand/size/image fill only missing values, and the run-wide GTIN cache can bypass even those updates on later chain encounters. Grouping a new campaign does not merge already-existing product groups.
 
@@ -140,10 +135,10 @@ The working tree has partial changes toward the requirements in [product-identit
 | --- | --- |
 | Canonical GTIN helper | `gtin.js` exports checksum, normalization, restricted classification; Coop external IDs, ICA EAN IDs, and Willys Axfood image IDs all normalize before import |
 | Willys fetch | Extracts the 14-digit Axfood image filename and passes it to the shared normalizer. Missing card GTINs use catalog recovery: exact product code for ordinary products, or exact promotion-code expansion for mix-and-match campaigns. |
-| Fallback identity | Schema allows `fingerprint`, but importer skips no-GTIN products and never writes fallback identity |
-| Restricted codes | Importer classifies canonical GTINs and writes `gtin_is_restricted`, so fresh-schema `is_comparable` is false for restricted-circulation codes |
-| Exactly one identity | Fresh-schema SQL CHECK now requires exactly one of GTIN/fingerprint; existing databases still need a dedicated migration |
+| Fallback identity | Deliberately out of scope: the strict schema/importer skip products without a verified GTIN |
+| Restricted codes | The helper identifies restricted-circulation codes, but the current simple model stores a canonical GTIN as the only product identity and has no comparability metadata |
+| Exactly one identity | Fresh-schema `products.gtin` is `NOT NULL UNIQUE`; existing databases still need a dedicated migration if they differ |
 | Restricted identity scope | GTIN uniqueness remains global, with no chain/store scope for restricted codes |
 | Existing database upgrade | No canonicalization/merge/backfill migration is present |
 
-`db:schema` creates missing objects but does not alter existing table definitions to match changed DDL. `db:migrate` is a destructive legacy redesign that preserves stores/chains and drops product/offer/history data, not a solution to these identity gaps. It makes no automatic backup and is not generally rerunnable against the current schema.
+`db:schema` creates missing objects but does not alter existing table definitions to match changed DDL. There is no generic migration command: a production schema change needs a dedicated, reviewed, tested migration.

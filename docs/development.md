@@ -38,9 +38,8 @@ Follow the [README quick start](../README.md#first-local-run) for `.env`, depend
 
 | Command | What it actually does |
 | --- | --- |
-| `npm run db:schema` | Apply fresh schema/seeds, without store fetching or existing-column migration |
+| `npm run db:schema` | Apply fresh schema/seeds, without store fetching or migration of incompatible existing columns |
 | `npm run db:init` | Schema plus all-chain store setup; host `.env` sourcing caveat above |
-| `npm run db:migrate` | Destructive one-shot legacy migration; prepare backup/recovery separately |
 | `npm run stores:fetch` | Coop/ICA discovery to JSON only |
 | `npm run stores:update-db` | Coop/ICA JSON upsert |
 | `npm run stores:willys:update-db` | Import committed Willys stores |
@@ -48,8 +47,10 @@ Follow the [README quick start](../README.md#first-local-run) for `.env`, depend
 | `npm run products:fetch` | Coop/ICA fetch and normalize; needs DB store selection |
 | `npm run products:willys:fetch` | Both Willys assortments; canonicalizes GTINs recovered from Axfood image URLs |
 | `npm run products:willys:normalize` | Normalize existing Willys raw files |
-| `npm run products:update-db` | Import every available chain file; archive/replace offers |
+| `npm run products:update-db` | Import every available chain file; replace/discard prior current offers |
 | `npm run products:update-all` | Full recurring pipeline, all three chains |
+| `npm run test:production-e2e` | Build the image and run a full, two-pass refresh against the persistent production-like local DB on port 5434 |
+| `npm run test:production-e2e:reset` | Explicitly delete only that production-like test DB volume before a fresh bootstrap |
 
 To execute in the app container, prepend `docker compose run --rm app`:
 
@@ -101,9 +102,39 @@ npm test
 
 `npm test` runs units, starts/waits for Compose PostgreSQL, then integration. With the DB already running, use the same environment and `npm run test:integration`; that command does not start PostgreSQL. Both need live retailer access and Coop keys. `APP_ENV=test` alone can still fall back to `.env`'s DB URL.
 
-The harness seeds six stores, uses temporary product artifacts, executes real fetch/normalize/import steps, then imports again to check archival. Assertions cover aggregate ingestion, one offer per product/store, comparison ranges, dates, mix-and-match, selected references, and history/current counts. They do not require successful output from every chain. Assumptions that the live sample contains a price range and a multi-product deal can fail as offers change.
+The harness seeds six stores, uses temporary product artifacts, executes real fetch/normalize/import steps, then imports again to check replacement. Assertions cover aggregate ingestion, one offer per product/store, comparison ranges, dates, mix-and-match, selected references, stable GTIN product IDs, and current-offer counts. They do not require successful output from every chain. Assumptions that the live sample contains a price range and a multi-product deal can fail as offers change.
 
 Temporary product artifacts are removed afterward; the test DB remains. Current Willys module loading must be fixed before integration can succeed. No live integration run was performed for this documentation change.
+
+### Production-shaped refresh acceptance test
+
+```bash
+npm run test:production-e2e
+```
+
+This is the pre-release test for the image that will run on AWS. It builds the
+checkout's Docker image, connects it to the persistent local Compose project
+`kassepris-production-test`, and uses only
+`kassepris_production_test` on host port **5434**. It never resets that
+database: on the first run after an explicit reset it performs `db:init` plus a
+full refresh; thereafter it performs the normal update-only path. Reset it
+only when desired:
+
+```bash
+npm run test:production-e2e:reset
+```
+
+The acceptance test validates the database before and after a second,
+new-container refresh. It requires all three chains to have stores, offers,
+and product links; validates canonical GTINs, positive prices, valid offer date
+ranges, and offer/product links; proves a GTIN can retrieve its current
+offers; preserves `GTIN -> product UUID`; and verifies the history table is
+absent. For each retailer it also requires the second refresh to retain at
+least **95%** of the first refresh's offers, offered products, offer-product
+links, and stores with offers. This deliberately detects partial retailer
+fetches that a simple nonzero-count smoke test misses. A legitimate weekly
+change exceeding that threshold needs investigation and an intentional
+threshold adjustment, not a blind release.
 
 ### Full local smoke run
 
@@ -118,7 +149,7 @@ make test
 
 ## Inspecting results
 
-Check per-chain failed fetches, normalization errors, skipped GTINs, unmatched store keys, and archived/inserted counts. Compare with a known healthy run. Overall nonzero totals can conceal a missing chain.
+Check per-chain failed fetches, normalization errors, skipped GTINs, unmatched store keys, and removed/inserted counts. Compare with a known healthy run. Overall nonzero totals can conceal a missing chain.
 
 Use this read-only query in a database client:
 

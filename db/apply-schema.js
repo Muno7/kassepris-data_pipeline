@@ -1,7 +1,7 @@
 // Applies db/schema.sql to the configured database (idempotent - safe to run
 // on an already-initialized DB). Node-native so it needs no `psql` binary,
 // which keeps the Docker image slim and lets `db:init` run inside the
-// container. For migrating a LEGACY database instead, use db/migrate.js.
+// container.
 
 import fs from "fs";
 import path from "path";
