@@ -19,7 +19,8 @@
     "products:update-all": "bash scripts/update-products.sh",
     "test": "bash scripts/test.sh",
     "test:unit": "node --test test/unit/*.test.js",
-    "test:integration": "APP_ENV=test node --test test/integration/*.test.js"
+    "test:integration": "APP_ENV=test node --test test/integration/*.test.js",
+    "test:dabas": "node --test test/dabas.test.js"
   },
   "license": "ISC",
   "dependencies": {
