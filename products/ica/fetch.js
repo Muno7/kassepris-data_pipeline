@@ -14,6 +14,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dataDir, stateDir } from "../lib/paths.js";
+import { normalizeGtin } from "../lib/gtin.js";
 import { pool } from "../../db/pool.js";
 import { createLogger } from "../lib/logger.js";
 import { createMetrics } from "../lib/metrics.js";
@@ -260,7 +261,11 @@ function mapOffer(offer, storePath) {
       image: ean?.image ?? null,
       isMember: offer.traits?.includes("Stammis") ?? false,
       traits: offer.traits ?? [],
-      gtin: ean?.id ?? null,
+      // ICA labels this as an EAN, but its width and even validity vary by
+      // offer.  Canonicalize it here so GTIN-8/UPC/EAN-13 representations of
+      // the same barcode reach the shared importer under one key; invalid
+      // retailer values become null rather than accidental product IDs.
+      gtin: normalizeGtin(ean?.id),
       validFrom: offer.validFrom ?? null,
       validUntil: offer.validTo ?? null,
       categoryName,

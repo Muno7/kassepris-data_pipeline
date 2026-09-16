@@ -96,27 +96,51 @@ CREATE TABLE IF NOT EXISTS product_groups (
 CREATE INDEX IF NOT EXISTS idx_product_groups_category_id ON product_groups (category_id);
 
 -- ---------------------------------------------------------------------------
--- products: one exact physical product/SKU, identified globally by its GTIN.
--- Persistent and canonical - never archived, never duplicated per chain. When
--- several chains describe the same gtin differently, the display fields hold
--- one normalized version (first non-null wins at ingest time; each chain's raw
--- naming is not preserved separately).
+-- products: one exact physical product/SKU. Persistent and canonical - never
+-- archived, never duplicated per chain. When several chains describe the same
+-- gtin differently, the display fields hold one normalized version (first
+-- non-null wins at ingest time).
 -- ---------------------------------------------------------------------------
--- gtin is TEXT, never an integer (leading zeros / length matter). A product
--- with no reliable gtin is not stored here - the ingestion pipeline recovers
--- gtins aggressively (incl. Willys' image/catalog fallback) and skips the rare
--- residual offer that still lacks one, rather than minting a non-gtin identity.
+-- Identity is a canonical GTIN, OR a chain-scoped fingerprint fallback. See
+-- products/lib/gtin.js and docs/product-identity.md.
+--
+--   * gtin - TEXT, never an integer (leading zeros / width matter). Stored in
+--     the canonical zero-padded form so the same barcode reported at different
+--     widths by different chains (ICA GTIN-8, Willys GTIN-14, ...) is ONE row.
+--     NULL when the pipeline found no real GTIN.
+--   * fingerprint - the fallback identity for a no-GTIN product: the
+--     normalizer's stable title/brand/size hash, prefixed with the chain slug
+--     because it is only meaningful within the chain that produced it. Such a
+--     product still reaches the app with all its offers; it just isn't
+--     cross-chain comparable.
+--   * products_identity_check + the two partial unique indexes: exactly one of
+--     gtin/fingerprint is set, and each is unique where present, so a bug can't
+--     insert a row identified by nothing and silently duplicate weekly.
+--   * gtin_is_restricted - a valid GTIN from a GS1 restricted-circulation range
+--     (in-store/weighed goods; ICA's bakery mints one per store). Valid barcode,
+--     but NOT global identity - two chains can never share one. ~8% of catalogue.
+--   * is_comparable - GENERATED, the ONE comparability rule (writer and reader
+--     can't drift): only a real, non-restricted GTIN. The app must gate
+--     cross-chain comparison on this, never on a bare `gtin IS NOT NULL`.
 CREATE TABLE IF NOT EXISTS products (
-  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  product_group_id uuid NOT NULL REFERENCES product_groups(id),
-  gtin             text NOT NULL UNIQUE,
-  title            text NOT NULL,
-  brand            text,
-  size             text,
-  image_url        text,
-  created_at       timestamptz NOT NULL DEFAULT now(),
-  updated_at       timestamptz NOT NULL DEFAULT now()
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  product_group_id   uuid NOT NULL REFERENCES product_groups(id),
+  gtin               text,
+  fingerprint        text,
+  gtin_is_restricted boolean NOT NULL DEFAULT false,
+  is_comparable      boolean GENERATED ALWAYS AS (gtin IS NOT NULL AND NOT gtin_is_restricted) STORED,
+  title              text NOT NULL,
+  brand              text,
+  size               text,
+  image_url          text,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT products_identity_check CHECK ((gtin IS NOT NULL) <> (fingerprint IS NOT NULL))
 );
+-- Partial so the many gtin'd rows (fingerprint NULL) stay out of the fingerprint
+-- index entirely, and vice-versa.
+CREATE UNIQUE INDEX IF NOT EXISTS products_gtin_key ON products (gtin) WHERE gtin IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS products_fingerprint_key ON products (fingerprint) WHERE fingerprint IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_products_product_group_id ON products (product_group_id);
 CREATE INDEX IF NOT EXISTS idx_products_title_lower_trgm ON products USING gin (lower(title) gin_trgm_ops);
 

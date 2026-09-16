@@ -25,6 +25,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { pool } from "../db/pool.js";
+import { isRestrictedCirculationGtin, normalizeGtin } from "./lib/gtin.js";
 import { normalizedFile } from "./lib/paths.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -164,14 +165,20 @@ async function importProducts() {
       let unmatchedStores = 0;
 
       for (const product of products) {
-        if (!product.gtin) {
+        // Treat normalized JSON as an input boundary, not a trusted database
+        // key. This makes imports of older artifacts safe and guarantees every
+        // lookup/insert uses the same canonical representation regardless of
+        // which retailer produced it.
+        const gtin = normalizeGtin(product.gtin);
+        if (!gtin) {
           skippedNoGtin++;
           continue;
         }
+        const gtinIsRestricted = isRestrictedCirculationGtin(gtin);
 
         const categoryId = categoryIdBySlug.get(product.categorySlug);
         if (!categoryId) {
-          console.warn(`Unknown category slug "${product.categorySlug}" for gtin ${product.gtin}, skipping product.`);
+          console.warn(`Unknown category slug "${product.categorySlug}" for gtin ${gtin}, skipping product.`);
           continue;
         }
 
@@ -180,11 +187,11 @@ async function importProducts() {
         // Resolve the canonical product row, creating its product_group only
         // when the product is genuinely new (an existing product keeps the
         // group it was first filed under - products are persistent).
-        let productId = productIdByGtin.get(product.gtin);
+        let productId = productIdByGtin.get(gtin);
         if (!productId) {
           const existing = await client.query(
             "SELECT id, product_group_id FROM products WHERE gtin = $1",
-            [product.gtin]
+            [gtin]
           );
           if (existing.rows.length > 0) {
             productId = existing.rows[0].id;
@@ -197,9 +204,10 @@ async function importProducts() {
                  brand = COALESCE(brand, $2),
                  size = COALESCE(size, $3),
                  image_url = COALESCE(image_url, $4),
+                 gtin_is_restricted = $5,
                  updated_at = now()
                WHERE id = $1`,
-              [productId, product.brand, product.size, product.image]
+              [productId, product.brand, product.size, product.image, gtinIsRestricted]
             );
           } else {
             let groupId = campaignKey ? groupIdByCampaign.get(campaignKey) : undefined;
@@ -212,14 +220,14 @@ async function importProducts() {
               if (campaignKey) groupIdByCampaign.set(campaignKey, groupId);
             }
             const p = await client.query(
-              `INSERT INTO products (product_group_id, gtin, title, brand, size, image_url)
-               VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-              [groupId, product.gtin, product.title, product.brand, product.size, product.image]
+              `INSERT INTO products (product_group_id, gtin, gtin_is_restricted, title, brand, size, image_url)
+               VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+              [groupId, gtin, gtinIsRestricted, product.title, product.brand, product.size, product.image]
             );
             productId = p.rows[0].id;
             insertedProducts++;
           }
-          productIdByGtin.set(product.gtin, productId);
+          productIdByGtin.set(gtin, productId);
         }
 
         // store_products (persistent membership) + accumulate current offers.
