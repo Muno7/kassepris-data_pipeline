@@ -104,7 +104,7 @@ npm test
 
 The harness seeds six stores, uses temporary product artifacts, executes real fetch/normalize/import steps, then imports again to check replacement. Assertions cover aggregate ingestion, one offer per product/store, comparison ranges, dates, mix-and-match, selected references, stable GTIN product IDs, and current-offer counts. They do not require successful output from every chain. Assumptions that the live sample contains a price range and a multi-product deal can fail as offers change.
 
-Temporary product artifacts are removed afterward; the test DB remains. Current Willys module loading must be fixed before integration can succeed. No live integration run was performed for this documentation change.
+Temporary product artifacts are removed afterward; the test DB remains. Willys rows whose GTIN cannot be recovered are logged and skipped, rather than failing the refresh. No live integration run was performed for this documentation change.
 
 ### Production-shaped refresh acceptance test
 
@@ -143,7 +143,7 @@ make build
 make test
 ```
 
-`make test` initializes all stores and runs the full live pipeline in Compose using `APP_ENV=development`, then checks row counts. It is broader than the sample test and does not run unit assertions. The known Willys mismatch also blocks it. Compose's app image is fixed at `kassepris-scraper:latest`, independently of custom Make image tags.
+`make test` initializes all stores and runs the full live pipeline in Compose using `APP_ENV=development`, then checks row counts. It is broader than the sample test and does not run unit assertions. Willys rows without a verified GTIN are reported and skipped. Compose's app image is fixed at `kassepris-scraper:latest`, independently of custom Make image tags.
 
 `make test-down` calls `docker compose down -v` and deletes the disposable DB volume. `docker compose down` preserves that volume.
 
@@ -171,7 +171,7 @@ ORDER BY c.slug;
 
 | Symptom | Check next |
 | --- | --- |
-| Willys GTIN missing from a campaign product | The campaign image may not be an Axfood catalog image; inspect the catalog recovery summary. Ordinary cards use exact product codes; mix-and-match cards use exact promotion-code expansion. |
+| Willys GTIN missing from a campaign product | The row is skipped and counted as a validation failure; inspect its logged product code and the catalog recovery summary. Ordinary cards use exact product codes; mix-and-match cards use exact promotion-code expansion. |
 | Coop authorization/missing variable | Both key names, exported settings, active dotenv profile |
 | DB/TLS error | Host `localhost:5433` vs container `db:5432`, URL/profile, SSL; host `db:init` override behavior |
 | Empty Coop/ICA output | Store table population/URLs, fetch summaries, upstream shape |

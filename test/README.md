@@ -3,8 +3,8 @@
 [Documentation home](../README.md) · [Detailed testing and operations guide](../docs/development.md#tests)
 
 Status at the 2026-09-15 documentation review: 11 offline unit tests passed.
-Full integration was not run. Willys currently imports a removed GTIN helper,
-which must be resolved before the full pipeline can load. See the root README.
+Full integration was not run. Willys products without recoverable GTINs are
+logged and skipped so they do not prevent the full pipeline from loading.
 
 Run after each change:
 

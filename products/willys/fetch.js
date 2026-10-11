@@ -440,6 +440,18 @@ async function recoverMissingGtins(entries) {
   return { attempted: candidates.length, recovered, expandedCampaigns };
 }
 
+// The database currently has no safe fallback identity for a product without
+// a GTIN. Keep the rest of an assortment usable when catalog recovery cannot
+// verify one, but make those omissions visible in both the structured logs and
+// the ingestion summary. This mirrors the importer behaviour for Coop/ICA.
+export function excludeEntriesWithoutVerifiedGtin(entries) {
+  const skipped = entries.filter((entry) => !entry.product.gtin);
+  return {
+    products: entries.filter((entry) => entry.product.gtin).map((entry) => entry.product),
+    skipped,
+  };
+}
+
 async function fetchAssortment({ slug, isHemma }) {
   if (checkpoint.isDone(slug)) {
     logger.debug("skipping, already completed (resumed run)", { assortment: slug });
@@ -462,15 +474,20 @@ async function fetchAssortment({ slug, isHemma }) {
   if (failed > 0) throw new Error(`${failed}/${categories.length} categories failed for assortment "${slug}"`);
 
   const { attempted, recovered, expandedCampaigns } = await recoverMissingGtins(entries);
-  const stillMissing = entries.filter((entry) => !entry.product.gtin).length;
+  const { products, skipped } = excludeEntriesWithoutVerifiedGtin(entries);
+  const stillMissing = skipped.length;
   logger.info("gtin fallback done", { assortment: slug, attempted, recovered, expandedCampaigns, stillMissing });
   if (stillMissing > 0) {
-    throw new Error(`GTIN recovery incomplete for assortment "${slug}": ${stillMissing} product rows still lack a verified GTIN`);
+    for (const _entry of skipped) metrics.recordValidationFailure();
+    logger.warn("skipping products without verified GTIN", {
+      assortment: slug,
+      skipped: stillMissing,
+      productCodes: skipped.map((entry) => entry.mainProductCode ?? null),
+    });
   }
 
-  // Drop lookup-only campaign metadata; the written file remains the shared
-  // raw-product shape, now with an expanded GTIN-bearing row per recovered SKU.
-  const products = entries.map((e) => e.product);
+  // Drop lookup-only campaign metadata. Products that still lack a verified
+  // GTIN are excluded because the importer cannot represent them safely yet.
   fs.writeFileSync(path.join(DATA_DIR, `${slug}.json`), JSON.stringify(products, null, 2));
   logger.info("assortment done", { assortment: slug, products: products.length });
 

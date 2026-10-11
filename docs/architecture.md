@@ -41,7 +41,7 @@ Willys assumes two shared newspaper assortments, not one individually fetched of
 
 **Completeness is not fully enforced:** Coop/ICA failure counts are not turned into orchestration errors. Raw directories are not cleared, so a failed fetch can leave an older store/assortment file available for normalization. Checkpoints are crash recovery, not a guarantee of a complete or fresh snapshot.
 
-Willys additionally requires every emitted raw product row to have a verified GTIN. Its catalog recovery expands missing-GTIN mix-and-match cards into eligible GTIN-bearing SKUs; if any row remains unresolved, that assortment fails before its output file is written.
+Willys attempts catalog recovery for every missing-GTIN campaign card, including expansion of verified mix-and-match SKUs. Rows still lacking a verified GTIN are skipped, logged with their retailer product codes, and counted as validation failures; the remaining assortment is written and the refresh continues.
 
 ## 3. Normalization contract
 
